@@ -3,6 +3,7 @@ import "dart:math" as math;
 import "package:flutter/material.dart";
 import "dart:async";
 import "package:google_fonts/google_fonts.dart";
+import "package:anc_app/src/router/router.dart";
 
 class LoginForm extends StatefulWidget {
   final VoidCallback onLoginSuccess;
@@ -460,7 +461,14 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
                     color: Colors.transparent,
                     child: InkWell(
                       borderRadius: BorderRadius.circular(8),
-                      onTap: _isLoading ? null : _handleLogin,
+                      onTap: _isLoading ? null : () {
+                        // Navigate to Chatbot screen
+                        context.goToAppRoute(AppRoute.chatbot);
+                        // If you still need to call _handleLogin or similar logic,
+                        // you can do it here, perhaps after navigation or based on its result.
+                        // For now, we are just navigating.
+                        // _handleLogin(); 
+                      },
                       child: Container(
                         alignment: Alignment.center,
                         child: _isLoading

@@ -5,6 +5,7 @@ import "package:flutter/material.dart";
 import "package:go_router/go_router.dart";
 import "package:anc_app/src/router/screen_params.dart";
 import "package:anc_app/src/features/auth/screens/login_screen.dart";
+import "package:anc_app/src/features/chatbot/screens/chatbot_screen.dart";
 
 /// All the routes in the app are defined here
 ///
@@ -26,6 +27,10 @@ enum AppRoute<ParamsType extends ScreenParams<ParamsType>> {
   home<NoParams>(
     path: "/home",
     isAuthEnforcementRequired: true,
+  ),
+  chatbot<NoParams>(
+    path: "/chatbot",
+    isAuthEnforcementRequired: true, // Assuming auth is required
   ),
   ;
 
@@ -77,6 +82,11 @@ GoRouter buildRouter({
               name: AppRoute.initial.name,
               path: AppRoute.initial.path,
               builder: (context, state) => const LoginScreen(),
+            ),
+            GoRoute(
+              name: AppRoute.chatbot.name,
+              path: AppRoute.chatbot.path,
+              builder: (context, state) => const ChatbotScreen(),
             ),
           ],
         ),
