@@ -134,13 +134,13 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
         return Transform.translate(
           offset: Offset(0, 20 * (1 - _slideAnimation.value)),
           child: Opacity(
-            opacity: _slideAnimation.value,
+            opacity: _slideAnimation.value.clamp(0.0, 1.0),
             child: Container(
-              constraints: const BoxConstraints(maxWidth: 400),
+              constraints: const BoxConstraints(maxWidth: 480, maxHeight: 590),
               child: Stack(
                 children: [
                   // Neural Network Background
-                  ...List.generate(12, (index) => NeuralDot(index: index)),
+                  ...List.generate(8, (index) => NeuralDot(index: index)),
 
                   // Main Container
                   Container(
@@ -181,7 +181,7 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
                       ),
                       child: Container(
                         margin: const EdgeInsets.all(2),
-                        padding: const EdgeInsets.all(32),
+                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(14),
                           color: const Color(0xFF1A1F2E).withOpacity(0.9),
@@ -190,9 +190,9 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
                         child: Column(
                           children: [
                             _buildHeader(),
-                            const SizedBox(height: 32),
+                            const SizedBox(height: 24),
                             _buildLoginForm(),
-                            const SizedBox(height: 32),
+                            const SizedBox(height: 24),
                             _buildFeatures(),
                           ],
                         ),
@@ -297,7 +297,7 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
           keyboardType: TextInputType.emailAddress,
         ),
 
-        const SizedBox(height: 24),
+        const SizedBox(height: 20),
 
         // Password Field
         _buildInputField(
@@ -307,7 +307,7 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
           isPassword: true,
         ),
 
-        const SizedBox(height: 32),
+        const SizedBox(height: 24),
 
         // Login Button
         Container(
@@ -417,7 +417,7 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
               hintText: hintText,
               hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
               border: InputBorder.none,
-              contentPadding: const EdgeInsets.all(16),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               suffixIcon: isPassword
                   ? IconButton(
                       icon: Icon(
@@ -442,7 +442,7 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
 
   Widget _buildFeatures() {
     return Container(
-      padding: const EdgeInsets.only(top: 24),
+      padding: const EdgeInsets.only(top: 16),
       decoration: BoxDecoration(
         border: Border(
           top: BorderSide(
@@ -570,11 +570,11 @@ class _NeuralDotState extends State<NeuralDot>
       builder: (context, child) {
         return Positioned(
           left: left * 350,
-          top: top * 400,
+          top: top * 300,
           child: Transform.scale(
             scale: _scaleAnimation.value,
             child: Opacity(
-              opacity: _opacityAnimation.value * 0.1,
+              opacity: (_opacityAnimation.value * 0.1).clamp(0.0, 1.0),
               child: Container(
                 width: 4,
                 height: 4,

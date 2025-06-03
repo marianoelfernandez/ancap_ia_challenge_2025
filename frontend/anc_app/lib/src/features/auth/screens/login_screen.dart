@@ -125,11 +125,13 @@ class _LoginScreenState extends State<LoginScreen>
                               children: [
                                 // Left Side - Branding
                                 Expanded(
+                                  flex: 5,
                                   child: _buildBrandingSection(isLargeScreen),
                                 ),
                                 const SizedBox(width: 48),
                                 // Right Side - Login Form
                                 Expanded(
+                                  flex: 6,
                                   child: Align(
                                     alignment: Alignment.centerRight,
                                     child: LoginForm(
@@ -388,8 +390,12 @@ class _LoginScreenState extends State<LoginScreen>
                 boxShadow: [
                   BoxShadow(
                     color: color.withOpacity(
-                      0.5 +
-                          0.3 * math.sin(_pulseController.value * 2 * math.pi),
+                      (0.5 +
+                              0.3 *
+                                  math.sin(
+                                    _pulseController.value * 2 * math.pi,
+                                  ))
+                          .clamp(0.0, 1.0),
                     ),
                     blurRadius:
                         4 + 2 * math.sin(_pulseController.value * 2 * math.pi),
