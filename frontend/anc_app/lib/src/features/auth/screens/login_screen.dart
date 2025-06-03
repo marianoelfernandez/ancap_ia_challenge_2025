@@ -201,94 +201,85 @@ class _LoginScreenState extends State<LoginScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // Logo and Brand Name
-            AnimatedBuilder(
-              animation: _fadeController,
-              builder: (context, child) {
-                return Transform.scale(
-                  scale: 0.8 + 0.2 * _fadeController.value,
-                  child: child,
-                );
-              },
-              child: Column(
-                crossAxisAlignment: isLargeScreen
-                    ? CrossAxisAlignment.start
-                    : CrossAxisAlignment.center,
-                children: [
-                  Text(
-                    "ANCAP",
-                    textAlign:
-                        isLargeScreen ? TextAlign.left : TextAlign.center,
-                    style: GoogleFonts.inter(
-                      fontSize: isLargeScreen ? 96 : 72, // text-6xl lg:text-8xl
-                      fontWeight:
-                          FontWeight.w900, // This is 'Black' weight for Inter
-                      letterSpacing: 1.92, // letterSpacing: '0.02em'
-                      height: 1,
-                      color: Colors.white,
-                      // Enhanced shadows for bolder appearance
-                      shadows: const [
-                        Shadow(
-                          color: Color(0xFFFBBF24),
-                          blurRadius: 8,
-                        ),
-                        Shadow(
-                          color: Color(0xFFFBBF24),
-                          blurRadius: 16,
-                          offset: Offset(0, 0),
-                        ),
-                        Shadow(
-                          color: Color(0xFFFBBF24),
-                          blurRadius: 24,
-                          offset: Offset(0, 0),
-                        ),
-                        // Additional shadow for stronger glow
-                        Shadow(
-                          color: Color(0xFFFBBF24),
-                          blurRadius: 4,
-                          offset: Offset(0, 0),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    width: 80, // Wider line
-                    height: 6, // Taller line
-                    margin: isLargeScreen
-                        ? null
-                        : const EdgeInsets.symmetric(horizontal: 0),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [
-                          Color(0xFFFBBF24),
-                          Color(0xFFEAB308),
-                        ], // yellow-400 to yellow-500
+            Column(
+              crossAxisAlignment: isLargeScreen
+                  ? CrossAxisAlignment.start
+                  : CrossAxisAlignment.center,
+              children: [
+                Text(
+                  "ANCAP",
+                  textAlign:
+                      isLargeScreen ? TextAlign.left : TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: isLargeScreen ? 96 : 72, // text-6xl lg:text-8xl
+                    fontWeight:
+                        FontWeight.w900, // This is 'Black' weight for Inter
+                    letterSpacing: 1.92, // letterSpacing: '0.02em'
+                    height: 1,
+                    color: Colors.white,
+                    // Enhanced shadows for bolder appearance
+                    shadows: const [
+                      Shadow(
+                        color: Color(0xFFFBBF24),
+                        blurRadius: 8,
                       ),
-                      borderRadius:
-                          BorderRadius.circular(3), // Adjusted for thicker line
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0xFFFBBF24),
-                          blurRadius: 15,
-                          spreadRadius:
-                              2, // Added spread for more prominent glow
-                        ),
-                        BoxShadow(
-                          color: Color(0xFFFBBF24),
-                          blurRadius: 30,
-                          spreadRadius: 1,
-                          offset: Offset(0, 0),
-                        ),
-                        BoxShadow(
-                          color: Color(0xFFFBBF24),
-                          blurRadius: 60,
-                          offset: Offset(0, 0),
-                        ),
-                      ],
-                    ),
+                      Shadow(
+                        color: Color(0xFFFBBF24),
+                        blurRadius: 16,
+                        offset: Offset(0, 0),
+                      ),
+                      Shadow(
+                        color: Color(0xFFFBBF24),
+                        blurRadius: 24,
+                        offset: Offset(0, 0),
+                      ),
+                      // Additional shadow for stronger glow
+                      Shadow(
+                        color: Color(0xFFFBBF24),
+                        blurRadius: 4,
+                        offset: Offset(0, 0),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  width: 80, // Wider line
+                  height: 6, // Taller line
+                  margin: isLargeScreen
+                      ? null
+                      : const EdgeInsets.symmetric(horizontal: 0),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [
+                        Color(0xFFFBBF24),
+                        Color(0xFFEAB308),
+                      ], // yellow-400 to yellow-500
+                    ),
+                    borderRadius:
+                        BorderRadius.circular(3), // Adjusted for thicker line
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0xFFFBBF24),
+                        blurRadius: 15,
+                        spreadRadius:
+                            2, // Added spread for more prominent glow
+                      ),
+                      BoxShadow(
+                        color: Color(0xFFFBBF24),
+                        blurRadius: 30,
+                        spreadRadius: 1,
+                        offset: Offset(0, 0),
+                      ),
+                      BoxShadow(
+                        color: Color(0xFFFBBF24),
+                        blurRadius: 60,
+                        offset: Offset(0, 0),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
 
             const SizedBox(height: 32),
