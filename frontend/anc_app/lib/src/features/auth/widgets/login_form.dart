@@ -2,6 +2,7 @@ import "dart:math" as math;
 
 import "package:flutter/material.dart";
 import "dart:async";
+import "package:google_fonts/google_fonts.dart";
 
 class LoginForm extends StatefulWidget {
   final VoidCallback onLoginSuccess;
@@ -336,11 +337,11 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
                 shaderCallback: (bounds) => const LinearGradient(
                   colors: [Color(0xFFFFC107), Color(0xFFFFD54F)],
                 ).createShader(bounds),
-                child: const Text(
+                child: Text(
                   "ANCAP",
-                  style: TextStyle(
+                  style: GoogleFonts.inter(
                     fontSize: 36,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w900, // Use 'Black' weight for Inter
                     color: Colors.white,
                     letterSpacing: 2,
                   ),
@@ -361,8 +362,9 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
               child: const Text(
                 "AI Business Intelligence Assistant",
                 style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.white70,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
                 ),
               ),
             );
@@ -398,9 +400,9 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
               child: Opacity(
                 opacity: _emailFieldAnimation.value,
                 child: _buildInputField(
-                  label: "Email Address",
+                  label: "Correo Electrónico",
                   controller: _emailController,
-                  hintText: "Enter your email",
+                  hintText: "Ingrese su correo",
                   keyboardType: TextInputType.emailAddress,
                 ),
               ),
@@ -419,9 +421,9 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
               child: Opacity(
                 opacity: _passwordFieldAnimation.value,
                 child: _buildInputField(
-                  label: "Password",
+                  label: "Contraseña",
                   controller: _passwordController,
-                  hintText: "Enter your password",
+                  hintText: "Ingrese su contraseña",
                   isPassword: true,
                 ),
               ),
@@ -462,9 +464,9 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
                       child: Container(
                         alignment: Alignment.center,
                         child: _isLoading
-                            ? Row(
+                            ? const Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
-                                children: const [
+                                children: [
                                   SizedBox(
                                     width: 20,
                                     height: 20,
@@ -477,10 +479,11 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
                                   ),
                                   SizedBox(width: 12),
                                   Text(
-                                    "Connecting to AI...",
+                                    "Conectando a IA...",
                                     style: TextStyle(
                                       color: Color(0xFF0D47A1),
-                                      fontWeight: FontWeight.w600,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 16,
                                     ),
                                   ),
                                 ],
@@ -495,10 +498,11 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
                                   ),
                                   SizedBox(width: 8),
                                   Text(
-                                    "Access AI Assistant",
+                                    "Acceder al Asistente IA",
                                     style: TextStyle(
                                       color: Color(0xFF0D47A1),
-                                      fontWeight: FontWeight.w600,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 16,
                                     ),
                                   ),
                                 ],
@@ -529,7 +533,8 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
           label,
           style: const TextStyle(
             color: Colors.white,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w700, // Bolder text
+            fontSize: 16, // Slightly larger
           ),
         ),
         const SizedBox(height: 8),
@@ -594,14 +599,14 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
                 Expanded(
                   child: _buildFeatureItem(
                     icon: Icons.psychology,
-                    label: "Smart Analytics",
+                    label: "Análisis Inteligente",
                     color: const Color(0xFF1976D2),
                   ),
                 ),
                 Expanded(
                   child: _buildFeatureItem(
                     icon: Icons.security,
-                    label: "Secure Access",
+                    label: "Acceso Seguro",
                     color: const Color(0xFFFFC107),
                   ),
                 ),
@@ -637,8 +642,9 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
         Text(
           label,
           style: TextStyle(
-            color: Colors.white.withOpacity(0.7),
-            fontSize: 12,
+            color: Colors.white.withOpacity(0.85), // Brighter text
+            fontSize: 13, // Slightly larger
+            fontWeight: FontWeight.w600, // Bolder text
           ),
         ),
       ],

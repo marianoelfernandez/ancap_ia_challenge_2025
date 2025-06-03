@@ -1,5 +1,6 @@
 import "package:flutter/material.dart";
 import "dart:math" as math;
+import "package:google_fonts/google_fonts.dart";
 import "package:anc_app/src/features/auth/widgets/login_form.dart";
 
 class LoginScreen extends StatefulWidget {
@@ -217,25 +218,33 @@ class _LoginScreenState extends State<LoginScreen>
                     "ANCAP",
                     textAlign:
                         isLargeScreen ? TextAlign.left : TextAlign.center,
-                    style: TextStyle(
+                    style: GoogleFonts.inter(
                       fontSize: isLargeScreen ? 96 : 72, // text-6xl lg:text-8xl
-                      fontWeight: FontWeight.w900,
+                      fontWeight:
+                          FontWeight.w900, // This is 'Black' weight for Inter
                       letterSpacing: 1.92, // letterSpacing: '0.02em'
                       height: 1,
                       color: Colors.white,
+                      // Enhanced shadows for bolder appearance
                       shadows: const [
                         Shadow(
                           color: Color(0xFFFBBF24),
-                          blurRadius: 10,
+                          blurRadius: 8,
                         ),
                         Shadow(
                           color: Color(0xFFFBBF24),
-                          blurRadius: 20,
+                          blurRadius: 16,
                           offset: Offset(0, 0),
                         ),
                         Shadow(
                           color: Color(0xFFFBBF24),
-                          blurRadius: 30,
+                          blurRadius: 24,
+                          offset: Offset(0, 0),
+                        ),
+                        // Additional shadow for stronger glow
+                        Shadow(
+                          color: Color(0xFFFBBF24),
+                          blurRadius: 4,
                           offset: Offset(0, 0),
                         ),
                       ],
@@ -243,8 +252,8 @@ class _LoginScreenState extends State<LoginScreen>
                   ),
                   const SizedBox(height: 16),
                   Container(
-                    width: 64,
-                    height: 4,
+                    width: 80, // Wider line
+                    height: 6, // Taller line
                     margin: isLargeScreen
                         ? null
                         : const EdgeInsets.symmetric(horizontal: 0),
@@ -255,15 +264,19 @@ class _LoginScreenState extends State<LoginScreen>
                           Color(0xFFEAB308),
                         ], // yellow-400 to yellow-500
                       ),
-                      borderRadius: BorderRadius.circular(2),
+                      borderRadius:
+                          BorderRadius.circular(3), // Adjusted for thicker line
                       boxShadow: const [
                         BoxShadow(
                           color: Color(0xFFFBBF24),
-                          blurRadius: 20,
+                          blurRadius: 15,
+                          spreadRadius:
+                              2, // Added spread for more prominent glow
                         ),
                         BoxShadow(
                           color: Color(0xFFFBBF24),
-                          blurRadius: 40,
+                          blurRadius: 30,
+                          spreadRadius: 1,
                           offset: Offset(0, 0),
                         ),
                         BoxShadow(
@@ -302,7 +315,7 @@ class _LoginScreenState extends State<LoginScreen>
                       : CrossAxisAlignment.center,
                   children: [
                     Text(
-                      "Next-Generation Business Intelligence",
+                      "Inteligencia de Negocios de Próxima Generación",
                       textAlign:
                           isLargeScreen ? TextAlign.left : TextAlign.center,
                       style: TextStyle(
@@ -323,8 +336,8 @@ class _LoginScreenState extends State<LoginScreen>
                           ? const BoxConstraints(maxWidth: 448)
                           : null, // max-w-md
                       child: Text(
-                        "Harness the power of AI to unlock insights from your business data. "
-                        "Chat with your tables, get instant analytics, and make data-driven decisions.",
+                        "Aprovecha el poder de la IA para obtener información valiosa de tus datos empresariales. "
+                        "Chatea con tus tablas, obtén análisis instantáneos y toma decisiones basadas en datos.",
                         textAlign:
                             isLargeScreen ? TextAlign.left : TextAlign.center,
                         style: const TextStyle(
@@ -355,15 +368,15 @@ class _LoginScreenState extends State<LoginScreen>
                 children: [
                   _buildFeatureIndicator(
                     color: const Color(0xFF4ADE80), // green-400
-                    label: "AI-Powered Analytics",
+                    label: "Análisis Potenciado por IA",
                   ),
                   _buildFeatureIndicator(
                     color: const Color(0xFF71717A), // zinc-400
-                    label: "Real-time Insights",
+                    label: "Información en Tiempo Real",
                   ),
                   _buildFeatureIndicator(
                     color: const Color(0xFFFBBF24), // yellow-400
-                    label: "Natural Language Queries",
+                    label: "Consultas en Lenguaje Natural",
                   ),
                 ],
               ),

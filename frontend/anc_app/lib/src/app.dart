@@ -4,6 +4,7 @@ import "package:flutter_bloc/flutter_bloc.dart";
 import "package:flutter_easyloading/flutter_easyloading.dart";
 import "package:anc_app/src/router/router.dart";
 import "package:anc_app/src/env.dart";
+import "package:google_fonts/google_fonts.dart";
 
 class App extends StatefulWidget {
   const App({
@@ -31,7 +32,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final theme = ThemeData(
       brightness: Brightness.light,
-      fontFamily: "Montserrat",
+      textTheme: GoogleFonts.interTextTheme(Theme.of(context).textTheme),
       inputDecorationTheme: InputDecorationTheme(
         isDense: true,
         hintStyle: TextStyle(fontSize: 15.0, color: Colors.grey[400]),
@@ -45,7 +46,9 @@ class _AppState extends State<App> with WidgetsBindingObserver {
         ),
       ),
     );
-    final darkTheme = ThemeData.dark();
+    final darkTheme = ThemeData.dark().copyWith(
+      textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
+    );
 
     return MultiBlocProvider(
       providers: [
