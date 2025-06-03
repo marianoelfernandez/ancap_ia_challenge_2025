@@ -4,6 +4,7 @@ import "dart:async";
 import "package:flutter/material.dart";
 import "package:go_router/go_router.dart";
 import "package:anc_app/src/router/screen_params.dart";
+import "package:anc_app/src/features/auth/screens/login_screen.dart";
 
 /// All the routes in the app are defined here
 ///
@@ -75,7 +76,7 @@ GoRouter buildRouter({
             GoRoute(
               name: AppRoute.initial.name,
               path: AppRoute.initial.path,
-              builder: (context, state) => const Center(child: Text("Hello")),
+              builder: (context, state) => const LoginScreen(),
             ),
           ],
         ),
