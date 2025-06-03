@@ -1,0 +1,1 @@
+ C:\\Users\\maria\\OneDrive\\Desktop\\repos\\ancap_repo\\ancap_ia_challenge_2025\\frontend\\anc_app\\.dart_tool\\flutter_build\\96b91e42978deb67d6a029389f92b999\\dart_build_result.json: 

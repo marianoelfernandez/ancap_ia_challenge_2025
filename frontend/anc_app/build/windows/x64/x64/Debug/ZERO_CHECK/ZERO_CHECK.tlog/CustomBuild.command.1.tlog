@@ -1,0 +1,10 @@
+^C:\USERS\MARIA\ONEDRIVE\DESKTOP\REPOS\ANCAP_REPO\ANCAP_IA_CHALLENGE_2025\FRONTEND\ANC_APP\BUILD\WINDOWS\X64\CMAKEFILES\8DE9E09E0846A298D4023E4C6D1C1A62\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -SC:/Users/maria/OneDrive/Desktop/repos/ancap_repo/ancap_ia_challenge_2025/frontend/anc_app/windows -BC:/Users/maria/OneDrive/Desktop/repos/ancap_repo/ancap_ia_challenge_2025/frontend/anc_app/build/windows/x64 --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/Users/maria/OneDrive/Desktop/repos/ancap_repo/ancap_ia_challenge_2025/frontend/anc_app/build/windows/x64/anc_app.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
