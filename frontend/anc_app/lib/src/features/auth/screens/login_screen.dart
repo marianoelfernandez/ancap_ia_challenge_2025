@@ -36,7 +36,7 @@ class _LoginScreenState extends State<LoginScreen>
     )..repeat();
 
     _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 1500),
       vsync: this,
     )..forward();
   }
