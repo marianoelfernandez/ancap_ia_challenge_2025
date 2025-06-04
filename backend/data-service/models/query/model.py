@@ -10,6 +10,8 @@ class QueryStatus(str, Enum):
     TIMEOUT = "timeout"
     INVALID_SQL = "invalid_sql"
 
+class QueryRequest(BaseModel):
+    sql_query: str = Field(..., description="SQL query to execute", min_length=1)
 
 # Request Models
 class SQLQueryRequest(BaseModel):

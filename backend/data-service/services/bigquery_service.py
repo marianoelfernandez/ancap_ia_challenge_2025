@@ -3,7 +3,7 @@ from google.cloud.exceptions import BadRequest
 from typing import Dict, Any, Optional
 import logging
 from datetime import datetime
-from app.config.settings import get_settings
+from config.settings import get_settings
 
 settings = get_settings()
 

@@ -3,7 +3,7 @@ from datetime import datetime
 import logging
 
 from services.bigquery_service import BigQueryService
-from app.models.query.model import SQLQueryRequest, SQLQueryResponse, QueryStatus, QueryMetadata
+from models.query.model import QueryRequest, SQLQueryResponse, QueryStatus, QueryMetadata
 
 router = APIRouter(
     tags=["query"]
@@ -12,7 +12,7 @@ router = APIRouter(
 
 @router.post("/query")
 async def execute_sql_query(
-    sql_query: str = Body(..., description="SQL query to execute"),
+    request: QueryRequest,
     bigquery_service: BigQueryService = Depends(BigQueryService)
 ) -> SQLQueryResponse:
     """
@@ -23,7 +23,7 @@ async def execute_sql_query(
         
         # Execute the query
         raw_results = await bigquery_service.execute_query(
-            query=sql_query,
+            query=request.sql_query,
             timeout=30,
             limit=1000
         )

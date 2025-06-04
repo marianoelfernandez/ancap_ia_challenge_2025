@@ -170,6 +170,28 @@ CREATE TABLE FacLinPr (
     PRIMARY KEY (FacPlaId, FacTpoDoc, FacSerie, FacNro, FacLinNro)
 );
 
+-- Tabla: houses_data
+CREATE TABLE houses_data (
+    id INTEGER,
+    date DATE,
+    bedrooms VARCHAR(255),
+    bathrooms VARCHAR(255),
+    square_footage_living VARCHAR(255),
+    floors VARCHAR(255),
+    waterfront VARCHAR(255),
+    view VARCHAR(255),
+    condition VARCHAR(255),
+    grade VARCHAR(255),
+    square_footage_above VARCHAR(255),
+    square_footage_basement VARCHAR(255),
+    year_built VARCHAR(255),
+    year_renovated VARCHAR(255),
+    zipcode VARCHAR(255),
+    lat VARCHAR(255),
+    long FLOAT,
+    price INTEGER
+);
+
 Recuerda que NO puedes calcular valores usando VARCHAR como número.
 Por favor, utiliza las tablas y claves que están explícitamente definidas arriba.
 

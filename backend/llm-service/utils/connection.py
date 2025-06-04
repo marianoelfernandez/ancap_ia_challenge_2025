@@ -7,17 +7,21 @@ settings = Settings()
 def call_server(tool:str, query: str) -> str:
     request_id = str(uuid.uuid4()) 
 
-    payload = {
-        "jsonrpc": "2.0",
-        "id": request_id,
-        "method": "tools/call",
-        "params": {
-            "name": tool,
-            "arguments": query
+    # payload = {
+    #     "jsonrpc": "2.0",
+    #     "id": request_id,
+    #     "method": "tools/call",
+    #     "params": {
+    #         "name": tool,
+    #         "arguments": query
             
-        }
+    #     }
+    # }
+
+    payload = {
+        "sql_query": query
     }
-    uri = f"{settings.mcp_server_uri}/mcp"
+    uri = f"{settings.mcp_server_uri}/query"
     response = requests.post(uri, json=payload).json()
     try:
         return response["result"]["content"][0]["text"]
