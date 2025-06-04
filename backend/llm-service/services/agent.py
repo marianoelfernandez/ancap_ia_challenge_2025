@@ -76,7 +76,9 @@ class Agent():
         def execute_sql(state: AgentState) -> AgentState:
             try:
                 generated_sql = state["generated_sql"]
-                result = call_server("execute_sql", generated_sql)
+                if not generated_sql:
+                    return {"output": "No se generó SQL"}
+                result = call_server(generated_sql)
                 state["output"] = result
                 self.memory.chat_memory.add_user_message(state["input"])
                 self.memory.chat_memory.add_ai_message(result)

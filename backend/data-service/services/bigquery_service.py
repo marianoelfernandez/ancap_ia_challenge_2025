@@ -19,7 +19,7 @@ class BigQueryService:
     async def execute_query(
         self, 
         query: str, 
-        timeout: int = 30,
+        timeout: Optional[int] = 30,
         limit: Optional[int] = None
     ) -> Dict[str, Any]:
         """
@@ -27,18 +27,15 @@ class BigQueryService:
         """
         try:
 
-            self.logger.info(f"Received query: {query}")
-            self.logger.info(f"client: {self.client}")
-            self.logger.info(f"project_id: {self.project_id}")
-            self.logger.info(f"timeout: {timeout}")
-            self.logger.info(f"limit: {limit}")
-            
+            self.logger.info(f"\nReceived query: {query}\n")
+           
             # Configure query job
             job_config = bigquery.QueryJobConfig()
             
             # Set timeout
-            job_config.job_timeout_ms = timeout * 1000
-            
+            if timeout:
+                job_config.job_timeout_ms = timeout * 1000
+
             # Add LIMIT clause if specified and not already present
             if limit and 'LIMIT' not in query.upper():
                 query = f"{query.rstrip(';')} LIMIT {limit}"

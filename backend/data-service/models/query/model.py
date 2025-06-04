@@ -10,8 +10,6 @@ class QueryStatus(str, Enum):
     TIMEOUT = "timeout"
     INVALID_SQL = "invalid_sql"
 
-class QueryRequest(BaseModel):
-    sql_query: str = Field(..., description="SQL query to execute", min_length=1)
 
 # Request Models
 class SQLQueryRequest(BaseModel):
@@ -24,12 +22,18 @@ class SQLQueryRequest(BaseModel):
     @field_validator('query')
     @classmethod
     def validate_sql_query(cls, v):
-        # Basic SQL validation
         dangerous_keywords = ['DROP', 'DELETE', 'TRUNCATE', 'UPDATE', 'ALTER', 'CREATE', 'INSERT']
         upper_query = v.upper()
         for keyword in dangerous_keywords:
             if keyword in upper_query:
                 raise ValueError(f"Dangerous SQL keyword '{keyword}' is not allowed")
+            
+        if 'SELECT' not in upper_query:
+            raise ValueError("Query must contain a SELECT statement")
+        
+        if 'FROM' not in upper_query:
+            raise ValueError("Query must contain a FROM statement")
+        
         return v
 
 class BatchQueryRequest(BaseModel):
