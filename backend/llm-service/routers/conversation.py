@@ -21,7 +21,7 @@ def receive_query_endpoint(req:QueryRequest):
     logger.debug("Received create house request")
     try:
         result = agent.ask_agent(req.query)
-        return {"message": result}
+        return {"data": result}
     except ValidationError as ve:
         logger.warning(f"Validation error: {ve.errors()}")
         raise HTTPException(422, ve.errors())

@@ -24,6 +24,8 @@ def call_server(tool:str, query: str) -> str:
     uri = f"{settings.mcp_server_uri}/query"
     response = requests.post(uri, json=payload).json()
     try:
-        return response["result"]["content"][0]["text"]
+        print(f"BigQuery response: {response}")
+        print(f"BigQuery response: {response['data'][0]}")
+        return response["data"][0]["rows"]
     except Exception as e:
         return f"[Error parsing MCP response] {e}"

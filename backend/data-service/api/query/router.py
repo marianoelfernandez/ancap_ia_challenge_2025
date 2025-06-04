@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Body, Depends
 from datetime import datetime
 import logging
+import re
 
 from services.bigquery_service import BigQueryService
 from models.query.model import QueryRequest, SQLQueryResponse, QueryStatus, QueryMetadata
@@ -9,6 +10,21 @@ router = APIRouter(
     tags=["query"]
 )
 
+def extract_sql_from_text(text: str) -> str:
+    """
+    Extract SQL query from text that may contain markdown SQL blocks.
+    Returns the first SQL query found between ```sql and ``` markers.
+    If no SQL block is found, returns the original text.
+    """
+    # Look for SQL between markdown SQL blocks
+    sql_pattern = r"```sql\s*(.*?)\s*```"
+    matches = re.findall(sql_pattern, text, re.DOTALL)
+    
+    if matches:
+        # Return the first SQL query found
+        return matches[0].strip()
+    
+    return text.strip()
 
 @router.post("/query")
 async def execute_sql_query(
@@ -21,18 +37,18 @@ async def execute_sql_query(
     try:
         start_time = datetime.now()
         
+        # Extract SQL from the request text
+        clean_sql = extract_sql_from_text(request.sql_query)
+        
         # Execute the query
         raw_results = await bigquery_service.execute_query(
-            query=request.sql_query,
+            query=clean_sql,
             timeout=30,
             limit=1000
         )
         
         # Process results based on requested format
-        
         execution_time = (datetime.now() - start_time).total_seconds()
-        
-        
         
         return SQLQueryResponse(
             status=QueryStatus.SUCCESS,

@@ -171,7 +171,7 @@ CREATE TABLE FacLinPr (
 );
 
 -- Tabla: houses_data
-CREATE TABLE houses_data (
+CREATE TABLE ancap-equipo2.testing.houses_data (
     id INTEGER,
     date DATE,
     bedrooms VARCHAR(255),
@@ -196,6 +196,8 @@ Recuerda que NO puedes calcular valores usando VARCHAR como número.
 Por favor, utiliza las tablas y claves que están explícitamente definidas arriba.
 
 """
+
+#TODO: Ver de pasar o al agente o a dataservice el projectId y tableId (ancap-equipo2.testing)
 
 intent_prompt = intent_prompt = ChatPromptTemplate.from_template(
     "Given the user input below, answer with only 'SQL' or 'GENERAL'.\n"
