@@ -3,7 +3,9 @@ from typing import AsyncGenerator
 import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.config.settings import get_settings
+
+from config.settings import get_settings
+from api.query.router import router as query_router
 
 logging.basicConfig(level=logging.INFO)
 
@@ -28,8 +30,6 @@ def create_app() -> FastAPI:
         title="Chatbot Data Service",
         description="Data service for chatbot system with BigQuery integration",
         version=settings.VERSION,
-        docs_url="/docs" if settings.DEBUG else None,
-        redoc_url="/redoc" if settings.DEBUG else None,
         lifespan=lifespan,
     )
 
@@ -43,7 +43,7 @@ def create_app() -> FastAPI:
     )
 
     # Include routers
-    
+    app.include_router(query_router)
 
     return app
 
