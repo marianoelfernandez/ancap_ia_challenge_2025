@@ -4,7 +4,7 @@ import logging
 import re
 
 from services.bigquery_service import BigQueryService
-from models.query.model import QueryRequest, SQLQueryResponse, QueryStatus, QueryMetadata
+from models.query.model import SQLQueryRequest, SQLQueryResponse, QueryStatus, QueryMetadata
 
 router = APIRouter(
     tags=["query"]
@@ -28,7 +28,7 @@ def extract_sql_from_text(text: str) -> str:
 
 @router.post("/query")
 async def execute_sql_query(
-    request: QueryRequest,
+    request: SQLQueryRequest,
     bigquery_service: BigQueryService = Depends(BigQueryService)
 ) -> SQLQueryResponse:
     """
@@ -38,13 +38,13 @@ async def execute_sql_query(
         start_time = datetime.now()
         
         # Extract SQL from the request text
-        clean_sql = extract_sql_from_text(request.sql_query)
+        clean_sql = extract_sql_from_text(request.query)
         
         # Execute the query
         raw_results = await bigquery_service.execute_query(
             query=clean_sql,
-            timeout=30,
-            limit=1000
+            timeout=request.timeout,
+            limit=request.limit
         )
         
         # Process results based on requested format
