@@ -1,0 +1,559 @@
+import "dart:ui";
+import "package:flutter/material.dart";
+import "package:google_fonts/google_fonts.dart";
+import "package:anc_app/src/models/chat_message.dart";
+import "package:anc_app/src/models/chat_history_item.dart";
+
+const Color _ancapYellow = Color(0xFFFFC107);
+const Color _ancapDarkBlue = Color(0xFF002A53);
+
+const Color _backgroundStart = Color(0xFF060912);
+const Color _backgroundMid = Color(0xFF0B101A);
+const Color _backgroundEnd = Color(0xFF050505);
+
+const Color _foreground = Color(0xFFF8FAFC);
+const Color _mutedForeground = Color(0xFF808EA2);
+const Color _border = Color(0xFF1A1F29);
+
+final Color _glassBackground = Colors.white.withValues(alpha: 0.03);
+const Color _glassBorder = Color(0x1AFFFFFF);
+
+class ChatbotScreen extends StatefulWidget {
+  const ChatbotScreen({super.key});
+
+  @override
+  State<ChatbotScreen> createState() => _ChatbotScreenState();
+}
+
+class _ChatbotScreenState extends State<ChatbotScreen> {
+  final List<ChatMessage> _messages = [
+    ChatMessage(
+      id: "1",
+      text:
+          "Hello! I'm your ANCAPP AI Assistant. How can I help you analyze your business data today?",
+      isAi: true,
+      timestamp: DateTime.now(),
+    ),
+  ];
+  final TextEditingController _inputController = TextEditingController();
+  final List<ChatHistoryItem> _chatHistory = [
+    ChatHistoryItem(id: "1", title: "Sales Analysis", date: "2 hours ago"),
+    ChatHistoryItem(id: "2", title: "Revenue Forecast", date: "Yesterday"),
+    ChatHistoryItem(id: "3", title: "Market Trends", date: "2 days ago"),
+  ];
+
+  void _handleSend() {
+    final text = _inputController.text.trim();
+    if (text.isEmpty) return;
+
+    setState(() {
+      _messages.add(
+        ChatMessage(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          text: text,
+          isAi: false,
+          timestamp: DateTime.now(),
+        ),
+      );
+    });
+    _inputController.clear();
+
+    // Simulate AI response
+    Future.delayed(const Duration(seconds: 1), () {
+      setState(() {
+        _messages.add(
+          ChatMessage(
+            id: (DateTime.now().millisecondsSinceEpoch + 1).toString(),
+            text:
+                "I'm analyzing your request. Let me process that data for you...",
+            isAi: true,
+            timestamp: DateTime.now(),
+          ),
+        );
+      });
+    });
+  }
+
+  Widget _buildGlassEffectContainer({
+    required Widget child,
+    EdgeInsetsGeometry? padding,
+    EdgeInsetsGeometry? margin,
+  }) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12.0),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+        child: Container(
+          margin: margin,
+          padding: padding,
+          decoration: BoxDecoration(
+            color: _glassBackground,
+            borderRadius: BorderRadius.circular(12.0),
+            border: Border.all(color: _glassBorder, width: 1),
+          ),
+          child: child,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final bool isSmallScreen = screenWidth < 768;
+
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [_backgroundStart, _backgroundMid, _backgroundEnd],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Row(
+          children: [
+            if (!isSmallScreen) _buildSidebar(),
+            Expanded(
+              child: Column(
+                children: [
+                  _buildChatHeader(),
+                  _buildMessagesList(),
+                  _buildInputArea(),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSidebar() {
+    return _buildGlassEffectContainer(
+      margin: EdgeInsets.zero,
+      child: SizedBox(
+        width: 300,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildUserProfile(),
+            _buildSearchInput(),
+            _buildChatHistoryList(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUserProfile() {
+    return Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Container(
+        padding: const EdgeInsets.only(bottom: 24.0),
+        decoration: BoxDecoration(
+          border:
+              Border(bottom: BorderSide(color: _border.withValues(alpha: 0.1))),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: const LinearGradient(
+                  colors: [
+                    _ancapYellow,
+                    Color(0xFFF59E0B),
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: _ancapYellow.withValues(alpha: 0.3),
+                    blurRadius: 20,
+                  ),
+                  BoxShadow(
+                    color: _ancapYellow.withValues(alpha: 0.2),
+                    blurRadius: 40,
+                  ),
+                  BoxShadow(
+                    color: _ancapYellow.withValues(alpha: 0.1),
+                    blurRadius: 60,
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.person_outline,
+                color: _ancapDarkBlue,
+                size: 24,
+              ), // User icon
+            ),
+            const SizedBox(width: 16), // gap-4
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "John Doe",
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w600,
+                    color: _foreground,
+                    fontSize: 16,
+                  ),
+                ),
+                Text(
+                  "Business Analyst",
+                  style: GoogleFonts.inter(
+                    color: _mutedForeground,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchInput() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: TextField(
+        style: GoogleFonts.inter(color: _foreground),
+        decoration: InputDecoration(
+          hintText: "Search conversations...",
+          hintStyle: GoogleFonts.inter(color: _mutedForeground, fontSize: 14),
+          prefixIcon:
+              const Icon(Icons.search, color: _mutedForeground, size: 16),
+          filled: true,
+          fillColor: Colors.transparent,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8.0),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8.0),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8.0),
+            borderSide: const BorderSide(
+              color: _ancapYellow,
+              width: 1,
+            ), // Ring effect on focus
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChatHistoryList() {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16.0),
+              child: Text(
+                "Recent Conversations",
+                style: GoogleFonts.inter(
+                  color: _mutedForeground,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                itemCount: _chatHistory.length,
+                itemBuilder: (context, index) {
+                  final chat = _chatHistory[index];
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {/* Handle chat selection */},
+                        borderRadius: BorderRadius.circular(12.0),
+                        hoverColor: _foreground.withValues(alpha: 0.05),
+                        child: _buildGlassEffectContainer(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.message_outlined,
+                                color: _ancapYellow,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      chat.title,
+                                      style: GoogleFonts.inter(
+                                        color: _foreground,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.access_time,
+                                          color: _mutedForeground,
+                                          size: 12,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          chat.date,
+                                          style: GoogleFonts.inter(
+                                            color: _mutedForeground,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChatHeader() {
+    return _buildGlassEffectContainer(
+      margin: const EdgeInsets.all(0),
+      padding: const EdgeInsets.all(24.0),
+      child: Container(
+        decoration: BoxDecoration(
+          border:
+              Border(bottom: BorderSide(color: _border.withValues(alpha: 0.1))),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: const LinearGradient(
+                  colors: [
+                    _ancapYellow,
+                    Color(0xFFF59E0B),
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: _ancapYellow.withValues(alpha: 0.3),
+                    blurRadius: 10,
+                  ),
+                  BoxShadow(
+                    color: _ancapYellow.withValues(alpha: 0.2),
+                    blurRadius: 20,
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.smart_toy_outlined,
+                color: _ancapDarkBlue,
+                size: 20,
+              ), // Bot icon
+            ),
+            const SizedBox(width: 12), // gap-3
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "ANCAP AI Assistant",
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w600,
+                    color: _foreground,
+                    fontSize: 18,
+                  ),
+                ),
+                Text(
+                  "Always here to help",
+                  style: GoogleFonts.inter(
+                    color: _mutedForeground,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMessagesList() {
+    return Expanded(
+      child: ListView.builder(
+        padding: const EdgeInsets.all(24.0),
+        reverse: true,
+        itemCount: _messages.length,
+        itemBuilder: (context, index) {
+          final message = _messages[_messages.length - 1 - index];
+          final isAi = message.isAi;
+          return Align(
+            alignment: isAi ? Alignment.centerLeft : Alignment.centerRight,
+            child: Container(
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.75,
+              ),
+              margin: const EdgeInsets.symmetric(
+                vertical: 8.0,
+              ),
+              padding: const EdgeInsets.all(16.0),
+              decoration: BoxDecoration(
+                color: isAi ? null : _ancapYellow,
+                borderRadius: BorderRadius.circular(20.0),
+                border: isAi ? Border.all(color: _glassBorder, width: 1) : null,
+                boxShadow: isAi
+                    ? null
+                    : [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 5,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+              ),
+              child: isAi
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(
+                        19.0,
+                      ),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: _glassBackground,
+                            borderRadius: BorderRadius.circular(19.0),
+                          ),
+                          padding: const EdgeInsets.all(
+                            0.1,
+                          ),
+                          child: Text(
+                            message.text,
+                            style: GoogleFonts.inter(
+                              color: _foreground,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                  : Text(
+                      message.text,
+                      style: GoogleFonts.inter(
+                        color: _ancapDarkBlue,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildInputArea() {
+    return _buildGlassEffectContainer(
+      margin: const EdgeInsets.all(0),
+      padding: const EdgeInsets.all(24.0),
+      child: Container(
+        decoration: BoxDecoration(
+          border:
+              Border(top: BorderSide(color: _border.withValues(alpha: 0.1))),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _inputController,
+                style: GoogleFonts.inter(color: _foreground, fontSize: 15),
+                decoration: InputDecoration(
+                  hintText: "Ask anything about your business data...",
+                  hintStyle:
+                      GoogleFonts.inter(color: _mutedForeground, fontSize: 15),
+                  filled: true,
+                  fillColor: Colors.transparent,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.0),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.0),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.0),
+                    borderSide: const BorderSide(
+                      color: _ancapYellow,
+                      width: 1.5,
+                    ),
+                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                ),
+                onSubmitted: (_) => _handleSend(),
+              ),
+            ),
+            const SizedBox(width: 16),
+            ElevatedButton(
+              onPressed: _handleSend,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                padding: EdgeInsets.zero,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12.0),
+                ),
+                shadowColor: Colors.transparent,
+              ),
+              child: Ink(
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [
+                      _ancapYellow,
+                      Color(0xFFF59E0B),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(12.0),
+                ),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 18,
+                  ),
+                  child:
+                      const Icon(Icons.send, color: _ancapDarkBlue, size: 20),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

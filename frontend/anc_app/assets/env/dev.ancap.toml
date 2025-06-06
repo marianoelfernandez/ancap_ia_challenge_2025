@@ -1,0 +1,5 @@
+[general]
+log_level = "debug"
+
+[us]
+easter_egg = false

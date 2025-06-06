@@ -1,0 +1,32 @@
+include: package:flutter_lints/flutter.yaml
+analyzer: 
+  exclude: 
+    - lib/generated/**
+    - lib/src/adapters/amplify/models/**
+  errors: 
+    require_trailing_commas: error
+    avoid_function_literals_in_foreach_calls: ignore
+    invalid_use_of_visible_for_testing_member: error
+    invalid_use_of_protected_member: error
+    invalid_use_of_internal_member: error
+    prefer_double_quotes: error
+    unawaited_futures: error
+    unused_import: error
+    annotate_overrides: error
+    avoid_unnecessary_containers: error
+    prefer_interpolation_to_compose_strings: error
+linter:
+  rules:
+    - require_trailing_commas
+    - unawaited_futures
+    - avoid_function_literals_in_foreach_calls
+    - prefer_double_quotes
+    - annotate_overrides
+    - avoid_unnecessary_containers
+    - prefer_const_constructors
+    - prefer_interpolation_to_compose_strings
+    
+
+
+# Additional information about this file can be found at
+# https://dart.dev/guides/language/analysis-options
