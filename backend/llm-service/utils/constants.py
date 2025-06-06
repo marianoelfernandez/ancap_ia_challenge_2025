@@ -1,174 +1,161 @@
 from langchain_core.prompts import ChatPromptTemplate
 
 schema_constant = """
-   
--- Tabla: DocCrg (Documento de Carga - Cabezal)
-CREATE TABLE DocCrg (
-    PlaId INT NOT NULL COMMENT 'Identificador Planta',
-    DocId INT NOT NULL COMMENT 'Identificador Documento de Carga',
-    DocDstId INT COMMENT 'Identificador Distribuidora',
-    DocFch DATE COMMENT 'Fecha del documento (YYYYMMDD)',
-    CliId INT COMMENT 'Identificador Cliente',
-    CliIdDir INT COMMENT 'Identificador Dirección Cliente',
-    DocNegId VARCHAR(10) COMMENT 'Identificador Negocio Cliente',
-    PolId INT COMMENT 'Identificador Política',
-    PRIMARY KEY (PlaId, DocId)
+
+-- Tabla: DOCCRG (Documento de Carga - Cabezal)
+-- Información general del documento de carga
+CREATE TABLE DOCCRG (
+    PlaId INTEGER,            -- FK a PLANTAS(PlaId)
+    DocId INTEGER,            -- Clave primaria compuesta con PlaId
+    DocDstId INTEGER,         -- FK a DISTRIBUIDORAS(DstId)
+    DocFch DATE,              -- Fecha del documento (YYYY-MM-DD)
+    CliId INTEGER,            -- FK a CLIENTES(CliId)
+    CliIdDir INTEGER,         -- FK a CLIDIR(CliIdDir)
+    DocNegId TEXT,            -- FK a NEGOCIOS(NegId)
+    PolId INTEGER             -- FK a POLITICAS(PolId)
 );
 
--- Tabla: DCPrdLin (Productos del Documento de Carga)
-CREATE TABLE DCPrdLin (
-    PlaId INT NOT NULL COMMENT 'Identificador Planta',
-    DocId INT NOT NULL COMMENT 'Identificador Documento de Carga',
-    PrdId INT NOT NULL COMMENT 'Identificador Producto',
-    DCCntCorL DECIMAL(13,2) COMMENT 'Cantidad liquidada',
-    DCCntCorUI VARCHAR(3) COMMENT 'Unidad de la cantidad liquidada',
-    PRIMARY KEY (PlaId, DocId, PrdId)
+-- Tabla: DCPRDLIN (Documento de Carga - Productos)
+-- Detalle de productos en cada documento de carga
+CREATE TABLE DCPRDLIN (
+    PlaId INTEGER,            -- FK a DOCCRG(PlaId)
+    DocId INTEGER,            -- FK a DOCCRG(DocId)
+    PrdId INTEGER,            -- FK a PRODUCTOS(PrdId)
+    DCCntCorL NUMERIC,        -- Cantidad liquidada
+    DCCntCorUI TEXT           -- Unidad de cantidad liquidada
 );
 
--- Tabla: Distribuidoras
-CREATE TABLE Distribuidoras (
-    DstId INT NOT NULL COMMENT 'Identificador Distribuidora',
-    DstNom VARCHAR(20) COMMENT 'Nombre Distribuidora',
-    PRIMARY KEY (DstId)
+-- Tabla: DISTRIBUIDORAS (Maestro de Distribuidoras)
+CREATE TABLE DISTRIBUIDORAS (
+    DstId INTEGER PRIMARY KEY,
+    DstNom TEXT
 );
 
--- Tabla: Plantas
-CREATE TABLE Plantas (
-    PlaId INT NOT NULL COMMENT 'Identificador Planta',
-    PlaNom VARCHAR(25) COMMENT 'Nombre Planta',
-    PRIMARY KEY (PlaId)
+-- Tabla: PLANTAS (Maestro de Plantas)
+CREATE TABLE PLANTAS (
+    PlaId INTEGER PRIMARY KEY,
+    PlaNom TEXT
 );
 
--- Tabla: Políticas
-CREATE TABLE Politicas (
-    PolId INT NOT NULL COMMENT 'Identificador Política',
-    PolDsc VARCHAR(40) COMMENT 'Descripción Política',
-    MerId INT COMMENT 'Identificador Mercado',
-    PRIMARY KEY (PolId)
+-- Tabla: POLITICAS (Maestro de Políticas)
+CREATE TABLE POLITICAS (
+    PolId INTEGER PRIMARY KEY,
+    PolDsc TEXT,
+    MerId INTEGER             -- FK a MERCADOS(MerId)
 );
 
--- Tabla: Mercado
-CREATE TABLE Mercado (
-    MerId INT NOT NULL COMMENT 'Identificador Mercado',
-    MerDsc VARCHAR(30) COMMENT 'Descripción Mercado',
-    PRIMARY KEY (MerId)
+-- Tabla: MERCADOS (Maestro de Mercados)
+CREATE TABLE MERCADOS (
+    MerId INTEGER PRIMARY KEY,
+    MerDsc TEXT
 );
 
--- Tabla: Cliente
-CREATE TABLE Cliente (
-    CliId INT NOT NULL COMMENT 'Identificador Cliente',
-    CliNom VARCHAR(25) COMMENT 'Nombre Cliente',
-    CliTpoId INT COMMENT 'Identificador Tipo Cliente',
-    PRIMARY KEY (CliId)
+-- Tabla: CLIENTES (Maestro de Clientes)
+CREATE TABLE CLIENTES (
+    CliId INTEGER PRIMARY KEY,
+    CliNom TEXT,
+    CliTpoId INTEGER          -- FK a CLITPO(CliTpoId)
 );
 
--- Tabla: CliTpo (Tipo Cliente)
-CREATE TABLE CliTpo (
-    CliTpoId INT NOT NULL COMMENT 'Identificador Tipo Cliente',
-    CliTpoDsc VARCHAR(30) COMMENT 'Descripción Tipo Cliente',
-    PRIMARY KEY (CliTpoId)
+-- Tabla: CLITPO (Maestro de Tipos de Cliente)
+CREATE TABLE CLITPO (
+    CliTpoId INTEGER PRIMARY KEY,
+    CliTpoDsc TEXT
 );
 
--- Tabla: CliDir (Direcciones del Cliente)
-CREATE TABLE CliDir (
-    CliId INT NOT NULL COMMENT 'Identificador Cliente',
-    CliIdDir INT NOT NULL COMMENT 'Identificador Dirección Cliente',
-    CliDir VARCHAR(20) COMMENT 'Dirección Cliente',
-    DptoId INT COMMENT 'Identificador Departamento',
-    LocaliId INT COMMENT 'Identificador Localidad',
-    PRIMARY KEY (CliId, CliIdDir)
+-- Tabla: CLIDIR (Maestro de Direcciones de Clientes)
+CREATE TABLE CLIDIR (
+    CliId NUMERIC,            -- FK a CLIENTES(CliId)
+    CliIdDir NUMERIC,         -- Clave primaria compuesta con CliId
+    CliDir TEXT,
+    DptoId NUMERIC,           -- FK a DEPARTAMENTOS(DptoId)
+    LocaliId NUMERIC          -- FK a LOCALIDADES(LocaliId)
 );
 
--- Tabla: Departamento
-CREATE TABLE Departamento (
-    DptoId INT NOT NULL COMMENT 'Identificador Departamento',
-    DptoNom VARCHAR(20) COMMENT 'Nombre Departamento',
-    PRIMARY KEY (DptoId)
+-- Tabla: DEPARTAMENTOS (Maestro de Departamentos)
+CREATE TABLE DEPARTAMENTOS (
+    DptoId NUMERIC PRIMARY KEY,
+    DptoNom TEXT
 );
 
--- Tabla: Localidades
-CREATE TABLE Localidades (
-    DptoId INT NOT NULL COMMENT 'Identificador Departamento',
-    LocaliId INT NOT NULL COMMENT 'Identificador Localidad',
-    LocaliNom VARCHAR(30) COMMENT 'Nombre Localidad',
-    PRIMARY KEY (DptoId, LocaliId)
+-- Tabla: LOCALIDADES (Maestro de Localidades)
+CREATE TABLE LOCALIDADES (
+    DptoId NUMERIC,           -- FK a DEPARTAMENTOS(DptoId)
+    LocaliId NUMERIC,         -- Clave primaria compuesta con DptoId
+    LocaliNom TEXT
 );
 
--- Tabla: Producto
-CREATE TABLE Producto (
-    PrdId INT NOT NULL COMMENT 'Identificador Producto',
-    PrdDsc VARCHAR(30) COMMENT 'Descripción Producto. NO ES UN NUMERO',
-    PrdGrpId INT COMMENT 'Identificador Grupo Producto',
-    PRIMARY KEY (PrdId)
+-- Tabla: PRODUCTOS (Maestro de Productos)
+CREATE TABLE PRODUCTOS (
+    PrdId NUMERIC PRIMARY KEY,
+    PrdDsc TEXT,
+    PrdGrpId NUMERIC          -- FK a PRDGRP(PrdGrpId)
 );
 
--- Tabla: PrdGrp (Grupo de Productos)
-CREATE TABLE PrdGrp (
-    PrdGrpId INT NOT NULL COMMENT 'Identificador Grupo Producto',
-    PrdGrpDsc VARCHAR(30) COMMENT 'Descripción Grupo Producto',
-    PrdCatId CHAR(1) COMMENT 'Identificador Categoría Producto',
-    PRIMARY KEY (PrdGrpId)
+-- Tabla: PRDGRP (Maestro de Grupos de Productos)
+CREATE TABLE PRDGRP (
+    PrdGrpId NUMERIC PRIMARY KEY,
+    PrdGrpDsc TEXT,
+    PrdCatId TEXT             -- FK a PRDCAT(PrdCatId)
 );
 
--- Tabla: PrdCat (Categoría de Productos)
-CREATE TABLE PrdCat (
-    PrdCatId CHAR(1) NOT NULL COMMENT 'Identificador Categoría Producto',
-    PrdCatNom VARCHAR(15) COMMENT 'Nombre Categoría Producto',
-    PRIMARY KEY (PrdCatId)
+-- Tabla: PRDCAT (Maestro de Categorías de Productos)
+CREATE TABLE PRDCAT (
+    PrdCatId TEXT PRIMARY KEY,
+    PrdCatNom TEXT
 );
 
--- Tabla: Negocio
-CREATE TABLE Negocio (
-    NegId VARCHAR(10) NOT NULL COMMENT 'Identificador Negocio',
-    NegDsc VARCHAR(30) COMMENT 'Descripción Negocio',
-    NegTpoId INT COMMENT 'Identificador Tipo Negocio',
-    PRIMARY KEY (NegId)
+-- Tabla: NEGOCIOS (Maestro de Negocios)
+CREATE TABLE NEGOCIOS (
+    NegId TEXT PRIMARY KEY,
+    NegDsc TEXT,
+    NegTpoId NUMERIC          -- FK a NEGTPO(NegTpoId)
 );
 
--- Tabla: NegTpo (Tipo Negocio)
-CREATE TABLE NegTpo (
-    NegTpoId INT NOT NULL COMMENT 'Identificador Tipo Negocio',
-    NegTpoDsc VARCHAR(30) COMMENT 'Descripción Tipo Negocio',
-    PRIMARY KEY (NegTpoId)
+-- Tabla: NEGTPO (Maestro de Tipos de Negocios)
+CREATE TABLE NEGTPO (
+    NegTpoId NUMERIC PRIMARY KEY,
+    NegTpoDsc TEXT
 );
 
--- Tabla: FacCab (Factura Cabezal)
-CREATE TABLE FacCab (
-    FacPlaId INT NOT NULL COMMENT 'Identificador Planta',
-    FacTpoDoc CHAR(1) NOT NULL COMMENT 'Tipo Factura (F: Factura, C: Nota de Crédito)',
-    FacSerie CHAR(2) NOT NULL COMMENT 'Serie Factura',
-    FacNro INT NOT NULL COMMENT 'Número Factura',
-    FacFch DATE COMMENT 'Fecha Factura (YYYYMMDD)',
-    CliId INT COMMENT 'Identificador Cliente',
-    CliIdDir INT COMMENT 'Identificación Dirección Cliente',
-    FacNegId VARCHAR(10) COMMENT 'Identificador Negocio Cliente',
-    PolId INT COMMENT 'Identificador Política',
-    DstId INT COMMENT 'Identificador Distribuidora',
-    FacMonId INT COMMENT 'Identificador Moneda',
-    FactTot DECIMAL(15,2) COMMENT 'Total de la Factura',
-    PRIMARY KEY (FacPlaId, FacTpoDoc, FacSerie, FacNro)
+-- Tabla: FACCAB (Facturas - Cabezal)
+-- Información general de cada factura emitida
+CREATE TABLE FACCAB (
+    FacPlaId NUMERIC,         -- FK a PLANTAS(PlaId)
+    FacTpoDoc TEXT,           -- Tipo de factura ('F' Factura, 'C' Nota de Crédito)
+    FacSerie TEXT,
+    FacNro NUMERIC,           -- Clave primaria compuesta con PlaId, TpoDoc, Serie, Nro
+    FacFch DATE,
+    CliId NUMERIC,            -- FK a CLIENTES(CliId)
+    CliIdDir NUMERIC,         -- FK a CLIDIR(CliIdDir)
+    FacNegId TEXT,            -- FK a NEGOCIOS(NegId)
+    PolId NUMERIC,            -- FK a POLITICAS(PolId)
+    DstId NUMERIC,            -- FK a DISTRIBUIDORAS(DstId)
+    FacMonId NUMERIC,         -- FK a MONEDAS(MonId)
+    FactTot NUMERIC
 );
 
--- Tabla: Moneda
-CREATE TABLE Moneda (
-    MonId VARCHAR(10) NOT NULL COMMENT 'Identificador Moneda',
-    MonSig VARCHAR(4) COMMENT 'Signo Moneda',
-    MonNom VARCHAR(20) COMMENT 'Nombre Moneda',
-    PRIMARY KEY (MonId)
+-- Tabla: MONEDAS (Maestro de Monedas)
+CREATE TABLE MONEDAS (
+    MonId NUMERIC PRIMARY KEY,
+    MonSig TEXT,
+    MonNom TEXT
 );
 
--- Tabla: FacLinPr (Líneas de Productos de las Facturas)
-CREATE TABLE FacLinPr (
-    FacPlaId INT NOT NULL COMMENT 'Identificador Planta',
-    FacTpoDoc CHAR(1) NOT NULL COMMENT 'Tipo Factura (F: Factura, C: Nota de Crédito)',
-    FacSerie CHAR(2) NOT NULL COMMENT 'Serie Factura',
-    FacNro INT NOT NULL COMMENT 'Número Factura',
-    FacLinNro INT NOT NULL COMMENT 'Número de Línea',
-    PrdId INT COMMENT 'Identificador Producto',
-    FacLinCnt DECIMAL(13,2) COMMENT 'Cantidad',
-    FacUndFac VARCHAR(3) COMMENT 'Unidad de Facturación',
-    PRIMARY KEY (FacPlaId, FacTpoDoc, FacSerie, FacNro, FacLinNro)
+-- Tabla: FACLINPR (Facturas - Productos)
+-- Detalle de productos facturados
+CREATE TABLE FACLINPR (
+    FacPlaId NUMERIC,         -- FK a FACCAB(FacPlaId)
+    FacTpoDoc TEXT,           -- FK a FACCAB(FacTpoDoc)
+    FacSerie TEXT,            -- FK a FACCAB(FacSerie)
+    FacNro NUMERIC,           -- FK a FACCAB(FacNro)
+    FacLinNro NUMERIC,
+    PrdId NUMERIC,            -- FK a PRODUCTOS(PrdId)
+    FacLinCnt NUMERIC,
+    FacUndFac TEXT
 );
+
+
 
 -- Tabla: houses_data
 CREATE TABLE ancap-equipo2.testing.houses_data (
@@ -198,7 +185,6 @@ Por favor, utiliza las tablas y claves que están explícitamente definidas arri
 """
 
 #TODO: Ver de pasar o al agente o a dataservice el projectId y tableId (ancap-equipo2.testing)
-
 intent_prompt = ChatPromptTemplate.from_template(
     "Given the user input below, answer with only 'SQL' or 'GENERAL'.\n"
     "Input: {query}\n"
