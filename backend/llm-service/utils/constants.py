@@ -199,8 +199,151 @@ Por favor, utiliza las tablas y claves que están explícitamente definidas arri
 
 #TODO: Ver de pasar o al agente o a dataservice el projectId y tableId (ancap-equipo2.testing)
 
-intent_prompt = intent_prompt = ChatPromptTemplate.from_template(
+intent_prompt = ChatPromptTemplate.from_template(
     "Given the user input below, answer with only 'SQL' or 'GENERAL'.\n"
     "Input: {query}\n"
     "Type:"
 )
+
+data_dictionary = """
+Diccionario de Datos
+
+DocCrg (Documento de Carga - Cabezal)
+Campos:
+
+PlaId (INT): Planta
+
+DocId (INT): Documento de Carga
+
+DocDstId (INT): Distribuidora
+
+DocFch (DATE): Fecha
+
+CliId (INT): Cliente
+
+CliIdDir (INT): Dirección Cliente
+
+DocNegId (VARCHAR): Negocio Cliente
+
+PolId (INT): Política
+PK: (PlaId, DocId)
+
+DCPrdLin (Productos del Documento de Carga)
+Campos:
+
+PlaId, DocId, PrdId (INT): Claves
+
+DCCntCorL (DECIMAL): Cantidad
+
+DCCntCorUI (VARCHAR): Unidad
+PK: (PlaId, DocId, PrdId)
+
+Distribuidoras
+
+DstId (INT), DstNom (VARCHAR)
+PK: DstId
+
+Plantas
+
+PlaId (INT), PlaNom (VARCHAR)
+PK: PlaId
+
+Politicas
+
+PolId (INT), PolDsc (VARCHAR), MerId (INT)
+PK: PolId
+
+Mercado
+
+MerId (INT), MerDsc (VARCHAR)
+PK: MerId
+
+Cliente
+
+CliId (INT), CliNom (VARCHAR), CliTpoId (INT)
+PK: CliId
+
+CliTpo (Tipo Cliente)
+
+CliTpoId (INT), CliTpoDsc (VARCHAR)
+PK: CliTpoId
+
+CliDir (Direcciones del Cliente)
+
+CliId, CliIdDir (INT), CliDir (VARCHAR), DptoId, LocaliId (INT)
+PK: (CliId, CliIdDir)
+
+Departamento
+
+DptoId (INT), DptoNom (VARCHAR)
+PK: DptoId
+
+Localidades
+
+DptoId, LocaliId (INT), LocaliNom (VARCHAR)
+PK: (DptoId, LocaliId)
+
+Producto
+
+PrdId (INT), PrdDsc (VARCHAR), PrdGrpId (INT)
+PK: PrdId
+
+PrdGrp (Grupo de Productos)
+
+PrdGrpId (INT), PrdGrpDsc (VARCHAR), PrdCatId (CHAR)
+PK: PrdGrpId
+
+PrdCat (Categoría Productos)
+
+PrdCatId (CHAR), PrdCatNom (VARCHAR)
+PK: PrdCatId
+
+Negocio
+
+NegId (VARCHAR), NegDsc (VARCHAR), NegTpoId (INT)
+PK: NegId
+
+NegTpo (Tipo Negocio)
+
+NegTpoId (INT), NegTpoDsc (VARCHAR)
+PK: NegTpoId
+
+FacCab (Factura Cabezal)
+Campos:
+
+FacPlaId (INT), FacTpoDoc (CHAR), FacSerie (CHAR), FacNro (INT)
+
+FacFch (DATE), CliId, CliIdDir, FacNegId, PolId, DstId (INT)
+
+FacMonId (INT), FactTot (DECIMAL)
+PK: (FacPlaId, FacTpoDoc, FacSerie, FacNro)
+
+Moneda
+
+MonId (VARCHAR), MonSig (VARCHAR), MonNom (VARCHAR)
+PK: MonId
+
+FacLinPr (Líneas de Productos Factura)
+
+FacPlaId, FacTpoDoc, FacSerie, FacNro, FacLinNro (Clave compuesta)
+
+PrdId (INT), FacLinCnt (DECIMAL), FacUndFac (VARCHAR)
+PK: (FacPlaId, FacTpoDoc, FacSerie, FacNro, FacLinNro)
+
+houses_data
+
+id (INT), date (DATE), price (INT)
+
+bedrooms, bathrooms, square_footage_living, floors, waterfront, view, condition, grade, square_footage_above, square_footage_basement, year_built, year_renovated, zipcode, lat (VARCHAR), long (FLOAT)
+"""
+data_dictionary_incomplete_prompt = ChatPromptTemplate.from_template(
+    """Eres un experto en diccionario de datos, usa el diccionario de datos para traducir la pregunta del usuario a una
+      pregunta curada con información específica sobre las tablas a consultar. Responde SOLO con la pregunta curada o una solicitud de más 
+      información comenzando con [RETRY].\n\n"""
+    "{data_dictionary}\n\n"
+    "Input: {query}\n"
+    "Type:"
+)
+
+
+data_dictionary_prompt = data_dictionary_incomplete_prompt.partial(data_dictionary=data_dictionary)

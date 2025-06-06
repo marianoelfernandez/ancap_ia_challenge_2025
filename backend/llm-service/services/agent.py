@@ -3,10 +3,11 @@ from langchain_openai import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langgraph.graph import StateGraph, END
+from langchain_google_genai import ChatGoogleGenerativeAI
 from utils.connection import call_server
 from utils.settings import Settings
 from typing import TypedDict, Optional
-from utils.constants import schema_constant, intent_prompt
+from utils.constants import schema_constant, intent_prompt, data_dictionary_prompt
 settings = Settings()
 
 class AgentState(TypedDict):
@@ -15,11 +16,16 @@ class AgentState(TypedDict):
     is_sql: Optional[bool]
     schema: Optional[str]
     generated_sql: Optional[str]
+    needs_more_info: Optional[bool]
 
 
 class Agent():
     def __init__(self):
-        self.llm = ChatOpenAI(model_name="gpt-4o-mini-2024-07-18", temperature=0)
+        self.llm = ChatGoogleGenerativeAI(
+            model="gemini-2.0-flash-001",
+            temperature=0,
+            google_api_key=settings.api_key
+            )
         self.memory = ConversationBufferMemory(return_messages=True, memory_key="chat_history")
 
         self.general_prompt = ChatPromptTemplate.from_messages([
@@ -51,17 +57,50 @@ class Agent():
 
             schema_str = schema_constant
             state["schema"] = schema_str
+            state["needs_more_info"] = False
             return state
 
 
-        def detect_type(state):
+        def detect_type(state : AgentState) -> AgentState:
             query = state["input"]
             response = self.llm.invoke(intent_prompt.format(query=query))
             # is_sql = "SQL" in response.content.upper()
             is_sql = True
             return {**state, "is_sql": is_sql}
+        
+        def query_translator(state: AgentState) -> AgentState:
+            try:
+                query = state["input"]
+                prompt = data_dictionary_prompt.format(
+                    query=query
+                )
 
+                response = self.llm.invoke(prompt)
 
+                if "[RETRY]" in response.content.strip():
+                    state["needs_more_info"] = True
+                    state["output"] = response.content.strip()
+                    return state
+                else:
+                    state["needs_more_info"] = False
+                    state["output"] = response.content.strip()
+                    return state
+            except Exception as e:
+                return {
+                    **state,
+                    "output": f"[Error al traducir consulta] {e}"
+                }
+        
+        def route_from_query_translator(state: AgentState) -> str:
+            if state.get("needs_more_info"):
+                return "respond_with_retry"
+            return "prepare_sql"
+        
+        def respond_with_retry(state: dict) -> dict:
+            self.memory.chat_memory.add_user_message(state["input"])
+            self.memory.chat_memory.add_ai_message(state["output"])
+            return state
+    
         def prepare_sql(state: AgentState) -> AgentState:
             try:
                 query = state["input"]
@@ -98,6 +137,8 @@ class Agent():
 
         builder.add_node("load_schema", load_schema_node)
         builder.add_node("detect_type", detect_type)
+        builder.add_node("query_translator", query_translator)
+        builder.add_node("respond_with_retry", respond_with_retry)
         builder.add_node("prepare_sql", prepare_sql)
         builder.add_node("execute_sql", execute_sql)
         builder.add_node("general_llm", general_llm)
@@ -106,8 +147,10 @@ class Agent():
         builder.add_edge("load_schema", "detect_type")
         builder.add_conditional_edges(
             "detect_type",
-            lambda s: "prepare_sql" if s["is_sql"] else "general_llm",
+            lambda s: "query_translator" if s["is_sql"] else "general_llm",
         )
+        builder.add_conditional_edges("query_translator", route_from_query_translator)
+        builder.set_finish_point("respond_with_retry")
         builder.add_edge("prepare_sql", "execute_sql")
         builder.add_edge("execute_sql", END)
         builder.add_edge("general_llm", END)
@@ -124,5 +167,6 @@ class Agent():
                 return result["output"]
             except Exception as e:
                 return f"[LangGraph Error] {e}"
+            
     def clr_history(self):
         self.memory.clear()
