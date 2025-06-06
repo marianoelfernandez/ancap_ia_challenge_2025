@@ -3,10 +3,11 @@ from langchain_openai import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langgraph.graph import StateGraph, END
+from langchain_google_genai import ChatGoogleGenerativeAI
 from utils.connection import call_server
 from utils.settings import Settings
 from typing import TypedDict, Optional
-from utils.constants import schema_constant, intent_prompt, data_dictionary_prompt, data_dictionary
+from utils.constants import schema_constant, intent_prompt, data_dictionary_prompt
 settings = Settings()
 
 class AgentState(TypedDict):
@@ -15,11 +16,16 @@ class AgentState(TypedDict):
     is_sql: Optional[bool]
     schema: Optional[str]
     generated_sql: Optional[str]
+    needs_more_info: Optional[bool]
 
 
 class Agent():
     def __init__(self):
-        self.llm = ChatOpenAI(model_name="gpt-4o-mini-2024-07-18", temperature=0)
+        self.llm = ChatGoogleGenerativeAI(
+            model="gemini-2.0-flash-001",
+            temperature=0,
+            google_api_key=settings.api_key
+            )
         self.memory = ConversationBufferMemory(return_messages=True, memory_key="chat_history")
 
         self.general_prompt = ChatPromptTemplate.from_messages([
@@ -51,7 +57,7 @@ class Agent():
 
             schema_str = schema_constant
             state["schema"] = schema_str
-            state["data_dictionary"] = data_dictionary
+            state["needs_more_info"] = False
             return state
 
 
@@ -65,28 +71,20 @@ class Agent():
         def query_translator(state: AgentState) -> AgentState:
             try:
                 query = state["input"]
-                data_dictionary = state["data_dictionary"]
-
                 prompt = data_dictionary_prompt.format(
-                    query=query,
-                    data_dictionary=data_dictionary
+                    query=query
                 )
 
                 response = self.llm.invoke(prompt)
 
-                if response.strip().startswith("[RETRY]"):
-                    return {
-                        **state,
-                        "needs_more_info": True,
-                        "retry_message": response.strip()
-                    }
-
-                return {
-                    **state,
-                    "translated_query": response.strip(),
-                    "needs_more_info": False
-                }
-
+                if "[RETRY]" in response.content.strip():
+                    state["needs_more_info"] = True
+                    state["output"] = response.content.strip()
+                    return state
+                else:
+                    state["needs_more_info"] = False
+                    state["output"] = response.content.strip()
+                    return state
             except Exception as e:
                 return {
                     **state,
@@ -99,13 +97,9 @@ class Agent():
             return "prepare_sql"
         
         def respond_with_retry(state: dict) -> dict:
-            retry_message = state.get("retry_message", "Por favor reformula tu consulta.")
             self.memory.chat_memory.add_user_message(state["input"])
-            self.memory.chat_memory.add_ai_message(retry_message)
-            return {
-                **state,
-                "output": retry_message
-            }
+            self.memory.chat_memory.add_ai_message(state["output"])
+            return state
     
         def prepare_sql(state: AgentState) -> AgentState:
             try:

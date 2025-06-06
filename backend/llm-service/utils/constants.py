@@ -336,7 +336,7 @@ id (INT), date (DATE), price (INT)
 
 bedrooms, bathrooms, square_footage_living, floors, waterfront, view, condition, grade, square_footage_above, square_footage_basement, year_built, year_renovated, zipcode, lat (VARCHAR), long (FLOAT)
 """
-data_dictionary_prompt = ChatPromptTemplate.from_template(
+data_dictionary_incomplete_prompt = ChatPromptTemplate.from_template(
     """Eres un experto en diccionario de datos, usa el diccionario de datos para traducir la pregunta del usuario a una
       pregunta curada con información específica sobre las tablas a consultar. Responde SOLO con la pregunta curada o una solicitud de más 
       información comenzando con [RETRY].\n\n"""
@@ -344,3 +344,6 @@ data_dictionary_prompt = ChatPromptTemplate.from_template(
     "Input: {query}\n"
     "Type:"
 )
+
+
+data_dictionary_prompt = data_dictionary_incomplete_prompt.partial(data_dictionary=data_dictionary)
