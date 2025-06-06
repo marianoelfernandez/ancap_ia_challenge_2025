@@ -1,0 +1,69 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+
+# IntelliJ
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# Flutter/Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+ios/Flutter/.last_build_id
+ios/Flutter/App.framework
+ios/Flutter/Flutter.framework
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_assets/
+ios/Flutter/flutter_export_environment.sh
+ios/Runner/GeneratedPluginRegistrant.*
+ios/Runner.xcodeproj/project.xcworkspace/
+ios/Runner.xcworkspace/
+ios/.symlinks/
+android/.gradle/
+android/app/src/main/java/io/flutter/plugins/
+android/app/build/
+android/key.properties
+android/local.properties
+
+# Windows
+windows/flutter/generated_plugins.cmake
+windows/flutter/generated_config.cmake
+windows/runner/Debug/
+windows/runner/Profile/
+windows/runner/Release/
+windows/runner/flutter_build.bat
+windows/runner/GeneratedPluginRegistrant.cpp
+windows/runner/GeneratedPluginRegistrant.h
+windows/runner/Runner.vcxproj.user
+
+# Linux
+linux/flutter/generated_plugins.cmake
+linux/flutter/generated_config.cmake
+linux/runner/Debug/
+linux/runner/Profile/
+linux/runner/Release/
+linux/runner/ephemeral/
+
+# macOS
+macos/Flutter/GeneratedPluginRegistrant.swift
+macos/Flutter/ephemeral.xcconfig
+
+# Web
+web/
+
+# VS Code
+.vscode/
