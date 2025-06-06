@@ -208,8 +208,7 @@ class _LoginScreenState extends State<LoginScreen>
               children: [
                 Text(
                   "ANCAP",
-                  textAlign:
-                      isLargeScreen ? TextAlign.left : TextAlign.center,
+                  textAlign: isLargeScreen ? TextAlign.left : TextAlign.center,
                   style: GoogleFonts.inter(
                     fontSize: isLargeScreen ? 96 : 72, // text-6xl lg:text-8xl
                     fontWeight:
@@ -262,8 +261,7 @@ class _LoginScreenState extends State<LoginScreen>
                       BoxShadow(
                         color: Color(0xFFFBBF24),
                         blurRadius: 15,
-                        spreadRadius:
-                            2, // Added spread for more prominent glow
+                        spreadRadius: 2, // Added spread for more prominent glow
                       ),
                       BoxShadow(
                         color: Color(0xFFFBBF24),
