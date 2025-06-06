@@ -1,6 +1,8 @@
 import "dart:ui";
 import "package:flutter/material.dart";
 import "package:google_fonts/google_fonts.dart";
+import "package:anc_app/src/models/chat_message.dart";
+import "package:anc_app/src/models/chat_history_item.dart";
 
 const Color _ancapYellow = Color(0xFFFFC107);
 const Color _ancapDarkBlue = Color(0xFF002A53);
@@ -15,32 +17,6 @@ const Color _border = Color(0xFF1A1F29);
 
 final Color _glassBackground = Colors.white.withValues(alpha: 0.03);
 const Color _glassBorder = Color(0x1AFFFFFF);
-
-class ChatMessage {
-  final String id;
-  final String text;
-  final bool isAi;
-  final DateTime timestamp;
-
-  ChatMessage({
-    required this.id,
-    required this.text,
-    required this.isAi,
-    required this.timestamp,
-  });
-}
-
-class ChatHistoryItem {
-  final String id;
-  final String title;
-  final String date;
-
-  ChatHistoryItem({
-    required this.id,
-    required this.title,
-    required this.date,
-  });
-}
 
 class ChatbotScreen extends StatefulWidget {
   const ChatbotScreen({super.key});
