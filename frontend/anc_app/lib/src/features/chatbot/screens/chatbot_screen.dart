@@ -1,28 +1,21 @@
-import "dart:ui"; // For BackdropFilter
+import "dart:ui";
 import "package:flutter/material.dart";
 import "package:google_fonts/google_fonts.dart";
 
-// --- Color Definitions (directly in file for now) ---
-const Color _ancapYellow = Color(0xFFFFC107); // hsl(45, 100%, 55%)
-// const Color _ancapBlue = Color(0xFF0059B3); // Unused for now
-const Color _ancapDarkBlue =
-    Color(0xFF002A53); // hsl(210, 100%, 16%) approx, darker blue
+const Color _ancapYellow = Color(0xFFFFC107);
+const Color _ancapDarkBlue = Color(0xFF002A53);
 
-const Color _backgroundStart = Color(0xFF060912); // Very dark blue/near black
-const Color _backgroundMid = Color(0xFF0B101A); // Darker shade
-const Color _backgroundEnd = Color(0xFF050505); // Almost pure black
+const Color _backgroundStart = Color(0xFF060912);
+const Color _backgroundMid = Color(0xFF0B101A);
+const Color _backgroundEnd = Color(0xFF050505);
 
-const Color _foreground = Color(0xFFF8FAFC); // hsl(210 40% 98%)
-const Color _mutedForeground =
-    Color(0xFF808EA2); // hsl(215 15% 57%) approx, slightly darker
-const Color _border =
-    Color(0xFF1A1F29); // hsl(220, 25%, 13%) approx, even darker
+const Color _foreground = Color(0xFFF8FAFC);
+const Color _mutedForeground = Color(0xFF808EA2);
+const Color _border = Color(0xFF1A1F29);
 
-final Color _glassBackground =
-    Colors.white.withOpacity(0.03); // Reduced opacity for darker glass
-const Color _glassBorder = Color(0x1AFFFFFF); // rgba(255, 255, 255, 0.1)
+final Color _glassBackground = Colors.white.withValues(alpha: 0.03);
+const Color _glassBorder = Color(0x1AFFFFFF);
 
-// --- Message Data Model ---
 class ChatMessage {
   final String id;
   final String text;
@@ -37,7 +30,6 @@ class ChatMessage {
   });
 }
 
-// --- Chat History Item Data Model ---
 class ChatHistoryItem {
   final String id;
   final String title;
@@ -51,10 +43,10 @@ class ChatHistoryItem {
 }
 
 class ChatbotScreen extends StatefulWidget {
-  const ChatbotScreen({Key? key}) : super(key: key);
+  const ChatbotScreen({super.key});
 
   @override
-  _ChatbotScreenState createState() => _ChatbotScreenState();
+  State<ChatbotScreen> createState() => _ChatbotScreenState();
 }
 
 class _ChatbotScreenState extends State<ChatbotScreen> {
@@ -62,7 +54,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     ChatMessage(
       id: "1",
       text:
-          "Hello! I'm your ANCAP AI Assistant. How can I help you analyze your business data today?",
+          "Hello! I'm your ANCAPP AI Assistant. How can I help you analyze your business data today?",
       isAi: true,
       timestamp: DateTime.now(),
     ),
@@ -112,7 +104,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     EdgeInsetsGeometry? margin,
   }) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(12.0), // --radius: 0.5rem from CSS
+      borderRadius: BorderRadius.circular(12.0),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
         child: Container(
@@ -132,8 +124,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final bool isSmallScreen =
-        screenWidth < 768; // Example breakpoint for collapsing sidebar
+    final bool isSmallScreen = screenWidth < 768;
 
     return Scaffold(
       body: Container(
@@ -146,10 +137,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         ),
         child: Row(
           children: [
-            // Sidebar (conditionally shown or drawer on small screens)
             if (!isSmallScreen) _buildSidebar(),
-
-            // Main Chat Area
             Expanded(
               child: Column(
                 children: [
@@ -162,17 +150,14 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
           ],
         ),
       ),
-      // Consider adding a Drawer for small screens if sidebar is hidden
-      // drawer: isSmallScreen ? _buildSidebar() : null,
     );
   }
 
   Widget _buildSidebar() {
     return _buildGlassEffectContainer(
-      margin: EdgeInsets
-          .zero, // Adjusted for full extension, removed top, bottom, left margins
+      margin: EdgeInsets.zero,
       child: SizedBox(
-        width: 300, // w-[300px]
+        width: 300,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -187,17 +172,18 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
   Widget _buildUserProfile() {
     return Padding(
-      padding: const EdgeInsets.all(24.0), // p-6
+      padding: const EdgeInsets.all(24.0),
       child: Container(
         padding: const EdgeInsets.only(bottom: 24.0),
         decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: _border.withOpacity(0.1))),
+          border:
+              Border(bottom: BorderSide(color: _border.withValues(alpha: 0.1))),
         ),
         child: Row(
           children: [
             Container(
-              width: 48, // w-12
-              height: 48, // h-12
+              width: 48,
+              height: 48,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: const LinearGradient(
@@ -205,19 +191,18 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                     _ancapYellow,
                     Color(0xFFF59E0B),
                   ],
-                ), // yellow-400 to yellow-500
+                ),
                 boxShadow: [
-                  // glow-effect
                   BoxShadow(
-                    color: _ancapYellow.withOpacity(0.3),
+                    color: _ancapYellow.withValues(alpha: 0.3),
                     blurRadius: 20,
                   ),
                   BoxShadow(
-                    color: _ancapYellow.withOpacity(0.2),
+                    color: _ancapYellow.withValues(alpha: 0.2),
                     blurRadius: 40,
                   ),
                   BoxShadow(
-                    color: _ancapYellow.withOpacity(0.1),
+                    color: _ancapYellow.withValues(alpha: 0.1),
                     blurRadius: 60,
                   ),
                 ],
@@ -257,21 +242,21 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
   Widget _buildSearchInput() {
     return Padding(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0), // p-4
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: TextField(
         style: GoogleFonts.inter(color: _foreground),
         decoration: InputDecoration(
           hintText: "Search conversations...",
           hintStyle: GoogleFonts.inter(color: _mutedForeground, fontSize: 14),
-          prefixIcon: Icon(Icons.search, color: _mutedForeground, size: 16),
+          prefixIcon:
+              const Icon(Icons.search, color: _mutedForeground, size: 16),
           filled: true,
-          fillColor: Colors.transparent, // Handled by glass effect
+          fillColor: Colors.transparent,
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8.0),
-            borderSide: BorderSide.none, // Border handled by glass effect
+            borderSide: BorderSide.none,
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8.0),
@@ -292,12 +277,12 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   Widget _buildChatHistoryList() {
     return Expanded(
       child: Padding(
-        padding: const EdgeInsets.all(16.0), // p-4
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.only(bottom: 16.0), // mb-4
+              padding: const EdgeInsets.only(bottom: 16.0),
               child: Text(
                 "Recent Conversations",
                 style: GoogleFonts.inter(
@@ -313,23 +298,23 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 itemBuilder: (context, index) {
                   final chat = _chatHistory[index];
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0), // space-y-2
+                    padding: const EdgeInsets.only(bottom: 8.0),
                     child: Material(
                       color: Colors.transparent,
                       child: InkWell(
                         onTap: () {/* Handle chat selection */},
                         borderRadius: BorderRadius.circular(12.0),
-                        hoverColor: _foreground.withOpacity(0.05),
+                        hoverColor: _foreground.withValues(alpha: 0.05),
                         child: _buildGlassEffectContainer(
-                          padding: const EdgeInsets.all(12.0), // p-3
+                          padding: const EdgeInsets.all(12.0),
                           child: Row(
                             children: [
-                              Icon(
+                              const Icon(
                                 Icons.message_outlined,
                                 color: _ancapYellow,
                                 size: 16,
-                              ), // MessageSquare
-                              const SizedBox(width: 12), // gap-3
+                              ),
+                              const SizedBox(width: 12),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -342,15 +327,15 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
-                                    const SizedBox(height: 4), // mt-1
+                                    const SizedBox(height: 4),
                                     Row(
                                       children: [
-                                        Icon(
+                                        const Icon(
                                           Icons.access_time,
                                           color: _mutedForeground,
                                           size: 12,
-                                        ), // Clock
-                                        const SizedBox(width: 8), // gap-2
+                                        ),
+                                        const SizedBox(width: 8),
                                         Text(
                                           chat.date,
                                           style: GoogleFonts.inter(
@@ -380,20 +365,18 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
   Widget _buildChatHeader() {
     return _buildGlassEffectContainer(
-      margin: const EdgeInsets.all(0), // No margin for header, spans full width
-      padding: const EdgeInsets.all(24.0), // p-6
-      // Removed unnecessary Container, decoration moved to Row's parent in _buildGlassEffectContainer or applied directly if needed.
-      // The BoxDecoration for border is now part of the Row's direct child Container.
+      margin: const EdgeInsets.all(0),
+      padding: const EdgeInsets.all(24.0),
       child: Container(
-        // This container is kept to apply the bottom border
         decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: _border.withOpacity(0.1))),
+          border:
+              Border(bottom: BorderSide(color: _border.withValues(alpha: 0.1))),
         ),
         child: Row(
           children: [
             Container(
-              width: 40, // w-10
-              height: 40, // h-10
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: const LinearGradient(
@@ -401,15 +384,14 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                     _ancapYellow,
                     Color(0xFFF59E0B),
                   ],
-                ), // yellow-400 to yellow-500
+                ),
                 boxShadow: [
-                  // glow-effect
                   BoxShadow(
-                    color: _ancapYellow.withOpacity(0.3),
+                    color: _ancapYellow.withValues(alpha: 0.3),
                     blurRadius: 10,
                   ),
                   BoxShadow(
-                    color: _ancapYellow.withOpacity(0.2),
+                    color: _ancapYellow.withValues(alpha: 0.2),
                     blurRadius: 20,
                   ),
                 ],
@@ -450,36 +432,31 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   Widget _buildMessagesList() {
     return Expanded(
       child: ListView.builder(
-        padding: const EdgeInsets.all(24.0), // p-6
-        reverse: true, // To keep latest messages at the bottom
+        padding: const EdgeInsets.all(24.0),
+        reverse: true,
         itemCount: _messages.length,
         itemBuilder: (context, index) {
-          final message = _messages[
-              _messages.length - 1 - index]; // Display in reverse for UI
+          final message = _messages[_messages.length - 1 - index];
           final isAi = message.isAi;
           return Align(
             alignment: isAi ? Alignment.centerLeft : Alignment.centerRight,
             child: Container(
               constraints: BoxConstraints(
                 maxWidth: MediaQuery.of(context).size.width * 0.75,
-              ), // max-w-[80%]
+              ),
               margin: const EdgeInsets.symmetric(
                 vertical: 8.0,
-              ), // space-y-6 (approx)
-              padding: const EdgeInsets.all(16.0), // p-4
+              ),
+              padding: const EdgeInsets.all(16.0),
               decoration: BoxDecoration(
-                color: isAi
-                    ? null
-                    : _ancapYellow, // AI uses glass, user uses yellow
-                borderRadius: BorderRadius.circular(20.0), // rounded-2xl
-                // Apply glass effect only for AI messages
+                color: isAi ? null : _ancapYellow,
+                borderRadius: BorderRadius.circular(20.0),
                 border: isAi ? Border.all(color: _glassBorder, width: 1) : null,
                 boxShadow: isAi
                     ? null
                     : [
-                        // Subtle shadow for user messages
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 5,
                           offset: const Offset(0, 2),
                         ),
@@ -489,18 +466,17 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(
                         19.0,
-                      ), // Inner radius for backdrop filter
+                      ),
                       child: BackdropFilter(
                         filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
                         child: Container(
                           decoration: BoxDecoration(
-                            color:
-                                _glassBackground, // This color is seen through the blur
+                            color: _glassBackground,
                             borderRadius: BorderRadius.circular(19.0),
                           ),
                           padding: const EdgeInsets.all(
                             0.1,
-                          ), // Minimal padding to ensure content is within blur
+                          ),
                           child: Text(
                             message.text,
                             style: GoogleFonts.inter(
@@ -529,10 +505,11 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   Widget _buildInputArea() {
     return _buildGlassEffectContainer(
       margin: const EdgeInsets.all(0),
-      padding: const EdgeInsets.all(24.0), // p-6
+      padding: const EdgeInsets.all(24.0),
       child: Container(
         decoration: BoxDecoration(
-          border: Border(top: BorderSide(color: _border.withOpacity(0.1))),
+          border:
+              Border(top: BorderSide(color: _border.withValues(alpha: 0.1))),
         ),
         child: Row(
           children: [
@@ -545,11 +522,10 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                   hintStyle:
                       GoogleFonts.inter(color: _mutedForeground, fontSize: 15),
                   filled: true,
-                  fillColor: Colors.transparent, // Handled by glass effect
+                  fillColor: Colors.transparent,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12.0),
-                    borderSide:
-                        BorderSide.none, // Border handled by glass effect
+                    borderSide: BorderSide.none,
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12.0),
@@ -560,7 +536,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                     borderSide: const BorderSide(
                       color: _ancapYellow,
                       width: 1.5,
-                    ), // Ring effect
+                    ),
                   ),
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
@@ -568,11 +544,11 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 onSubmitted: (_) => _handleSend(),
               ),
             ),
-            const SizedBox(width: 16), // gap-4
+            const SizedBox(width: 16),
             ElevatedButton(
               onPressed: _handleSend,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent, // To show gradient through
+                backgroundColor: Colors.transparent,
                 padding: EdgeInsets.zero,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12.0),
@@ -586,15 +562,16 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                       _ancapYellow,
                       Color(0xFFF59E0B),
                     ],
-                  ), // yellow-400 to yellow-500
+                  ),
                   borderRadius: BorderRadius.circular(12.0),
                 ),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 20,
                     vertical: 18,
-                  ), // Match input field height
-                  child: Icon(Icons.send, color: _ancapDarkBlue, size: 20),
+                  ),
+                  child:
+                      const Icon(Icons.send, color: _ancapDarkBlue, size: 20),
                 ),
               ),
             ),

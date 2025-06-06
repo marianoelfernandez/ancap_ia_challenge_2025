@@ -6,6 +6,7 @@ import "package:go_router/go_router.dart";
 import "package:anc_app/src/router/screen_params.dart";
 import "package:anc_app/src/features/auth/screens/login_screen.dart";
 import "package:anc_app/src/features/chatbot/screens/chatbot_screen.dart";
+import "package:anc_app/src/features/splash/screens/splash_screen.dart"; // Added splash screen import
 
 /// All the routes in the app are defined here
 ///
@@ -31,6 +32,10 @@ enum AppRoute<ParamsType extends ScreenParams<ParamsType>> {
   chatbot<NoParams>(
     path: "/chatbot",
     isAuthEnforcementRequired: true, // Assuming auth is required
+  ),
+  splash<NoParams>(
+    path: "/splash",
+    isAuthEnforcementRequired: false, // Splash screen doesn't need auth itself, shown after login
   ),
   ;
 
@@ -87,6 +92,11 @@ GoRouter buildRouter({
               name: AppRoute.chatbot.name,
               path: AppRoute.chatbot.path,
               builder: (context, state) => const ChatbotScreen(),
+            ),
+            GoRoute(
+              name: AppRoute.splash.name,
+              path: AppRoute.splash.path,
+              builder: (context, state) => const SplashScreen(),
             ),
           ],
         ),

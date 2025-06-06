@@ -24,10 +24,9 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
   late AnimationController _pulseController;
   late AnimationController _typingController;
 
-  late Animation<double> _formAnimation; // Overall form animation
+  late Animation<double> _formAnimation;
   late Animation<double> _pulseAnimation;
 
-  // Staggered animations for form elements
   late Animation<double> _headerIconAnimation;
   late Animation<double> _headerTitleAnimation;
   late Animation<double> _headerSubtitleAnimation;
@@ -45,9 +44,6 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
       vsync: this,
     );
 
-    // We'll use the slide controller for all animations now
-    // No need for a separate scale controller
-
     _pulseController = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
@@ -58,7 +54,6 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
       vsync: this,
     );
 
-    // Overall form animation (0-30% of total duration)
     _formAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -69,7 +64,6 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
       ),
     );
 
-    // Header icon animation (10-25% of total duration)
     _headerIconAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -80,7 +74,6 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
       ),
     );
 
-    // Header title animation (20-35% of total duration)
     _headerTitleAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -91,7 +84,6 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
       ),
     );
 
-    // Header subtitle animation (30-45% of total duration)
     _headerSubtitleAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -102,7 +94,6 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
       ),
     );
 
-    // Email field animation (40-55% of total duration)
     _emailFieldAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -113,7 +104,6 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
       ),
     );
 
-    // Password field animation (50-65% of total duration)
     _passwordFieldAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -124,7 +114,6 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
       ),
     );
 
-    // Login button animation (60-75% of total duration)
     _loginButtonAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -135,7 +124,6 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
       ),
     );
 
-    // Features animation (70-85% of total duration)
     _featuresAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -145,8 +133,6 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
         curve: const Interval(0.7, 0.85, curve: Curves.easeOut),
       ),
     );
-
-    // Using _headerIconAnimation instead of _scaleAnimation
 
     _pulseAnimation = Tween<double>(
       begin: 0.3,
@@ -158,9 +144,7 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
       ),
     );
 
-    // Start animations
     _slideController.forward();
-    // No need to start _scaleController separately
     _pulseController.repeat(reverse: true);
     _typingController.repeat();
   }
@@ -190,7 +174,6 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
       _isLoading = true;
     });
 
-    // Simulate login process
     await Future.delayed(const Duration(seconds: 2));
 
     setState(() {
@@ -213,10 +196,7 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
               constraints: const BoxConstraints(maxWidth: 480, maxHeight: 590),
               child: Stack(
                 children: [
-                  // Neural Network Background
                   ...List.generate(8, (index) => NeuralDot(index: index)),
-
-                  // Main Container
                   Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
@@ -234,7 +214,7 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFFFC107).withOpacity(0.2),
+                          color: const Color(0xFFFFC107).withValues(alpha: 0.2),
                           blurRadius: 20,
                           spreadRadius: 0,
                         ),
@@ -247,9 +227,9 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            const Color(0xFFFFC107).withOpacity(0.1),
+                            const Color(0xFFFFC107).withValues(alpha: 0.1),
                             Colors.transparent,
-                            const Color(0xFF1976D2).withOpacity(0.1),
+                            const Color(0xFF1976D2).withValues(alpha: 0.1),
                           ],
                         ),
                       ),
@@ -261,7 +241,7 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
                         ),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(14),
-                          color: const Color(0xFF1A1F2E).withOpacity(0.9),
+                          color: const Color(0xFF1A1F2E).withValues(alpha: 0.9),
                           backgroundBlendMode: BlendMode.multiply,
                         ),
                         child: Column(
@@ -308,7 +288,7 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
                       boxShadow: [
                         BoxShadow(
                           color: const Color(0xFFFFC107)
-                              .withOpacity(_pulseAnimation.value),
+                              .withValues(alpha: _pulseAnimation.value),
                           blurRadius: 30,
                           spreadRadius: 5,
                         ),
@@ -328,7 +308,6 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
 
         const SizedBox(height: 16),
 
-        // Title with fade-in animation
         AnimatedBuilder(
           animation: _headerTitleAnimation,
           builder: (context, child) {
@@ -339,10 +318,10 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
                   colors: [Color(0xFFFFC107), Color(0xFFFFD54F)],
                 ).createShader(bounds),
                 child: Text(
-                  "ANCAP",
+                  "ANC-APP",
                   style: GoogleFonts.inter(
                     fontSize: 36,
-                    fontWeight: FontWeight.w900, // Use 'Black' weight for Inter
+                    fontWeight: FontWeight.w900,
                     color: Colors.white,
                     letterSpacing: 2,
                   ),
@@ -354,7 +333,6 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
 
         const SizedBox(height: 8),
 
-        // Subtitle with fade-in animation
         AnimatedBuilder(
           animation: _headerSubtitleAnimation,
           builder: (context, child) {
@@ -374,7 +352,6 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
 
         const SizedBox(height: 8),
 
-        // Typing Indicator
         AnimatedBuilder(
           animation: _headerSubtitleAnimation,
           builder: (context, child) {
@@ -392,7 +369,6 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Email Field with slide-in animation
         AnimatedBuilder(
           animation: _emailFieldAnimation,
           builder: (context, child) {
@@ -410,10 +386,7 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
             );
           },
         ),
-
         const SizedBox(height: 20),
-
-        // Password Field with slide-in animation
         AnimatedBuilder(
           animation: _passwordFieldAnimation,
           builder: (context, child) {
@@ -431,10 +404,7 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
             );
           },
         ),
-
         const SizedBox(height: 24),
-
-        // Login Button with slide-up animation
         AnimatedBuilder(
           animation: _loginButtonAnimation,
           builder: (context, child) {
@@ -451,7 +421,7 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFFFC107).withOpacity(0.3),
+                        color: const Color(0xFFFFC107).withValues(alpha: 0.3),
                         blurRadius: 15,
                         offset: const Offset(0, 5),
                       ),
@@ -461,14 +431,12 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
                     color: Colors.transparent,
                     child: InkWell(
                       borderRadius: BorderRadius.circular(8),
-                      onTap: _isLoading ? null : () {
-                        // Navigate to Chatbot screen
-                        context.goToAppRoute(AppRoute.chatbot);
-                        // If you still need to call _handleLogin or similar logic,
-                        // you can do it here, perhaps after navigation or based on its result.
-                        // For now, we are just navigating.
-                        // _handleLogin(); 
-                      },
+                      onTap: _isLoading
+                          ? null
+                          : () {
+                              context.goToAppRoute(AppRoute.chatbot);
+                              // _handleLogin();
+                            },
                       child: Container(
                         alignment: Alignment.center,
                         child: _isLoading
@@ -541,17 +509,17 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
           label,
           style: const TextStyle(
             color: Colors.white,
-            fontWeight: FontWeight.w700, // Bolder text
-            fontSize: 16, // Slightly larger
+            fontWeight: FontWeight.w700,
+            fontSize: 16,
           ),
         ),
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
-            color: Colors.white.withOpacity(0.05),
+            color: Colors.white.withValues(alpha: 0.05),
             border: Border.all(
-              color: Colors.white.withOpacity(0.1),
+              color: Colors.white.withValues(alpha: 0.1),
             ),
           ),
           child: TextField(
@@ -561,7 +529,7 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
             style: const TextStyle(color: Colors.white),
             decoration: InputDecoration(
               hintText: hintText,
-              hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+              hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
               border: InputBorder.none,
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -571,7 +539,7 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
                         _isPasswordVisible
                             ? Icons.visibility_off
                             : Icons.visibility,
-                        color: Colors.white.withOpacity(0.7),
+                        color: Colors.white.withValues(alpha: 0.7),
                       ),
                       onPressed: () {
                         setState(() {
@@ -598,7 +566,7 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
             decoration: BoxDecoration(
               border: Border(
                 top: BorderSide(
-                  color: Colors.white.withOpacity(0.1),
+                  color: Colors.white.withValues(alpha: 0.1),
                 ),
               ),
             ),
@@ -638,7 +606,7 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
           height: 32,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: color.withOpacity(0.2),
+            color: color.withValues(alpha: 0.2),
           ),
           child: Icon(
             icon,
@@ -650,9 +618,9 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
         Text(
           label,
           style: TextStyle(
-            color: Colors.white.withOpacity(0.85), // Brighter text
-            fontSize: 13, // Slightly larger
-            fontWeight: FontWeight.w600, // Bolder text
+            color: Colors.white.withValues(alpha: 0.85),
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ],
@@ -663,10 +631,10 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
 class NeuralDot extends StatefulWidget {
   final int index;
 
-  const NeuralDot({Key? key, required this.index}) : super(key: key);
+  const NeuralDot({super.key, required this.index});
 
   @override
-  _NeuralDotState createState() => _NeuralDotState();
+  State<NeuralDot> createState() => _NeuralDotState();
 }
 
 class _NeuralDotState extends State<NeuralDot>
@@ -750,7 +718,7 @@ class _NeuralDotState extends State<NeuralDot>
 class TypingIndicator extends StatelessWidget {
   final AnimationController controller;
 
-  const TypingIndicator({Key? key, required this.controller}) : super(key: key);
+  const TypingIndicator({super.key, required this.controller});
 
   @override
   Widget build(BuildContext context) {
