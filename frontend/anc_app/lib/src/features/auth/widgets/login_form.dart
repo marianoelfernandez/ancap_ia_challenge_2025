@@ -434,7 +434,9 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
                       onTap: _isLoading
                           ? null
                           : () {
-                              context.goToAppRoute(AppRoute.chatbot);
+                              context.goToAppRoute(
+                                AppRoute.splash,
+                              ); // Navigate to splash screen first
                               // _handleLogin();
                             },
                       child: Container(

@@ -1,5 +1,6 @@
 import "dart:async";
 import "package:flutter/material.dart";
+import "dart:developer" as developer; // Import for log
 import "package:go_router/go_router.dart";
 import "package:google_fonts/google_fonts.dart";
 import "package:anc_app/src/router/router.dart";
@@ -24,6 +25,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void initState() {
     super.initState();
+    developer.log("SplashScreen initState called", name: "SplashScreen"); // <--- ADD THIS
 
     _animationController = AnimationController(
       vsync: this,
@@ -40,8 +42,11 @@ class _SplashScreenState extends State<SplashScreen>
     _animationController.forward();
 
     Timer(const Duration(seconds: 3), () {
+      developer.log("SplashScreen Timer expired, navigating to chatbot", name: "SplashScreen"); // <--- ADD THIS
       if (mounted) {
         context.goNamed(AppRoute.chatbot.name);
+      } else {
+        developer.log("SplashScreen Timer: NOT MOUNTED, cannot navigate", name: "SplashScreen"); // <--- ADD THIS
       }
     });
   }
@@ -54,6 +59,7 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    developer.log("SplashScreen build called", name: "SplashScreen"); // <--- ADD THIS
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
