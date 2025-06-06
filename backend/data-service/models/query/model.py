@@ -50,7 +50,7 @@ class QueryMetadata(BaseModel):
 
 class SQLQueryResponse(BaseModel):
     status: QueryStatus
-    data: Optional[List[Dict[str, Any]]] = None
+    data: Optional[Dict[str, Any]] = None
     metadata: Optional[QueryMetadata] = None
     error_message: Optional[str] = None
     suggestions: Optional[List[str]] = None

@@ -34,14 +34,12 @@ async def execute_sql_query(
             limit=request.limit
         )
 
-        processed_results = data_service.process_results(raw_results, FlChartType.LINE_CHART);
-        
-        # Process results based on requested format
-        execution_time = (datetime.now() - start_time).total_seconds()
+        processed_results = data_service.process_results(raw_results, FlChartType.LINE_CHART); # TODO: add format from request
+    
         
         return SQLQueryResponse(
             status=QueryStatus.SUCCESS,
-            data=[raw_results]
+            data=processed_results
         )
         
     except ValueError as e:
