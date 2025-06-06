@@ -6,7 +6,7 @@ from langgraph.graph import StateGraph, END
 from utils.connection import call_server
 from utils.settings import Settings
 from typing import TypedDict, Optional
-from utils.constants import schema_constant, intent_prompt
+from utils.constants import schema_constant, intent_prompt, data_dictionary_prompt, data_dictionary
 settings = Settings()
 
 class AgentState(TypedDict):
@@ -51,17 +51,62 @@ class Agent():
 
             schema_str = schema_constant
             state["schema"] = schema_str
+            state["data_dictionary"] = data_dictionary
             return state
 
 
-        def detect_type(state):
+        def detect_type(state : AgentState) -> AgentState:
             query = state["input"]
             response = self.llm.invoke(intent_prompt.format(query=query))
             # is_sql = "SQL" in response.content.upper()
             is_sql = True
             return {**state, "is_sql": is_sql}
+        
+        def query_translator(state: AgentState) -> AgentState:
+            try:
+                query = state["input"]
+                data_dictionary = state["data_dictionary"]
 
+                prompt = data_dictionary_prompt.format(
+                    query=query,
+                    data_dictionary=data_dictionary
+                )
 
+                response = self.llm.invoke(prompt)
+
+                if response.strip().startswith("[RETRY]"):
+                    return {
+                        **state,
+                        "needs_more_info": True,
+                        "retry_message": response.strip()
+                    }
+
+                return {
+                    **state,
+                    "translated_query": response.strip(),
+                    "needs_more_info": False
+                }
+
+            except Exception as e:
+                return {
+                    **state,
+                    "output": f"[Error al traducir consulta] {e}"
+                }
+        
+        def route_from_query_translator(state: AgentState) -> str:
+            if state.get("needs_more_info"):
+                return "respond_with_retry"
+            return "prepare_sql"
+        
+        def respond_with_retry(state: dict) -> dict:
+            retry_message = state.get("retry_message", "Por favor reformula tu consulta.")
+            self.memory.chat_memory.add_user_message(state["input"])
+            self.memory.chat_memory.add_ai_message(retry_message)
+            return {
+                **state,
+                "output": retry_message
+            }
+    
         def prepare_sql(state: AgentState) -> AgentState:
             try:
                 query = state["input"]
@@ -98,6 +143,8 @@ class Agent():
 
         builder.add_node("load_schema", load_schema_node)
         builder.add_node("detect_type", detect_type)
+        builder.add_node("query_translator", query_translator)
+        builder.add_node("respond_with_retry", respond_with_retry)
         builder.add_node("prepare_sql", prepare_sql)
         builder.add_node("execute_sql", execute_sql)
         builder.add_node("general_llm", general_llm)
@@ -106,8 +153,10 @@ class Agent():
         builder.add_edge("load_schema", "detect_type")
         builder.add_conditional_edges(
             "detect_type",
-            lambda s: "prepare_sql" if s["is_sql"] else "general_llm",
+            lambda s: "query_translator" if s["is_sql"] else "general_llm",
         )
+        builder.add_conditional_edges("query_translator", route_from_query_translator)
+        builder.set_finish_point("respond_with_retry")
         builder.add_edge("prepare_sql", "execute_sql")
         builder.add_edge("execute_sql", END)
         builder.add_edge("general_llm", END)
@@ -124,5 +173,6 @@ class Agent():
                 return result["output"]
             except Exception as e:
                 return f"[LangGraph Error] {e}"
+            
     def clr_history(self):
         self.memory.clear()
