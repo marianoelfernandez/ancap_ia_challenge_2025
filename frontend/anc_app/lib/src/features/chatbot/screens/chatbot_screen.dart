@@ -8,17 +8,18 @@ const Color _ancapYellow = Color(0xFFFFC107); // hsl(45, 100%, 55%)
 const Color _ancapDarkBlue =
     Color(0xFF002A53); // hsl(210, 100%, 16%) approx, darker blue
 
-const Color _backgroundStart =
-    Color(0xFF0A101F); // hsl(222, 47%, 8%) approx, darker
-const Color _backgroundMid =
-    Color(0xFF141C28); // hsl(218, 33%, 12%) approx, darker
-const Color _backgroundEnd = Color(0xFF0D0D0D); // Very dark gray / neutral-950+
+const Color _backgroundStart = Color(0xFF060912); // Very dark blue/near black
+const Color _backgroundMid = Color(0xFF0B101A); // Darker shade
+const Color _backgroundEnd = Color(0xFF050505); // Almost pure black
 
 const Color _foreground = Color(0xFFF8FAFC); // hsl(210 40% 98%)
-const Color _mutedForeground = Color(0xFF94A3B8); // hsl(215 20% 65%)
-const Color _border = Color(0xFF202733); // hsl(220, 25%, 16%) approx, darker
+const Color _mutedForeground =
+    Color(0xFF808EA2); // hsl(215 15% 57%) approx, slightly darker
+const Color _border =
+    Color(0xFF1A1F29); // hsl(220, 25%, 13%) approx, even darker
 
-final Color _glassBackground = Colors.white.withOpacity(0.05);
+final Color _glassBackground =
+    Colors.white.withOpacity(0.03); // Reduced opacity for darker glass
 const Color _glassBorder = Color(0x1AFFFFFF); // rgba(255, 255, 255, 0.1)
 
 // --- Message Data Model ---
