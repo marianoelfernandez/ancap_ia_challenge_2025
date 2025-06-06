@@ -64,8 +64,7 @@ class Agent():
         def detect_type(state : AgentState) -> AgentState:
             query = state["input"]
             response = self.llm.invoke(intent_prompt.format(query=query))
-            # is_sql = "SQL" in response.content.upper()
-            is_sql = True
+            is_sql = "SQL" in response.content.upper()
             return {**state, "is_sql": is_sql}
         
         def query_translator(state: AgentState) -> AgentState:
