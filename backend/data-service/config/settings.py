@@ -34,6 +34,7 @@ class Settings(BaseSettings):
     
     # GCP Settings
     GCP_PROJECT_ID: str = Field(..., description="GCP Project ID")
+    GCP_DATA_PROJECT_ID: str = Field(..., description="GCP Data Project ID")
     GCP_CREDENTIALS_PATH: str = Field(
         default="", 
         description="Path to GCP service account JSON file"

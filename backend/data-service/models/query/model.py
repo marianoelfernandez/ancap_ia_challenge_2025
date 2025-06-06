@@ -50,10 +50,20 @@ class QueryMetadata(BaseModel):
 
 class SQLQueryResponse(BaseModel):
     status: QueryStatus
-    data: Optional[List[Dict[str, Any]]] = None
+    data: Optional[Dict[str, Any]] = None
     metadata: Optional[QueryMetadata] = None
     error_message: Optional[str] = None
     suggestions: Optional[List[str]] = None
+
+
+class ValidateQueryResponse(BaseModel):
+    status: QueryStatus
+    estimated_bytes: Optional[int] = None
+    estimated_cost: Optional[float] = None
+    tables_referenced: Optional[List[str]] = None
+    error_message: Optional[str] = None
+    suggestions: Optional[List[str]] = None
+
 
 class BatchQueryResponse(BaseModel):
     results: List[SQLQueryResponse]

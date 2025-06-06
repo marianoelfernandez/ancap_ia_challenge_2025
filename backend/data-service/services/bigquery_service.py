@@ -4,11 +4,12 @@ from typing import Dict, Any, Optional
 import logging
 from datetime import datetime
 from config.settings import get_settings
+from models.query.model import QueryStatus, ValidateQueryResponse
 
 settings = get_settings()
 
 class BigQueryService:
-    def __init__(self, project_id: str = settings.GCP_PROJECT_ID):
+    def __init__(self, project_id: str = settings.GCP_DATA_PROJECT_ID):
         """Initialize BigQuery service with project configuration"""
         self.client = bigquery.Client(project=project_id)
         self.project_id = project_id or self.client.project
@@ -93,7 +94,7 @@ class BigQueryService:
             self.logger.error(f"Query execution error: {str(e)}")
             raise
     
-    async def validate_query(self, query: str) -> Dict[str, Any]:
+    async def validate_query(self, query: str) -> ValidateQueryResponse:
         """
         Validate a SQL query using BigQuery's dry run feature
         """
@@ -105,7 +106,7 @@ class BigQueryService:
             job_stats = query_job._properties.get('statistics', {})
             query_stats = job_stats.get('query', {})
             
-            bytes_processed = int(query_stats.get('totalBytesProcessed', 0))
+            bytes_processed = int(query_job.total_bytes_processed)
             
             # Get referenced tables
             referenced_tables = []
@@ -114,25 +115,32 @@ class BigQueryService:
                     table_name = f"{table_ref['projectId']}.{table_ref['datasetId']}.{table_ref['tableId']}"
                     referenced_tables.append(table_name)
             
-            return {
-                'valid': True,
-                'estimated_bytes': bytes_processed,
-                'tables_referenced': referenced_tables,
-                'query_schema': [
-                    {
-                        'name': field.name,
-                        'type': field.field_type,
-                        'mode': field.mode
-                    }
-                    for field in query_job.schema or []
-                ]
-            }
+            return ValidateQueryResponse(
+                status=QueryStatus.SUCCESS,
+                estimated_bytes=bytes_processed,
+                estimated_cost=self._estimate_cost(bytes_processed),
+                tables_referenced=referenced_tables
+            )
             
         except BadRequest as e:
-            return {
-                'valid': False,
-                'error': str(e)
-            }
+            return ValidateQueryResponse(
+                status=QueryStatus.INVALID_SQL,
+                error_message=str(e),
+            )
+
+    def _estimate_cost(self, bytes_processed: int) -> float:
+        """Estimate query cost based on bytes processed
+        
+        BigQuery pricing (on-demand):
+        - $6.25 per TiB (1,099,511,627,776 bytes)
+        - First 1 TiB per month is free
+        - All calculations are in USD
+        """
+        # Convert bytes to TiB (1 TiB = 1024^4 bytes)
+        tib_processed = bytes_processed / (1024 ** 4)
+        cost_usd = tib_processed * 6.25
+        
+        return round(cost_usd, 4)
     
     def _serialize_value(self, value: Any) -> Any:
         """Serialize BigQuery values to JSON-compatible format"""

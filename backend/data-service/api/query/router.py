@@ -1,35 +1,22 @@
 from fastapi import APIRouter, Body, Depends
 from datetime import datetime
 import logging
-import re
 
 from services.bigquery_service import BigQueryService
-from models.query.model import SQLQueryRequest, SQLQueryResponse, QueryStatus, QueryMetadata
+from services.data_service import DataService
+from models.query.model import SQLQueryRequest, SQLQueryResponse, QueryStatus, QueryMetadata, ValidateQueryResponse
+from models.data.model import FlChartType
+from utils.text_parser import extract_sql_from_text
 
 router = APIRouter(
     tags=["query"]
 )
 
-def extract_sql_from_text(text: str) -> str:
-    """
-    Extract SQL query from text that may contain markdown SQL blocks.
-    Returns the first SQL query found between ```sql and ``` markers.
-    If no SQL block is found, returns the original text.
-    """
-    # Look for SQL between markdown SQL blocks
-    sql_pattern = r"```sql\s*(.*?)\s*```"
-    matches = re.findall(sql_pattern, text, re.DOTALL)
-    
-    if matches:
-        # Return the first SQL query found
-        return matches[0].strip()
-    
-    return text.strip()
-
 @router.post("/query")
 async def execute_sql_query(
     request: SQLQueryRequest,
-    bigquery_service: BigQueryService = Depends(BigQueryService)
+    bigquery_service: BigQueryService = Depends(BigQueryService),
+    data_service: DataService = Depends(DataService)
 ) -> SQLQueryResponse:
     """
     Execute a SQL query and return results
@@ -46,13 +33,13 @@ async def execute_sql_query(
             timeout=request.timeout,
             limit=request.limit
         )
-        
-        # Process results based on requested format
-        execution_time = (datetime.now() - start_time).total_seconds()
+
+        processed_results = data_service.process_results(raw_results, FlChartType.LINE_CHART); # TODO: add format from request
+    
         
         return SQLQueryResponse(
             status=QueryStatus.SUCCESS,
-            data=[raw_results]
+            data=processed_results
         )
         
     except ValueError as e:
@@ -93,3 +80,16 @@ async def execute_sql_query(
             suggestions=["Contact support if the issue persists"]
         )
 
+
+@router.post('/validate')
+async def validate_sql_query(
+    request: SQLQueryRequest,
+    bigquery_service: BigQueryService = Depends(BigQueryService)
+) -> ValidateQueryResponse:
+    try:
+        return await bigquery_service.validate_query(request.query)
+    except Exception as e:
+        return ValidateQueryResponse(
+            status=QueryStatus.ERROR,
+            error_message=str(e)
+        )
