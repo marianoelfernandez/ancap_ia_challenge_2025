@@ -1,3 +1,4 @@
+name: ancap_ia_challenge
 services:
   database:
     build: ./database
