@@ -1,23 +1,22 @@
-[project]
+[tool.poetry]
 name = "data-service"
 version = "0.1.0"
 description = "Data service for chatbot system with BigQuery integration"
-authors = [
-    {name = "rchiarino",email = "rz.chiarino@gmail.com"}
-]
+authors = ["Renzo Chiarino <rz.chiarino@gmail.com>"]
 readme = "README.md"
-requires-python = "^3.9"
-dependencies = [
-    "fastapi (>=0.115.12,<0.116.0)",
-    "google-cloud-bigquery (>=3.34.0,<4.0.0)",
-    "google-cloud-storage (>=3.1.0,<4.0.0)",
-    "sqlalchemy (>=2.0.41,<3.0.0)",
-    "psycopg2-binary (>=2.9.10,<3.0.0)",
-    "python-multipart (>=0.0.20,<0.0.21)",
-    "python-dotenv (>=1.1.0,<2.0.0)",
-    "pydantic-settings (>=2.9.1,<3.0.0)",
-    "uvicorn (>=0.34.3,<0.35.0)"
-]
+packages = [{ include = "data_service" }]
+
+[tool.poetry.dependencies]
+python = ">=3.09,<3.14"
+fastapi = "^0.115.0"
+google-cloud-bigquery = "^3.34.0"
+google-cloud-storage = "^3.1.0"
+sqlalchemy = "^2.0.41"
+psycopg2-binary = "^2.9.10"
+python-multipart = "^0.0.20"
+python-dotenv = "^1.1.0"
+pydantic-settings = "^2.9.1"
+uvicorn = "^0.34.3"
 
 
 [build-system]
