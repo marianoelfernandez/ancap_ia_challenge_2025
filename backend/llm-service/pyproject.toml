@@ -17,6 +17,7 @@ dotenv = "^0.9.9"
 uvicorn = "^0.34.3"
 psycopg2-binary = "^2.9.10"
 langchain="~0.3.25"
+pocketbase = "^0.15.0"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

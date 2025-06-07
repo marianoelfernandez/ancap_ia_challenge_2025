@@ -193,3 +193,41 @@ intent_prompt = intent_prompt = ChatPromptTemplate.from_template(
     "Input: {query}\n"
     "Type:"
 )
+
+facturas_tables = [
+    "FACCAB",        # Facturas - cabezal
+    "FACLINPR",      # Facturas - productos
+    "MONEDAS",       # Maestro Monedas
+    "CLIENTES",      # Maestro Clientes
+    "CLIDIR",        # Direcciones de Clientes
+    "DISTRIBUIDORAS",# Maestro Distribuidoras
+    "PLANTAS",       # Maestro Plantas
+    "POLITICAS",     # Maestro Políticas
+    "MERCADOS",      # Maestro Mercados
+    "NEGOCIOS",      # Maestro Negocios
+    "NEGTPO",        # Maestro Tipos de Negocios
+    "CLITPO",        # Maestro Tipos de Cliente
+    "PRODUCTOS",     # Maestro Productos
+    "PRDGRP",        # Grupos de Productos
+    "PRDCAT",        # Categorías de Productos
+    "DEPARTAMENTOS", # Maestro Departamentos
+    "LOCALIDADES"    # Maestro Localidades
+]
+entregas_tables = [
+    "DOCCRG",        # Documento de Carga - cabezal
+    "DCPRDLIN",      # Documento de Carga - productos
+    "CLIENTES",      # Maestro Clientes
+    "CLIDIR",        # Direcciones de Clientes
+    "DISTRIBUIDORAS",# Maestro Distribuidoras
+    "PLANTAS",       # Maestro Plantas
+    "POLITICAS",     # Maestro Políticas
+    "MERCADOS",      # Maestro Mercados
+    "NEGOCIOS",      # Maestro Negocios
+    "NEGTPO",        # Maestro Tipos de Negocios
+    "CLITPO",        # Maestro Tipos de Cliente
+    "PRODUCTOS",     # Maestro Productos
+    "PRDGRP",        # Grupos de Productos
+    "PRDCAT",        # Categorías de Productos
+    "DEPARTAMENTOS", # Maestro Departamentos
+    "LOCALIDADES"    # Maestro Localidades
+]

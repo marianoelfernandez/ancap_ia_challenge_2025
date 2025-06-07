@@ -7,6 +7,9 @@ from utils.connection import call_server
 from utils.settings import Settings
 from typing import TypedDict, Optional
 from utils.constants import schema_constant, intent_prompt
+from db.dbconnection import generate_conversation_id, save_query
+from utils.auth import permissions_check
+
 settings = Settings()
 
 class AgentState(TypedDict):
@@ -69,6 +72,8 @@ class Agent():
                 response = self.sql_chain.invoke({"input": query, "schema": schema})
                 generated_sql = response.content.strip()
                 state["generated_sql"] = generated_sql
+                conversation_id = state.get("conversation_id", None)
+                permissions_check(generated_sql, conversation_id)
                 return state
             except Exception as e:
                 return {"output": f"[Error al generar SQL] {e}"}
@@ -114,13 +119,23 @@ class Agent():
 
         return builder
 
-    def ask_agent(self, query: str) -> str:
+    def ask_agent(self, query: str, conversation_id: str| None, user_id : str) -> str:
             @traceable(name="Agent Graph Run")
             def _run_with_trace(input_query):
-                return self.runnable.invoke({"input": input_query})
+                return self.runnable.invoke({"input": input_query, "conversation_id": conversation_id})
 
             try:
+                conv_id = conversation_id
+                if not conversation_id:
+                    conv_id = generate_conversation_id(user_id)
+
                 result = _run_with_trace(query)
+                save_query(result["input"],
+                            result.get("generated_sql", ""),
+                              result.get("output", ""),
+                              0,
+                              conv_id)
+                
                 return result["output"]
             except Exception as e:
                 return f"[LangGraph Error] {e}"
