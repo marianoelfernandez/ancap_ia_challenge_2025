@@ -1,8 +1,8 @@
 
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Header
 from pydantic import ValidationError,BaseModel
-
+from utils.auth import get_user_id_from_auth
 import logging
 from services.agent import Agent
 
@@ -14,18 +14,20 @@ logging.basicConfig(level=logging.INFO)
 
 class QueryRequest(BaseModel):
     query: str
+    conversation_id: Optional[str] = None
     auth_payload: Optional[dict] = None
 
 @router.post("/query")
-def receive_query_endpoint(req:QueryRequest):
-    logger.debug("Received create house request")
+def receive_query_endpoint(req:QueryRequest,  authorization: str = Header(...)):
+    logger.debug("Received query request")
     try:
-        result = agent.ask_agent(req.query)
+        user_id = get_user_id_from_auth(authorization)
+        result = agent.ask_agent(req.query, req.conversation_id, user_id)
         return {"data": result}
     except ValidationError as ve:
         logger.warning(f"Validation error: {ve.errors()}")
         raise HTTPException(422, ve.errors())
     except Exception as e:
-        logger.error(f"Unexpected error inserting house: {str(e)}", exc_info=True)
-        raise HTTPException(500, f"Error inserting house")
+        logger.error(f"Unexpected error with query: {str(e)}", exc_info=True)
+        raise HTTPException(500, f"Error with query")
 

@@ -266,17 +266,19 @@
                 "type": "text"
             },
             {
-                "cascadeDelete": false,
-                "collectionId": "pbc_2105053228",
                 "hidden": false,
-                "id": "relation431889200",
+                "id": "select1466534506",
                 "maxSelect": 1,
-                "minSelect": 0,
-                "name": "Role_id",
+                "name": "role",
                 "presentable": false,
                 "required": false,
                 "system": false,
-                "type": "relation"
+                "type": "select",
+                "values": [
+                    "Admin",
+                    "Facturas",
+                    "Entregas"
+                ]
             }
         ],
         "indexes": [
@@ -776,13 +778,26 @@
                 "id": "text2462055697",
                 "max": 0,
                 "min": 0,
-                "name": "Conversation",
+                "name": "conversation",
                 "pattern": "",
                 "presentable": false,
                 "primaryKey": false,
                 "required": false,
                 "system": false,
                 "type": "text"
+            },
+            {
+                "cascadeDelete": false,
+                "collectionId": "_pb_users_auth_",
+                "hidden": false,
+                "id": "relation2809058197",
+                "maxSelect": 1,
+                "minSelect": 0,
+                "name": "user_id",
+                "presentable": false,
+                "required": false,
+                "system": false,
+                "type": "relation"
             },
             {
                 "hidden": false,

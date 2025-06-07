@@ -16,3 +16,5 @@ def call_server(query: str) -> str:
         return response["data"][0]["rows"]
     except Exception as e:
         return f"[Error parsing MCP response] {e}"
+    
+

@@ -186,9 +186,10 @@ Por favor, utiliza las tablas y claves que están explícitamente definidas arri
 
 #TODO: Ver de pasar o al agente o a dataservice el projectId y tableId (ancap-equipo2.testing)
 intent_prompt = ChatPromptTemplate.from_template(
-    "Given the user input below, answer with only 'SQL' or 'GENERAL'.\n"
+    """Dada una pregunta de un usuario, debes identificar si requiere una consulta SQL o solo es una conversación.
+      responde SOLO 'SQL' si la intención del usuario es una consulta a base de datos o 'GENERAL'.\n"""
     "Input: {query}\n"
-    "Type:"
+    "Tipo:"
 )
 
 data_dictionary = """
@@ -333,3 +334,40 @@ data_dictionary_incomplete_prompt = ChatPromptTemplate.from_template(
 
 
 data_dictionary_prompt = data_dictionary_incomplete_prompt.partial(data_dictionary=data_dictionary)
+facturas_tables = [
+    "FACCAB",        # Facturas - cabezal
+    "FACLINPR",      # Facturas - productos
+    "MONEDAS",       # Maestro Monedas
+    "CLIENTES",      # Maestro Clientes
+    "CLIDIR",        # Direcciones de Clientes
+    "DISTRIBUIDORAS",# Maestro Distribuidoras
+    "PLANTAS",       # Maestro Plantas
+    "POLITICAS",     # Maestro Políticas
+    "MERCADOS",      # Maestro Mercados
+    "NEGOCIOS",      # Maestro Negocios
+    "NEGTPO",        # Maestro Tipos de Negocios
+    "CLITPO",        # Maestro Tipos de Cliente
+    "PRODUCTOS",     # Maestro Productos
+    "PRDGRP",        # Grupos de Productos
+    "PRDCAT",        # Categorías de Productos
+    "DEPARTAMENTOS", # Maestro Departamentos
+    "LOCALIDADES"    # Maestro Localidades
+]
+entregas_tables = [
+    "DOCCRG",        # Documento de Carga - cabezal
+    "DCPRDLIN",      # Documento de Carga - productos
+    "CLIENTES",      # Maestro Clientes
+    "CLIDIR",        # Direcciones de Clientes
+    "DISTRIBUIDORAS",# Maestro Distribuidoras
+    "PLANTAS",       # Maestro Plantas
+    "POLITICAS",     # Maestro Políticas
+    "MERCADOS",      # Maestro Mercados
+    "NEGOCIOS",      # Maestro Negocios
+    "NEGTPO",        # Maestro Tipos de Negocios
+    "CLITPO",        # Maestro Tipos de Cliente
+    "PRODUCTOS",     # Maestro Productos
+    "PRDGRP",        # Grupos de Productos
+    "PRDCAT",        # Categorías de Productos
+    "DEPARTAMENTOS", # Maestro Departamentos
+    "LOCALIDADES"    # Maestro Localidades
+]
