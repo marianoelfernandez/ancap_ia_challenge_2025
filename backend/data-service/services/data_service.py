@@ -24,7 +24,6 @@ class DataService:
         
     def _process_line_chart(self, rows: List[Dict[str, Any]], columns: List[Dict[str, Any]]) -> Dict[str, Any]:
         return {
-            "type": "line_chart",
             "data": rows,
             "columns": columns
         }

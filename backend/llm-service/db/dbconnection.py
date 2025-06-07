@@ -18,7 +18,7 @@ class PocketBaseClient:
         return self.client
 
 
-def save_query(natural_query: str, query: str, response: str, cost:int, conversation_id:str) -> Record:
+def save_query(natural_query: str, query: str, response: dict, cost:int, conversation_id:str) -> Record:
     client = PocketBaseClient().get_client()
 
     data = {
@@ -87,4 +87,3 @@ def get_role(conversation_id: str) -> str | None:
     except Exception as e:
         print(f"Error obteniendo rol para conversation_id {conversation_id}: {e}")
         return None
-    

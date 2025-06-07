@@ -1,6 +1,6 @@
 import requests
 from utils.settings import Settings
-import uuid
+
 
 settings = Settings()
 
@@ -11,9 +11,9 @@ def call_server(query: str) -> str:
     uri = f"{settings.mcp_server_uri}/query"
     response = requests.post(uri, json=payload).json()
     try:
-        print(f"BigQuery response: {response}")
-        print(f"BigQuery response: {response['data'][0]}")
-        return response["data"][0]["rows"]
+        print(f"\nBigQuery response: {response}\n")
+        print(f"Data: {response['data']}\n")
+        return str(response["data"])
     except Exception as e:
         return f"[Error parsing MCP response] {e}"
     

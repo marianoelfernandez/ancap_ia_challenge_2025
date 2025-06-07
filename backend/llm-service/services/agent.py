@@ -7,7 +7,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from utils.connection import call_server
 from utils.settings import Settings
 from typing import TypedDict, Optional
-from utils.constants import schema_constant, intent_prompt
+from utils.constants import schema_constant, intent_prompt, data_dictionary_prompt
 from db.dbconnection import check_or_generate_conversation_id, save_query
 from utils.auth import permissions_check
 
@@ -20,6 +20,7 @@ class AgentState(TypedDict):
     schema: Optional[str]
     generated_sql: Optional[str]
     needs_more_info: Optional[bool]
+    conversation_id: Optional[str]
 
 
 class Agent():
@@ -111,23 +112,28 @@ class Agent():
                 generated_sql = response.content.strip()
                 state["generated_sql"] = generated_sql
                 conversation_id = state.get("conversation_id", None)
+                # TODO: Validate if this is correctly checking the permissions
                 permissions_check(generated_sql, conversation_id)
                 return state
             except Exception as e:
-                return {"output": f"[Error al generar SQL] {e}"}
+                return {
+                    **state,
+                    "output": f"[Error al generar SQL] {e}",
+                    "generated_sql": None,
+                }
 
         def execute_sql(state: AgentState) -> AgentState:
             try:
                 generated_sql = state["generated_sql"]
                 if not generated_sql:
-                    return {"output": "No se generó SQL"}
+                    return {**state, "output": "No se generó SQL"}
                 result = call_server(generated_sql)
                 state["output"] = result
                 self.memory.chat_memory.add_user_message(state["input"])
                 self.memory.chat_memory.add_ai_message(result)
                 return state
             except Exception as e:
-                return {"output": f"[Error al ejecutar SQL] {e}"}
+                return {**state, "output": f"[Error al ejecutar SQL] {e}"}
 
 
         def general_llm(state):
@@ -180,7 +186,7 @@ class Agent():
                 
                 return result["output"]
             except Exception as e:
-                return f"[LangGraph Error] {e}"
+                raise e
             
     def clr_history(self):
         self.memory.clear()

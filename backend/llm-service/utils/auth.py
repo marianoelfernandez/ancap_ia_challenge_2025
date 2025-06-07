@@ -1,6 +1,6 @@
 from http.client import HTTPException
 from db.dbconnection import get_role
-from constants import entregas_tables, facturas_tables
+from utils.constants import entregas_tables, facturas_tables
 import logging
 import jwt
 
@@ -23,9 +23,9 @@ def get_user_id_from_auth(authorization: str) -> str:
       raise HTTPException(401, "User ID not found in token")
 
   logger.debug(f"User ID from token: {user_id}")
+  return user_id
 
-
-  def permissions_check(sql, conversation_id):
+def permissions_check(sql, conversation_id):
     """
     Arg:
         conversation_id (str): The ID of the conversation to check.
@@ -39,12 +39,13 @@ def get_user_id_from_auth(authorization: str) -> str:
     if unauthorized:
         raise ValueError(f"El rol '{role}' no tiene acceso a las siguientes tablas: {unauthorized}")
     
-    return True 
-  
-  def extract_tables_from_sql(sql: str) -> list:
+    return True
+     
+
+def extract_tables_from_sql(sql: str) -> list:
     """
     Extracts table names from a SQL query.
-    
+
     Args:
         sql (str): The SQL query string.
         
@@ -58,4 +59,4 @@ def get_user_id_from_auth(authorization: str) -> str:
         if table.lower() in sql_lower
     ]
     return used_tables
-  
+
