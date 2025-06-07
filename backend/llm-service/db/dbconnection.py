@@ -35,27 +35,42 @@ def save_query(natural_query: str, query: str, response: str, cost:int, conversa
     except Exception as e:
         raise RuntimeError(f"Error saving query to PocketBase: {e}")
     
-def generate_conversation_id(user_id: str, title: str = "Conversation") -> str:
+def check_or_generate_conversation_id(
+    user_id: str, 
+    conversation_id: str | None, 
+    title: str = "Conversation"
+    ) -> str:
     """
-    Creates a new conversation record in PocketBase and returns its ID.
-    
+    Checks if conversation_id belongs to user_id; if None, creates a new conversation.
+
     Args:
-        user_id (str): The ID of the user who owns the conversation.
+        user_id (str): ID of the user who owns the conversation.
+        conversation_id (str | None): Conversation ID to check.
         title (str): Optional title for the conversation.
+
     Returns:
-        str: The ID of the newly created conversation.
+        str: Valid conversation ID.
     """
     client: PocketBase = PocketBaseClient().get_client()
 
-    try:
-        record: Record = client.collection("conversations").create({
-            "user_id": user_id,
-            "conversation": title
-        })
-        return record.id
-    except Exception as e:
-        raise RuntimeError(f"Error creating conversation: {e}")
-
+    if conversation_id is None:
+        try:
+            record: Record = client.collection("conversations").create({
+                "user_id": user_id,
+                "conversation": title
+            })
+            return record.id
+        except Exception as e:
+            raise RuntimeError(f"Error creating conversation: {e}")
+    else:
+        try:
+            record: Record = client.collection("conversations").get_one(conversation_id)
+            if record.get("user_id") == user_id:
+                return conversation_id
+            else:
+                raise RuntimeError(f"Conversation {conversation_id} does not belong to user {user_id}")
+        except Exception as e:
+            raise RuntimeError(f"Error retrieving conversation: {e}")
 
 def get_role(conversation_id: str) -> str | None:
     try:

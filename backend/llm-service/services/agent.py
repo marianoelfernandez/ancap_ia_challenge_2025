@@ -7,7 +7,7 @@ from utils.connection import call_server
 from utils.settings import Settings
 from typing import TypedDict, Optional
 from utils.constants import schema_constant, intent_prompt
-from db.dbconnection import generate_conversation_id, save_query
+from db.dbconnection import check_or_generate_conversation_id, save_query
 from utils.auth import permissions_check
 
 settings = Settings()
@@ -125,9 +125,9 @@ class Agent():
                 return self.runnable.invoke({"input": input_query, "conversation_id": conversation_id})
 
             try:
-                conv_id = conversation_id
-                if not conversation_id:
-                    conv_id = generate_conversation_id(user_id)
+
+
+                conv_id = check_or_generate_conversation_id(user_id,conversation_id)
 
                 result = _run_with_trace(query)
                 save_query(result["input"],
