@@ -155,32 +155,10 @@ CREATE TABLE FACLINPR (
     FacUndFac TEXT
 );
 
-
-
--- Tabla: houses_data
-CREATE TABLE ancap-equipo2.testing.houses_data (
-    id INTEGER,
-    date DATE,
-    bedrooms VARCHAR(255),
-    bathrooms VARCHAR(255),
-    square_footage_living VARCHAR(255),
-    floors VARCHAR(255),
-    waterfront VARCHAR(255),
-    view VARCHAR(255),
-    condition VARCHAR(255),
-    grade VARCHAR(255),
-    square_footage_above VARCHAR(255),
-    square_footage_basement VARCHAR(255),
-    year_built VARCHAR(255),
-    year_renovated VARCHAR(255),
-    zipcode VARCHAR(255),
-    lat VARCHAR(255),
-    long FLOAT,
-    price INTEGER
-);
-
 Recuerda que NO puedes calcular valores usando VARCHAR como número.
 Por favor, utiliza las tablas y claves que están explícitamente definidas arriba.
+Todas las tablas estan en la base de datos "datosancap.entregas_facturacion", por lo que debes usar el nombre de la tabla y no el nombre del esquema.
+Ejemplo: no uses "FACCAB" y usa "datosancap.entregas_facturacion.FACCAB" para referirte a la tabla de facturas.
 
 """
 
@@ -317,11 +295,6 @@ FacPlaId, FacTpoDoc, FacSerie, FacNro, FacLinNro (Clave compuesta)
 PrdId (INT), FacLinCnt (DECIMAL), FacUndFac (VARCHAR)
 PK: (FacPlaId, FacTpoDoc, FacSerie, FacNro, FacLinNro)
 
-houses_data
-
-id (INT), date (DATE), price (INT)
-
-bedrooms, bathrooms, square_footage_living, floors, waterfront, view, condition, grade, square_footage_above, square_footage_basement, year_built, year_renovated, zipcode, lat (VARCHAR), long (FLOAT)
 """
 data_dictionary_incomplete_prompt = ChatPromptTemplate.from_template(
     """Eres un experto en diccionario de datos, usa el diccionario de datos para traducir la pregunta del usuario a una
