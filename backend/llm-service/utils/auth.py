@@ -1,8 +1,9 @@
 from http.client import HTTPException
-from db.dbconnection import get_role
+from db.dbconnection import get_role, get_user
 from utils.constants import entregas_tables, facturas_tables
 import logging
 import jwt
+from fastapi import Header, HTTPException
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -25,6 +26,13 @@ def get_user_id_from_auth(authorization: str) -> str:
   logger.debug(f"User ID from token: {user_id}")
   return user_id
 
+def get_admin_user(authorization: str = Header(...)):
+    user_id = get_user_id_from_auth(authorization)
+    user = get_user(user_id)
+    if not user or getattr(user, "role") != "Admin":
+        raise HTTPException(status_code=403, detail="User is not authorized to perform this action")
+    return user
+
 def permissions_check(sql, conversation_id):
     """
     Arg:
@@ -33,6 +41,8 @@ def permissions_check(sql, conversation_id):
         bool: True if the user has permissions for the query, False otherwise.
     """
     role = get_role(conversation_id)
+    if not role:
+        raise ValueError(f"Could not determine role for conversation_id {conversation_id}")
     tables_used = extract_tables_from_sql(sql)
     allowed_tables = set(TABLES_PER_ROLE.get(role, []))
     unauthorized = [table for table in tables_used if table not in allowed_tables]
