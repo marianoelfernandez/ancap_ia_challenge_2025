@@ -4,6 +4,8 @@ from pocketbase.errors import ClientResponseError
 from threading import Lock
 from utils.settings import Settings
 from typing import cast
+from langchain.memory import ConversationBufferMemory
+from langchain.schema import HumanMessage, AIMessage
 import logging
 
 logger = logging.getLogger(__name__)
@@ -114,3 +116,38 @@ def get_user(user_id: str) -> Record | None:
     except Exception as e:
         logger.error(f"Unexpected error getting user {user_id}: {e}")
         return None
+    
+def build_memory_of_conversation(conversation_id: str) -> list:
+    """
+    Builds a memory of the conversation by retrieving messages from PocketBase.
+
+    Args:
+        conversation_id (str): ID of the conversation to retrieve messages for.
+
+    Returns:
+        list: List of messages in the conversation.
+    """
+    client = PocketBaseClient().get_client()
+    try:
+        messages = client.collection("queries").get_list(
+            1,10,{
+            "filter":f"conversation_id='{conversation_id}'",
+            "sort":"-created"
+            }
+        )
+        memory = parse_memory(messages)
+        return memory
+    except Exception as e:
+        logger.error(f"Error building memory for conversation {conversation_id}: {e}")
+        return []
+    
+def parse_memory(chat_history_list):
+    messages = []
+    for entry in chat_history_list:
+        query = getattr(entry, "natural_query")
+        output = getattr(entry, "output")
+        messages.append(HumanMessage(content=query))
+        messages.append(AIMessage(content=output))
+    memory = ConversationBufferMemory(return_messages=True, memory_key="chat_history")
+    memory.chat_memory.messages = messages
+    return memory
