@@ -31,12 +31,11 @@ enum AppRoute<ParamsType extends ScreenParams<ParamsType>> {
   ),
   chatbot<NoParams>(
     path: "/chatbot",
-    isAuthEnforcementRequired: true, // Assuming auth is required
+    isAuthEnforcementRequired: true,
   ),
   splash<NoParams>(
     path: "/splash",
-    isAuthEnforcementRequired:
-        false, // Splash screen doesn't need auth itself, shown after login
+    isAuthEnforcementRequired: false,
   ),
   ;
 
