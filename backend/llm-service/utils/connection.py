@@ -4,7 +4,7 @@ from utils.settings import Settings
 
 settings = Settings()
 
-def call_server(query: str) -> str:
+def call_server(query: str) -> dict:
     payload = {
         "query": query
     }
@@ -13,8 +13,9 @@ def call_server(query: str) -> str:
     try:
         print(f"\nBigQuery response: {response}\n")
         print(f"Data: {response['data']}\n")
-        return str(response)
+        metadata = response.get('metadata', {})
+        return {'response': response, 'cost': float(metadata.get('cost_estimate', 0.0))}
     except Exception as e:
-        return f"[Error parsing MCP response] {e}"
+        return {"error": f"[Error parsing MCP response] {e}"}
     
 

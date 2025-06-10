@@ -128,10 +128,10 @@ class Agent():
                 if not generated_sql:
                     return {**state, "output": "No se generó SQL"}
                 result = call_server(generated_sql)
-                state["output"] = result
-                state['cost'] = -1 # TODO: add cost from result
+                state["output"] = str(result['response']) if 'response' in result else str(result['error'])
+                state['cost'] = float(result.get('cost', 0.0))
                 self.memory.chat_memory.add_user_message(state["input"])
-                self.memory.chat_memory.add_ai_message(result)
+                self.memory.chat_memory.add_ai_message(state["output"])
                 return state
             except Exception as e:
                 return {**state, "output": f"[Error al ejecutar SQL] {e}"}
