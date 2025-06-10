@@ -2,6 +2,7 @@
 
 import "dart:async";
 
+import "package:anc_app/src/di.dart";
 import "package:flutter/material.dart";
 import "package:flutter/services.dart";
 import "package:anc_app/src/app.dart";
@@ -13,6 +14,7 @@ void main() async {
     () async {
       WidgetsFlutterBinding.ensureInitialized();
       await AppEnv.I.load(locale: AppEnvLocale.us);
+      await setupDI();
       await SystemChrome.setPreferredOrientations(
         [
           DeviceOrientation.portraitUp,

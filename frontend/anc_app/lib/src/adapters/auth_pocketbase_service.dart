@@ -1,6 +1,7 @@
 import "package:anc_app/src/features/auth/services/auth_service.dart";
 import "package:anc_app/src/models/user.dart";
 import "package:pocketbase/pocketbase.dart";
+import "package:flutter/foundation.dart";
 import "package:oxidized/oxidized.dart";
 //auth error
 import "package:anc_app/src/models/errors/auth_error.dart";
@@ -49,7 +50,8 @@ class AuthPocketBaseService implements AuthService {
           name: "",
         ),
       );
-    } catch (e) {
+    } catch (e, s) {
+      debugPrint("signIn error: $e\n$s");
       return Result.err(AuthErrorUnknown());
     }
   }
