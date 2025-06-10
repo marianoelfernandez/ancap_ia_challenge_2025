@@ -75,13 +75,13 @@ def check_or_generate_conversation_id(
 def get_role(conversation_id: str) -> str | None:
     try:
         client = PocketBaseClient().get_client()
-        conversation = client.collection("conversations").get_one(conversation_id)
-        user_id = conversation.get("user_id")
+        conversation : Record = client.collection("conversations").get_one(conversation_id)
+        user_id = conversation.__dict__.get("user_id")
         if not user_id:
             return None
         
         user = client.collection("users").get_one(user_id)
-        role = user.get("role")
+        role = user.__dict__.get("role")
         return role
 
     except Exception as e:

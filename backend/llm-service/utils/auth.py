@@ -32,15 +32,20 @@ def permissions_check(sql, conversation_id):
     Returns:
         bool: True if the user has permissions for the query, False otherwise.
     """
-    role = get_role(conversation_id)
-    tables_used = extract_tables_from_sql(sql)
-    allowed_tables = set(TABLES_PER_ROLE.get(role, []))
-    unauthorized = [table for table in tables_used if table not in allowed_tables]
-    if unauthorized:
-        raise ValueError(f"El rol '{role}' no tiene acceso a las siguientes tablas: {unauthorized}")
-    
-    return True
-     
+    try:
+        role = get_role(conversation_id)
+        tables_used = extract_tables_from_sql(sql)
+        allowed_tables = TABLES_PER_ROLE.get(role, [])
+        if allowed_tables:
+            allowed_tables = allowed_tables[0]
+        unauthorized = [table for table in tables_used if table not in allowed_tables]
+        if unauthorized:
+            raise ValueError(f"El rol '{role}' no tiene acceso a las siguientes tablas: {unauthorized}")
+        
+        return True
+    except Exception as e:
+        logger.error(f"Error in permissions_check: {e}")
+        raise HTTPException(403, f"Permisos insuficientes: {str(e)}")
 
 def extract_tables_from_sql(sql: str) -> list:
     """
