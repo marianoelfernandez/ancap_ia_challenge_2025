@@ -1,5 +1,7 @@
 [general]
 log_level = "debug"
+api_url = "http://localhost:8090"
+
 
 [us]
 easter_egg = false

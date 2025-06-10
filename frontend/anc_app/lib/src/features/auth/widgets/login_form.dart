@@ -1,24 +1,26 @@
 import "dart:math" as math;
 
+import "package:anc_app/src/features/auth/cubits/auth_cubit.dart";
 import "package:flutter/material.dart";
 import "dart:async";
 import "package:google_fonts/google_fonts.dart";
 import "package:anc_app/src/router/router.dart";
+import "package:flutter_bloc/flutter_bloc.dart";
 
 class LoginForm extends StatefulWidget {
   final VoidCallback onLoginSuccess;
+  final AuthCubit authCubit = AuthCubit();
 
-  const LoginForm({Key? key, required this.onLoginSuccess}) : super(key: key);
+  LoginForm({super.key, required this.onLoginSuccess});
 
   @override
-  _LoginFormState createState() => _LoginFormState();
+  State<LoginForm> createState() => _LoginFormState();
 }
 
 class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
-  bool _isLoading = false;
 
   late AnimationController _slideController;
   late AnimationController _pulseController;
@@ -170,98 +172,124 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
+    // Use the AuthCubit to sign in
+    final authCubit = context.read<AuthCubit>();
+    await authCubit.signIn(
+      _emailController.text.trim(),
+      _passwordController.text,
+    );
+  }
 
-    await Future.delayed(const Duration(seconds: 2));
-
-    setState(() {
-      _isLoading = false;
-    });
-
-    widget.onLoginSuccess();
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _formAnimation,
-      builder: (context, child) {
-        return Transform.translate(
-          offset: Offset(0, 20 * (1 - _formAnimation.value)),
-          child: Opacity(
-            opacity: _formAnimation.value.clamp(0.0, 1.0),
-            child: Container(
-              constraints: const BoxConstraints(maxWidth: 480, maxHeight: 590),
-              child: Stack(
-                children: [
-                  ...List.generate(8, (index) => NeuralDot(index: index)),
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      gradient: const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Color(0xFF1A1F2E),
-                          Color(0xFF0F1419),
-                        ],
-                      ),
-                      border: Border.all(
-                        width: 2,
-                        color: Colors.transparent,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFFFFC107).withValues(alpha: 0.2),
-                          blurRadius: 20,
-                          spreadRadius: 0,
+    return BlocListener<AuthCubit, AuthState>(
+      listener: (context, state) {
+        if (state.isAuthenticated) {
+          // Navigate to splash screen on successful login
+          context.goToAppRoute(AppRoute.splash);
+          widget.onLoginSuccess();
+        } else if (state.hasError) {
+          // Show error message
+          _showErrorSnackBar(state.redactedError);
+        }
+      },
+      child: BlocBuilder<AuthCubit, AuthState>(
+        builder: (context, state) {
+          return AnimatedBuilder(
+            animation: _formAnimation,
+            builder: (context, child) {
+              return Transform.translate(
+                offset: Offset(0, 20 * (1 - _formAnimation.value)),
+                child: Opacity(
+                  opacity: _formAnimation.value.clamp(0.0, 1.0),
+                  child: Container(
+                    constraints:
+                        const BoxConstraints(maxWidth: 480, maxHeight: 590),
+                    child: Stack(
+                      children: [
+                        ...List.generate(8, (index) => NeuralDot(index: index)),
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            gradient: const LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Color(0xFF1A1F2E),
+                                Color(0xFF0F1419),
+                              ],
+                            ),
+                            border: Border.all(
+                              width: 2,
+                              color: Colors.transparent,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFFFC107)
+                                    .withValues(alpha: 0.2),
+                                blurRadius: 20,
+                                spreadRadius: 0,
+                              ),
+                            ],
+                          ),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16),
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  const Color(0xFFFFC107)
+                                      .withValues(alpha: 0.1),
+                                  Colors.transparent,
+                                  const Color(0xFF1976D2)
+                                      .withValues(alpha: 0.1),
+                                ],
+                              ),
+                            ),
+                            child: Container(
+                              margin: const EdgeInsets.all(2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 32,
+                                vertical: 20,
+                              ),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(14),
+                                color: const Color(0xFF1A1F2E)
+                                    .withValues(alpha: 0.9),
+                                backgroundBlendMode: BlendMode.multiply,
+                              ),
+                              child: Column(
+                                children: [
+                                  _buildHeader(),
+                                  const SizedBox(height: 24),
+                                  _buildLoginForm(state),
+                                  const SizedBox(height: 24),
+                                  _buildFeatures(),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
                       ],
                     ),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            const Color(0xFFFFC107).withValues(alpha: 0.1),
-                            Colors.transparent,
-                            const Color(0xFF1976D2).withValues(alpha: 0.1),
-                          ],
-                        ),
-                      ),
-                      child: Container(
-                        margin: const EdgeInsets.all(2),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 32,
-                          vertical: 20,
-                        ),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(14),
-                          color: const Color(0xFF1A1F2E).withValues(alpha: 0.9),
-                          backgroundBlendMode: BlendMode.multiply,
-                        ),
-                        child: Column(
-                          children: [
-                            _buildHeader(),
-                            const SizedBox(height: 24),
-                            _buildLoginForm(),
-                            const SizedBox(height: 24),
-                            _buildFeatures(),
-                          ],
-                        ),
-                      ),
-                    ),
                   ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
+                ),
+              );
+            },
+          );
+        },
+      ),
     );
   }
 
@@ -365,7 +393,7 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildLoginForm() {
+  Widget _buildLoginForm(AuthState authState) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -431,17 +459,10 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
                     color: Colors.transparent,
                     child: InkWell(
                       borderRadius: BorderRadius.circular(8),
-                      onTap: _isLoading
-                          ? null
-                          : () {
-                              context.goToAppRoute(
-                                AppRoute.splash,
-                              ); // Navigate to splash screen first
-                              // _handleLogin();
-                            },
+                      onTap: authState.isLoading ? null : _handleLogin,
                       child: Container(
                         alignment: Alignment.center,
-                        child: _isLoading
+                        child: authState.isLoading
                             ? const Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [

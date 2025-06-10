@@ -45,6 +45,10 @@ enum EnvKey<T> {
     defaultValue: AppLogLevel.info,
     parser: AppLogLevel.parse,
   ),
+  apiUrl(
+    path: "general.api_url",
+    defaultValue: "",
+  ),
   ;
 
   final String path;

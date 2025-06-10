@@ -2,6 +2,7 @@ import "package:equatable/equatable.dart";
 import "package:anc_app/src/features/auth/services/auth_service.dart";
 import "package:anc_app/src/models/errors/auth_error.dart";
 import "package:anc_app/src/models/user.dart";
+import "package:flutter/foundation.dart";
 import "package:flutter_bloc/flutter_bloc.dart";
 import "package:get_it/get_it.dart";
 import "package:oxidized/oxidized.dart";
@@ -26,6 +27,7 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   Future<void> signIn(String email, String password) async {
+    debugPrint("Signing in");
     emit(state.toLoading());
     final result = await authService.signIn(
       email: email,
