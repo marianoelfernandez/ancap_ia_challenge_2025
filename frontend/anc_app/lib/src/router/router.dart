@@ -35,7 +35,8 @@ enum AppRoute<ParamsType extends ScreenParams<ParamsType>> {
   ),
   splash<NoParams>(
     path: "/splash",
-    isAuthEnforcementRequired: false, // Splash screen doesn't need auth itself, shown after login
+    isAuthEnforcementRequired:
+        false, // Splash screen doesn't need auth itself, shown after login
   ),
   ;
 
@@ -86,7 +87,7 @@ GoRouter buildRouter({
             GoRoute(
               name: AppRoute.initial.name,
               path: AppRoute.initial.path,
-              builder: (context, state) => const LoginScreen(),
+              builder: (context, state) => LoginScreen(),
             ),
             GoRoute(
               name: AppRoute.chatbot.name,

@@ -1,5 +1,6 @@
 import "dart:math" as math;
 
+import "package:anc_app/src/features/auth/cubits/auth_cubit.dart";
 import "package:flutter/material.dart";
 import "dart:async";
 import "package:google_fonts/google_fonts.dart";
@@ -7,11 +8,12 @@ import "package:anc_app/src/router/router.dart";
 
 class LoginForm extends StatefulWidget {
   final VoidCallback onLoginSuccess;
+  final AuthCubit authCubit = AuthCubit();
 
-  const LoginForm({Key? key, required this.onLoginSuccess}) : super(key: key);
+  LoginForm({super.key, required this.onLoginSuccess});
 
   @override
-  _LoginFormState createState() => _LoginFormState();
+  State<LoginForm> createState() => _LoginFormState();
 }
 
 class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {

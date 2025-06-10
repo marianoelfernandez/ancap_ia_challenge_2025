@@ -4,7 +4,7 @@ import "package:google_fonts/google_fonts.dart";
 import "package:anc_app/src/features/auth/widgets/login_form.dart";
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({Key? key}) : super(key: key);
+  const LoginScreen({super.key});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
