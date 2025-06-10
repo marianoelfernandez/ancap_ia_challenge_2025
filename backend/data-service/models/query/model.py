@@ -42,7 +42,7 @@ class BatchQueryRequest(BaseModel):
 
 class QueryMetadata(BaseModel):
     execution_time: float 
-    rows_processed: int
+    rows_processed: Optional[int] = None
     bytes_processed: Optional[int] = None
     query_id: str
     timestamp: datetime

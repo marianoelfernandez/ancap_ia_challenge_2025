@@ -22,7 +22,6 @@ async def execute_sql_query(
     Execute a SQL query and return results
     """
     try:
-        start_time = datetime.now()
         
         # Extract SQL from the request text
         clean_sql = extract_sql_from_text(request.query)
@@ -34,12 +33,29 @@ async def execute_sql_query(
             limit=request.limit
         )
 
+        start_time = raw_results.get("start_time")
+        end_time = raw_results.get("end_time")
+        bytes_billed = raw_results.get("bytes_billed", 0)
+        estimated_cost = bigquery_service._estimate_cost(bytes_billed)
+        job_id = raw_results.get("job_id", "null")
+
+        execution_duration = 0.0
+        if start_time and end_time:
+            execution_duration = (end_time - start_time).total_seconds()
+        
         processed_results = data_service.process_results(raw_results, FlChartType.LINE_CHART); # TODO: add format from request
     
         
         return SQLQueryResponse(
             status=QueryStatus.SUCCESS,
-            data=processed_results
+            data=processed_results,
+            metadata=QueryMetadata(
+                execution_time=execution_duration,
+                bytes_processed=bytes_billed,
+                query_id=job_id,
+                timestamp=datetime.now(),
+                cost_estimate=estimated_cost
+            )
         )
         
     except ValueError as e:
