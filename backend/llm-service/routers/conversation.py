@@ -29,5 +29,5 @@ def receive_query_endpoint(req:QueryRequest,  authorization: str = Header(...)):
         raise HTTPException(422, ve.errors())
     except Exception as e:
         logger.error(f"Unexpected error with query: {str(e)}", exc_info=True)
-        raise HTTPException(500, f"Error with query")
+        raise HTTPException(500, f"{e}")
 

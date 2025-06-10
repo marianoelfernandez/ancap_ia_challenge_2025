@@ -1,3 +1,4 @@
+from pydantic import ValidationError
 from langsmith import traceable
 from langchain_openai import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
@@ -62,6 +63,9 @@ class Agent():
             schema_str = schema_constant
             state["schema"] = schema_str
             state["needs_more_info"] = False
+
+            if "conversation_id" not in state and "conversation_id" in state.get("input", {}):
+                state["conversation_id"] = state["input"]["conversation_id"]
             return state
 
 
@@ -108,19 +112,15 @@ class Agent():
             try:
                 query = state["input"]
                 schema = state["schema"]
+                conversation_id = state.get("conversation_id", None)
                 response = self.sql_chain.invoke({"input": query, "schema": schema})
                 generated_sql = response.content.strip()
                 state["generated_sql"] = generated_sql
-                conversation_id = state.get("conversation_id", None)
-                # TODO: Validate if this is correctly checking the permissions
                 permissions_check(generated_sql, conversation_id)
                 return state
             except Exception as e:
-                return {
-                    **state,
-                    "output": f"[Error al generar SQL] {e}",
-                    "generated_sql": None,
-                }
+                state["output"] = f"[Error durante la consulta] {e}"
+                raise Exception(state["output"])
 
         def execute_sql(state: AgentState) -> AgentState:
             try:
@@ -169,15 +169,15 @@ class Agent():
 
     def ask_agent(self, query: str, conversation_id: str| None, user_id : str) -> str:
             @traceable(name="Agent Graph Run")
-            def _run_with_trace(input_query):
-                return self.runnable.invoke({"input": input_query, "conversation_id": conversation_id})
+            def _run_with_trace(input_query, conv_id):
+                return self.runnable.invoke({"input": input_query, "conversation_id": conv_id})
 
             try:
 
 
-                conv_id = check_or_generate_conversation_id(user_id,conversation_id)
+                conv_id = check_or_generate_conversation_id(user_id, conversation_id)
 
-                result = _run_with_trace(query)
+                result = _run_with_trace(query, conv_id)
                 save_query(result["input"],
                             result.get("generated_sql", ""),
                               result.get("output", ""),
