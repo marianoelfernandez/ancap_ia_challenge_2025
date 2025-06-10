@@ -9,7 +9,7 @@ from utils.connection import call_server
 from utils.settings import Settings
 from typing import TypedDict, Optional
 from utils.constants import schema_constant, intent_prompt, data_dictionary_prompt
-from db.dbconnection import check_or_generate_conversation_id, save_query
+from db.dbconnection import check_or_generate_conversation_id, save_query, build_memory_of_conversation
 from utils.auth import permissions_check
 
 settings = Settings()
@@ -31,8 +31,11 @@ class Agent():
             temperature=0,
             google_api_key=settings.api_key
             )
-        self.memory = ConversationBufferMemory(return_messages=True, memory_key="chat_history")
-
+        self.pro_agent =ChatGoogleGenerativeAI(
+            model="gemini-2.5-pro-preview-06-05",
+            temperature=0,
+            google_api_key=settings.api_key
+            )
         self.general_prompt = ChatPromptTemplate.from_messages([
             ("system", "You are a helpful assistant."),
             MessagesPlaceholder("chat_history"),
@@ -40,15 +43,18 @@ class Agent():
         ])
         self.general_chain = self.general_prompt | self.llm
 
-
-
         self.sql_generation_prompt = ChatPromptTemplate.from_messages([
         ("system", """
          Eres un amigable experto SQL con acceso a un esquema de base de datos.\n
         Tienes acceso a las siguientes tablas y herramientas:\n\n{schema}"""),
-        ("user", "{input}")
+        ("system", """
+         El usuario te proporcionará una consulta en lenguaje natural.\n"""),
+        ("user", "{input}"),
+        ("system", """
+         También tienes la consulta enriquecida con nombres de tablas para ayudarte a generar el código SQL: {curated_query}.\n""")
         ])
-        self.sql_chain = self.sql_generation_prompt | self.llm
+
+        self.sql_chain = self.sql_generation_prompt | self.pro_agent
 
         self.graph = self._build_graph(AgentState)
         self.runnable = self.graph.compile()
@@ -78,9 +84,13 @@ class Agent():
         def query_translator(state: AgentState) -> AgentState:
             try:
                 query = state["input"]
+                conv_id = state["conversation_id"]
+                memory = build_memory_of_conversation(conv_id)
                 prompt = data_dictionary_prompt.format(
-                    query=query
+                    query=query,
+                    chat_history = memory.chat_memory.messages,
                 )
+
 
                 response = self.llm.invoke(prompt)
 
@@ -104,16 +114,16 @@ class Agent():
             return "prepare_sql"
         
         def respond_with_retry(state: dict) -> dict:
-            self.memory.chat_memory.add_user_message(state["input"])
-            self.memory.chat_memory.add_ai_message(state["output"])
             return state
     
         def prepare_sql(state: AgentState) -> AgentState:
             try:
                 query = state["input"]
                 schema = state["schema"]
+                curated_query = state["output"]
+                print(f"Curated Query: {curated_query}")
                 conversation_id = state.get("conversation_id", None)
-                response = self.sql_chain.invoke({"input": query, "schema": schema})
+                response = self.sql_chain.invoke({"input": query, "schema": schema, "curated_query": curated_query})
                 generated_sql = response.content.strip()
                 state["generated_sql"] = generated_sql
                 permissions_check(generated_sql, conversation_id)
@@ -130,20 +140,19 @@ class Agent():
                 result = call_server(generated_sql)
                 state["output"] = str(result['response']) if 'response' in result else str(result['error'])
                 state['cost'] = float(result.get('cost', 0.0))
-                self.memory.chat_memory.add_user_message(state["input"])
-                self.memory.chat_memory.add_ai_message(state["output"])
                 return state
             except Exception as e:
                 return {**state, "output": f"[Error al ejecutar SQL] {e}"}
 
 
         def general_llm(state):
+            conv_id = state["conversation_id"]
+            memory = build_memory_of_conversation(conv_id)
+
             response = self.general_chain.invoke({
                 "input": state["input"],
-                "chat_history": self.memory.chat_memory.messages,
+                "chat_history": memory.chat_memory.messages,
             })
-            self.memory.chat_memory.add_user_message(state["input"])
-            self.memory.chat_memory.add_ai_message(response.content)
             return {"output": response.content}
 
         builder.add_node("load_schema", load_schema_node)
@@ -186,9 +195,8 @@ class Agent():
                               result.get("cost", 0),
                               conv_id)
                 
-                return result["output"]
+                return result["output"], result["conversation_id"]
             except Exception as e:
                 raise e
             
-    def clr_history(self):
-        self.memory.clear()
+

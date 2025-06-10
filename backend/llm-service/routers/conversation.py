@@ -21,8 +21,8 @@ def receive_query_endpoint(req:QueryRequest,  authorization: str = Header(...)):
     logger.debug("Received query request")
     try:
         user_id = get_user_id_from_auth(authorization)
-        result = agent.ask_agent(req.query, req.conversation_id, user_id)
-        return {"response": result}
+        result, conv_id = agent.ask_agent(req.query, req.conversation_id, user_id)
+        return {"response": result, "conversation_id":conv_id}
     except ValidationError as ve:
         logger.warning(f"Validation error: {ve.errors()}")
         raise HTTPException(422, ve.errors())
