@@ -298,9 +298,10 @@ PK: (FacPlaId, FacTpoDoc, FacSerie, FacNro, FacLinNro)
 """
 data_dictionary_incomplete_prompt = ChatPromptTemplate.from_template(
     """Eres un experto en diccionario de datos, usa el diccionario de datos para traducir la pregunta del usuario a una
-      pregunta curada con información específica sobre las tablas a consultar, debes REESCRIBIR la consulta para que sea más descriptiva. Responde SOLO con la consulta transformada o una solicitud de más 
+      pregunta curada con información específica sobre las tablas a consultar, debes REESCRIBIR la consulta del usuario EN LENGUAJE NATURAL para que sea más descriptiva. Responde SOLO con la consulta transformada o una solicitud de más 
       información comenzando con [RETRY] si no tienes suficiente información.\n\n"""
     "{data_dictionary}\n\n"
+    "{chat_history}\n\n"
     "Input: {query}\n"
     "Type:"
 )
