@@ -22,7 +22,7 @@ class AgentState(TypedDict):
     generated_sql: Optional[str]
     needs_more_info: Optional[bool]
     conversation_id: Optional[str]
-
+    cost: Optional[float]
 
 class Agent():
     def __init__(self):
@@ -129,6 +129,7 @@ class Agent():
                     return {**state, "output": "No se generó SQL"}
                 result = call_server(generated_sql)
                 state["output"] = result
+                state['cost'] = -1 # TODO: add cost from result
                 self.memory.chat_memory.add_user_message(state["input"])
                 self.memory.chat_memory.add_ai_message(result)
                 return state
@@ -178,10 +179,11 @@ class Agent():
                 conv_id = check_or_generate_conversation_id(user_id, conversation_id)
 
                 result = _run_with_trace(query, conv_id)
+                print(f"\nResult: {result}\n")
                 save_query(result["input"],
                             result.get("generated_sql", ""),
                               result.get("output", ""),
-                              0,
+                              result.get("cost", 0),
                               conv_id)
                 
                 return result["output"]

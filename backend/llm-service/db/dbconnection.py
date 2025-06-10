@@ -31,7 +31,7 @@ def save_query(natural_query: str, query: str, response: dict, cost:int, convers
         "natural_query": natural_query,
         "sql_query": query,
         "output": response,
-        "cost": 0.0,  # Placeholder for cost, adjust as needed
+        "cost": cost,
         "conversation_id": conversation_id,
     }
 

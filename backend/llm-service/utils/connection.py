@@ -13,7 +13,7 @@ def call_server(query: str) -> str:
     try:
         print(f"\nBigQuery response: {response}\n")
         print(f"Data: {response['data']}\n")
-        return str(response["data"])
+        return str(response)
     except Exception as e:
         return f"[Error parsing MCP response] {e}"
     
