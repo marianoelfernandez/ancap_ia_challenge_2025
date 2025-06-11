@@ -2,8 +2,6 @@ import "dart:math" as math;
 
 import "package:anc_app/src/features/auth/cubits/auth_cubit.dart";
 import "package:flutter/material.dart";
-import "dart:async";
-import "package:google_fonts/google_fonts.dart";
 import "package:anc_app/src/router/router.dart";
 import "package:flutter_bloc/flutter_bloc.dart";
 
@@ -24,18 +22,15 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
 
   late AnimationController _slideController;
   late AnimationController _pulseController;
-  late AnimationController _typingController;
 
   late Animation<double> _formAnimation;
   late Animation<double> _pulseAnimation;
 
   late Animation<double> _headerIconAnimation;
-  late Animation<double> _headerTitleAnimation;
   late Animation<double> _headerSubtitleAnimation;
   late Animation<double> _emailFieldAnimation;
   late Animation<double> _passwordFieldAnimation;
   late Animation<double> _loginButtonAnimation;
-  late Animation<double> _featuresAnimation;
 
   @override
   void initState() {
@@ -48,11 +43,6 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
 
     _pulseController = AnimationController(
       duration: const Duration(seconds: 2),
-      vsync: this,
-    );
-
-    _typingController = AnimationController(
-      duration: const Duration(milliseconds: 1400),
       vsync: this,
     );
 
@@ -73,16 +63,6 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
       CurvedAnimation(
         parent: _slideController,
         curve: const Interval(0.1, 0.25, curve: Curves.elasticOut),
-      ),
-    );
-
-    _headerTitleAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(
-      CurvedAnimation(
-        parent: _slideController,
-        curve: const Interval(0.2, 0.35, curve: Curves.easeOut),
       ),
     );
 
@@ -126,16 +106,6 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
       ),
     );
 
-    _featuresAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(
-      CurvedAnimation(
-        parent: _slideController,
-        curve: const Interval(0.7, 0.85, curve: Curves.easeOut),
-      ),
-    );
-
     _pulseAnimation = Tween<double>(
       begin: 0.3,
       end: 0.6,
@@ -148,14 +118,12 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
 
     _slideController.forward();
     _pulseController.repeat(reverse: true);
-    _typingController.repeat();
   }
 
   @override
   void dispose() {
     _slideController.dispose();
     _pulseController.dispose();
-    _typingController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -323,34 +291,6 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
             );
           },
         ),
-
-        const SizedBox(height: 16),
-
-        AnimatedBuilder(
-          animation: _headerTitleAnimation,
-          builder: (context, child) {
-            return Opacity(
-              opacity: _headerTitleAnimation.value,
-              child: ShaderMask(
-                shaderCallback: (bounds) => const LinearGradient(
-                  colors: [Color(0xFFFFC107), Color(0xFFFFD54F)],
-                ).createShader(bounds),
-                child: Text(
-                  "ANC-APP",
-                  style: GoogleFonts.inter(
-                    fontSize: 36,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                    letterSpacing: 2,
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-
-        const SizedBox(height: 8),
-
         AnimatedBuilder(
           animation: _headerSubtitleAnimation,
           builder: (context, child) {
@@ -367,8 +307,6 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
             );
           },
         ),
-
-        const SizedBox(height: 8),
       ],
     );
   }
@@ -552,78 +490,6 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
                     )
                   : null,
             ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFeatures() {
-    return AnimatedBuilder(
-      animation: _featuresAnimation,
-      builder: (context, child) {
-        return Opacity(
-          opacity: _featuresAnimation.value,
-          child: Container(
-            padding: const EdgeInsets.only(top: 16),
-            decoration: BoxDecoration(
-              border: Border(
-                top: BorderSide(
-                  color: Colors.white.withValues(alpha: 0.1),
-                ),
-              ),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildFeatureItem(
-                    icon: Icons.psychology,
-                    label: "Análisis Inteligente",
-                    color: const Color(0xFF1976D2),
-                  ),
-                ),
-                Expanded(
-                  child: _buildFeatureItem(
-                    icon: Icons.security,
-                    label: "Acceso Seguro",
-                    color: const Color(0xFFFFC107),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildFeatureItem({
-    required IconData icon,
-    required String label,
-    required Color color,
-  }) {
-    return Column(
-      children: [
-        Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: color.withValues(alpha: 0.2),
-          ),
-          child: Icon(
-            icon,
-            color: color,
-            size: 16,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.85),
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
           ),
         ),
       ],
