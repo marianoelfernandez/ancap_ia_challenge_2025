@@ -220,7 +220,7 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
                         ...List.generate(8, (index) => NeuralDot(index: index)),
                         Container(
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(8),
                             gradient: const LinearGradient(
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
@@ -233,18 +233,10 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
                               width: 2,
                               color: Colors.transparent,
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFFFFC107)
-                                    .withValues(alpha: 0.2),
-                                blurRadius: 20,
-                                spreadRadius: 0,
-                              ),
-                            ],
                           ),
                           child: Container(
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(8),
                               gradient: LinearGradient(
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
@@ -264,8 +256,8 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
                                 vertical: 20,
                               ),
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(14),
-                                color: const Color(0xFF1A1F2E)
+                                borderRadius: BorderRadius.circular(8),
+                                color: const Color(0xFF1344D6)
                                     .withValues(alpha: 0.9),
                                 backgroundBlendMode: BlendMode.multiply,
                               ),
@@ -274,8 +266,6 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
                                   _buildHeader(),
                                   const SizedBox(height: 24),
                                   _buildLoginForm(state),
-                                  const SizedBox(height: 24),
-                                  _buildFeatures(),
                                 ],
                               ),
                             ),
@@ -367,10 +357,10 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
             return Opacity(
               opacity: _headerSubtitleAnimation.value,
               child: const Text(
-                "AI Business Intelligence Assistant",
+                "Ancap Natural Chat",
                 style: TextStyle(
                   fontSize: 16,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w200,
                   color: Colors.white,
                 ),
               ),
@@ -379,16 +369,6 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
         ),
 
         const SizedBox(height: 8),
-
-        AnimatedBuilder(
-          animation: _headerSubtitleAnimation,
-          builder: (context, child) {
-            return Opacity(
-              opacity: _headerSubtitleAnimation.value,
-              child: TypingIndicator(controller: _typingController),
-            );
-          },
-        ),
       ],
     );
   }
@@ -734,43 +714,6 @@ class _NeuralDotState extends State<NeuralDot>
           ),
         );
       },
-    );
-  }
-}
-
-class TypingIndicator extends StatelessWidget {
-  final AnimationController controller;
-
-  const TypingIndicator({super.key, required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(3, (index) {
-        return AnimatedBuilder(
-          animation: controller,
-          builder: (context, child) {
-            final progress = (controller.value * 3 - index).clamp(0.0, 1.0);
-            final bounceValue = math.sin(progress * math.pi);
-
-            return Container(
-              margin: const EdgeInsets.symmetric(horizontal: 2),
-              child: Transform.translate(
-                offset: Offset(0, -10 * bounceValue),
-                child: Container(
-                  width: 6,
-                  height: 6,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Color(0xFFFFC107),
-                  ),
-                ),
-              ),
-            );
-          },
-        );
-      }),
     );
   }
 }

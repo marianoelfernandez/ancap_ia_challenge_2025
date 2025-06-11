@@ -78,9 +78,10 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     required Widget child,
     EdgeInsetsGeometry? padding,
     EdgeInsetsGeometry? margin,
+    double? borderRadius,
   }) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(12.0),
+      borderRadius: BorderRadius.circular(borderRadius ?? 12.0),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
         child: Container(
@@ -88,7 +89,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
           padding: padding,
           decoration: BoxDecoration(
             color: _glassBackground,
-            borderRadius: BorderRadius.circular(12.0),
+            borderRadius: BorderRadius.circular(borderRadius ?? 12.0),
             border: Border.all(color: _glassBorder, width: 1),
           ),
           child: child,
@@ -132,6 +133,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   Widget _buildSidebar() {
     return _buildGlassEffectContainer(
       margin: EdgeInsets.zero,
+      borderRadius: 0,
       child: SizedBox(
         width: 300,
         child: Column(
@@ -343,6 +345,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     return _buildGlassEffectContainer(
       margin: const EdgeInsets.all(0),
       padding: const EdgeInsets.all(24.0),
+      borderRadius: 0,
       child: Container(
         decoration: BoxDecoration(
           border:
@@ -480,8 +483,9 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
   Widget _buildInputArea() {
     return _buildGlassEffectContainer(
-      margin: const EdgeInsets.all(0),
-      padding: const EdgeInsets.all(24.0),
+      margin: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(12.0),
+      borderRadius: 8,
       child: Container(
         decoration: BoxDecoration(
           border:
@@ -494,21 +498,21 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 controller: _inputController,
                 style: GoogleFonts.inter(color: _foreground, fontSize: 15),
                 decoration: InputDecoration(
-                  hintText: "Ask anything about your business data...",
+                  hintText: "Habla con tu base de datos...",
                   hintStyle:
                       GoogleFonts.inter(color: _mutedForeground, fontSize: 15),
                   filled: true,
                   fillColor: Colors.transparent,
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.0),
+                    borderRadius: BorderRadius.circular(.0),
                     borderSide: BorderSide.none,
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.0),
+                    borderRadius: BorderRadius.circular(.0),
                     borderSide: BorderSide.none,
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.0),
+                    borderRadius: BorderRadius.circular(.0),
                     borderSide: const BorderSide(
                       color: _ancapYellow,
                       width: 1.5,
@@ -539,12 +543,12 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                       Color(0xFFF59E0B),
                     ],
                   ),
-                  borderRadius: BorderRadius.circular(12.0),
+                  borderRadius: BorderRadius.circular(8.0),
                 ),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 18,
+                    horizontal: 15,
+                    vertical: 15,
                   ),
                   child:
                       const Icon(Icons.send, color: _ancapDarkBlue, size: 20),
