@@ -3,6 +3,10 @@ import "dart:math" as math;
 import "package:google_fonts/google_fonts.dart";
 import "package:anc_app/src/features/auth/widgets/login_form.dart";
 
+const Color _backgroundStart = Color(0xFF060912);
+const Color _backgroundMid = Color(0xFF0B101A);
+const Color _backgroundEnd = Color(0xFF050505);
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -62,11 +66,7 @@ class _LoginScreenState extends State<LoginScreen>
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF0C0A09), // slate-950
-              Color(0xFF18181B), // zinc-900
-              Color(0xFF171717), // neutral-900
-            ],
+            colors: [_backgroundStart, _backgroundMid, _backgroundEnd],
           ),
         ),
         child: Stack(
@@ -360,11 +360,11 @@ class _LoginScreenState extends State<LoginScreen>
                     label: "Análisis Potenciado por IA",
                   ),
                   _buildFeatureIndicator(
-                    color: const Color(0xFF71717A), // zinc-400
-                    label: "Información en Tiempo Real",
+                    color: const Color(0xFF4ADE80), // zinc-400
+                    label: "Graficos y Visualizaciones",
                   ),
                   _buildFeatureIndicator(
-                    color: const Color(0xFFFBBF24), // yellow-400
+                    color: const Color(0xFF4ADE80), // yellow-400
                     label: "Consultas en Lenguaje Natural",
                   ),
                 ],
