@@ -343,7 +343,7 @@ class _LoginScreenState extends State<LoginScreen>
         Text(
           label,
           style: const TextStyle(
-            fontSize: 14,
+            fontSize: 12,
             color: Color(0xFFA1A1AA), // text-muted-foreground
           ),
         ),
@@ -351,94 +351,94 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  Widget _buildFloatingOrb({
-    required AnimationController controller,
-    double? left,
-    double? top,
-    double? right,
-    double? bottom,
-    required double size,
-    required List<Color> colors,
-    required double xOffset,
-    required double yOffset,
-    double delay = 0.0,
-  }) {
-    return Positioned(
-      left: left,
-      top: top,
-      right: right,
-      bottom: bottom,
-      child: AnimatedBuilder(
-        animation: controller,
-        builder: (context, child) {
-          final value = controller.value;
-          final phase = (value * 2 * math.pi) + (delay * math.pi / 4);
+  // Widget _buildFloatingOrb({
+  //   required AnimationController controller,
+  //   double? left,
+  //   double? top,
+  //   double? right,
+  //   double? bottom,
+  //   required double size,
+  //   required List<Color> colors,
+  //   required double xOffset,
+  //   required double yOffset,
+  //   double delay = 0.0,
+  // }) {
+  //   return Positioned(
+  //     left: left,
+  //     top: top,
+  //     right: right,
+  //     bottom: bottom,
+  //     child: AnimatedBuilder(
+  //       animation: controller,
+  //       builder: (context, child) {
+  //         final value = controller.value;
+  //         final phase = (value * 2 * math.pi) + (delay * math.pi / 4);
 
-          return Transform.translate(
-            offset: Offset(
-              xOffset * math.sin(phase) * 0.5,
-              yOffset * math.sin(phase) * 0.5,
-            ),
-            child: child,
-          );
-        },
-        child: Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: RadialGradient(
-              colors: colors,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: colors[0],
-                blurRadius: size * 0.5,
-                spreadRadius: -size * 0.1,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  //         return Transform.translate(
+  //           offset: Offset(
+  //             xOffset * math.sin(phase) * 0.5,
+  //             yOffset * math.sin(phase) * 0.5,
+  //           ),
+  //           child: child,
+  //         );
+  //       },
+  //       child: Container(
+  //         width: size,
+  //         height: size,
+  //         decoration: BoxDecoration(
+  //           shape: BoxShape.circle,
+  //           gradient: RadialGradient(
+  //             colors: colors,
+  //           ),
+  //           boxShadow: [
+  //             BoxShadow(
+  //               color: colors[0],
+  //               blurRadius: size * 0.5,
+  //               spreadRadius: -size * 0.1,
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
 
-  Widget _buildPulsingOrb({required AnimationController controller}) {
-    return Positioned.fill(
-      child: Center(
-        child: AnimatedBuilder(
-          animation: controller,
-          builder: (context, child) {
-            final scale = 1.0 + 0.2 * math.sin(controller.value * 2 * math.pi);
-            final rotation = controller.value * 2 * math.pi;
+  // Widget _buildPulsingOrb({required AnimationController controller}) {
+  //   return Positioned.fill(
+  //     child: Center(
+  //       child: AnimatedBuilder(
+  //         animation: controller,
+  //         builder: (context, child) {
+  //           final scale = 1.0 + 0.2 * math.sin(controller.value * 2 * math.pi);
+  //           final rotation = controller.value * 2 * math.pi;
 
-            return Transform.scale(
-              scale: scale,
-              child: Transform.rotate(
-                angle: rotation,
-                child: Container(
-                  width: 160,
-                  height: 160,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        const Color(0xFFFBBF24)
-                            .withOpacity(0.1), // yellow-400/10
-                        const Color(0xFF71717A).withOpacity(0.1), // zinc-400/10
-                        Colors.transparent,
-                      ],
-                      stops: const [0.2, 0.5, 1.0],
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
+  //           return Transform.scale(
+  //             scale: scale,
+  //             child: Transform.rotate(
+  //               angle: rotation,
+  //               child: Container(
+  //                 width: 160,
+  //                 height: 160,
+  //                 decoration: BoxDecoration(
+  //                   shape: BoxShape.circle,
+  //                   gradient: RadialGradient(
+  //                     colors: [
+  //                       const Color(0xFFFBBF24)
+  //                           .withOpacity(0.1), // yellow-400/10
+  //                       const Color(0xFF71717A).withOpacity(0.1), // zinc-400/10
+  //                       Colors.transparent,
+  //                     ],
+  //                     stops: const [0.2, 0.5, 1.0],
+  //                   ),
+  //                 ),
+  //               ),
+  //             ),
+  //           );
+  //         },
+  //       ),
+  //     ),
+  //   );
+  // }
 
   Widget _buildAiGrid() {
     return AnimatedBuilder(
