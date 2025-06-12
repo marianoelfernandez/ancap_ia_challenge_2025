@@ -217,64 +217,28 @@ class _LoginScreenState extends State<LoginScreen>
                     height: 1,
                     color: Colors.white,
                     // Enhanced shadows for bolder appearance
-                    shadows: const [
-                      Shadow(
-                        color: Color(0xFFFBBF24),
-                        blurRadius: 8,
-                      ),
-                      Shadow(
-                        color: Color(0xFFFBBF24),
-                        blurRadius: 16,
-                        offset: Offset(0, 0),
-                      ),
-                      Shadow(
-                        color: Color(0xFFFBBF24),
-                        blurRadius: 24,
-                        offset: Offset(0, 0),
-                      ),
-                      // Additional shadow for stronger glow
-                      Shadow(
-                        color: Color(0xFFFBBF24),
-                        blurRadius: 4,
-                        offset: Offset(0, 0),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Container(
-                  width: 80, // Wider line
-                  height: 6, // Taller line
-                  margin: isLargeScreen
-                      ? null
-                      : const EdgeInsets.symmetric(horizontal: 0),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [
-                        Color(0xFFFBBF24),
-                        Color(0xFFEAB308),
-                      ], // yellow-400 to yellow-500
-                    ),
-                    borderRadius:
-                        BorderRadius.circular(3), // Adjusted for thicker line
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0xFFFBBF24),
-                        blurRadius: 15,
-                        spreadRadius: 2, // Added spread for more prominent glow
-                      ),
-                      BoxShadow(
-                        color: Color(0xFFFBBF24),
-                        blurRadius: 30,
-                        spreadRadius: 1,
-                        offset: Offset(0, 0),
-                      ),
-                      BoxShadow(
-                        color: Color(0xFFFBBF24),
-                        blurRadius: 60,
-                        offset: Offset(0, 0),
-                      ),
-                    ],
+                    // shadows: const [
+                    //   Shadow(
+                    //     color: Color(0xFFFBBF24),
+                    //     blurRadius: 8,
+                    //   ),
+                    //   Shadow(
+                    //     color: Color(0xFFFBBF24),
+                    //     blurRadius: 16,
+                    //     offset: Offset(0, 0),
+                    //   ),
+                    //   Shadow(
+                    //     color: Color(0xFFFBBF24),
+                    //     blurRadius: 24,
+                    //     offset: Offset(0, 0),
+                    //   ),
+                    //   // Additional shadow for stronger glow
+                    //   Shadow(
+                    //     color: Color(0xFFFBBF24),
+                    //     blurRadius: 4,
+                    //     offset: Offset(0, 0),
+                    //   ),
+                    // ],
                   ),
                 ),
               ],
