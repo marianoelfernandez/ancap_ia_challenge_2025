@@ -79,38 +79,6 @@ class _LoginScreenState extends State<LoginScreen>
               ),
             ),
 
-            // Floating Orbs
-            _buildFloatingOrb(
-              controller: _orbController1,
-              left: 80,
-              top: 80,
-              size: 128,
-              colors: [
-                const Color(0xFFFBBF24).withOpacity(0.2), // yellow-400/20
-                const Color(0xFFEAB308).withOpacity(0.2), // yellow-500/20
-              ],
-              xOffset: 100,
-              yOffset: -50,
-            ),
-
-            _buildFloatingOrb(
-              controller: _orbController2,
-              right: 80,
-              bottom: 80,
-              size: 96,
-              colors: [
-                const Color(0xFF71717A).withOpacity(0.2), // zinc-400/20
-                const Color(0xFF64748B).withOpacity(0.2), // slate-500/20
-              ],
-              xOffset: -80,
-              yOffset: 60,
-              delay: 2.0,
-            ),
-
-            _buildPulsingOrb(
-              controller: _pulseController,
-            ),
-
             // Main Content
             Positioned.fill(
               child: SafeArea(
