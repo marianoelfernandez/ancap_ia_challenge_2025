@@ -391,10 +391,14 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
             ),
             decoration: InputDecoration(
               hintText: hintText,
-              hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
+              hintStyle: TextStyle(
+                color: Colors.white.withValues(alpha: 0.5),
+                fontSize: 13,
+                fontWeight: FontWeight.w200,
+              ),
               border: InputBorder.none,
               contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               suffixIcon: isPassword
                   ? IconButton(
                       icon: Icon(
@@ -402,6 +406,7 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
                             ? Icons.visibility_off
                             : Icons.visibility,
                         color: Colors.white.withValues(alpha: 0.7),
+                        size: 14,
                       ),
                       onPressed: () {
                         setState(() {
