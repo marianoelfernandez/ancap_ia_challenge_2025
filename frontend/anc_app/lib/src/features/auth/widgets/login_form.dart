@@ -202,7 +202,7 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    "Iniciar sesión",
+                    "Bienvenido",
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w600,
@@ -211,7 +211,7 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
                   ),
                   SizedBox(height: 8),
                   Text(
-                    "Ingresa tus credenciales para continuar",
+                    "Ingresa tus credenciales para acceder a tu cuenta",
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w300,
@@ -279,7 +279,9 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(8),
                     gradient: const LinearGradient(
-                      colors: [Color(0xFFFFC107), Color(0xFFFFD54F)],
+                      colors: [Color(0xFFFFD54F), Color(0xFFFFC107)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
                     boxShadow: [
                       BoxShadow(
@@ -296,39 +298,36 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
                       onTap: authState.isLoading ? null : _handleLogin,
                       child: Container(
                         alignment: Alignment.center,
-                        child: authState.isLoading
-                            ? const Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: authState.isLoading
+                              ? const [
+                                  Text(
+                                    "Conectando",
+                                    style: TextStyle(
+                                      color: Color(0xFF0B101A),
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  SizedBox(width: 12),
                                   SizedBox(
                                     width: 20,
                                     height: 20,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
                                       valueColor: AlwaysStoppedAnimation<Color>(
-                                        Color(0xFF0D47A1),
+                                        Color(0xFF0B101A),
                                       ),
                                     ),
                                   ),
-                                  SizedBox(width: 12),
+                                ]
+                              : const [
                                   Text(
-                                    "Conectando a IA...",
+                                    "Acceder al sistema",
                                     style: TextStyle(
-                                      color: Color(0xFF0D47A1),
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                ],
-                              )
-                            : const Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    "Acceder al Asistente IA",
-                                    style: TextStyle(
-                                      color: Color(0xFF0D47A1),
+                                      color: Color(0xFF0B101A),
                                       fontWeight: FontWeight.w800,
                                       fontSize: 16,
                                     ),
@@ -336,11 +335,11 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
                                   SizedBox(width: 8),
                                   Icon(
                                     Icons.login,
-                                    color: Color(0xFF0D47A1),
+                                    color: Color(0xFF0B101A),
                                     size: 20,
                                   ),
                                 ],
-                              ),
+                        ),
                       ),
                     ),
                   ),
