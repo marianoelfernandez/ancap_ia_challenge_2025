@@ -1,11 +1,13 @@
 import "dart:math" as math;
+import "dart:ui";
 
 import "package:anc_app/src/features/auth/cubits/auth_cubit.dart";
 import "package:flutter/material.dart";
-import "dart:async";
-import "package:google_fonts/google_fonts.dart";
 import "package:anc_app/src/router/router.dart";
 import "package:flutter_bloc/flutter_bloc.dart";
+
+final Color _glassBackground = Colors.white.withValues(alpha: 0.03);
+const Color _glassBorder = Color(0x1AFFFFFF);
 
 class LoginForm extends StatefulWidget {
   final VoidCallback onLoginSuccess;
@@ -23,19 +25,11 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
   bool _isPasswordVisible = false;
 
   late AnimationController _slideController;
-  late AnimationController _pulseController;
-  late AnimationController _typingController;
-
   late Animation<double> _formAnimation;
-  late Animation<double> _pulseAnimation;
-
-  late Animation<double> _headerIconAnimation;
-  late Animation<double> _headerTitleAnimation;
   late Animation<double> _headerSubtitleAnimation;
   late Animation<double> _emailFieldAnimation;
   late Animation<double> _passwordFieldAnimation;
   late Animation<double> _loginButtonAnimation;
-  late Animation<double> _featuresAnimation;
 
   @override
   void initState() {
@@ -46,16 +40,6 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
       vsync: this,
     );
 
-    _pulseController = AnimationController(
-      duration: const Duration(seconds: 2),
-      vsync: this,
-    );
-
-    _typingController = AnimationController(
-      duration: const Duration(milliseconds: 1400),
-      vsync: this,
-    );
-
     _formAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -63,26 +47,6 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
       CurvedAnimation(
         parent: _slideController,
         curve: const Interval(0.0, 0.3, curve: Curves.easeOut),
-      ),
-    );
-
-    _headerIconAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(
-      CurvedAnimation(
-        parent: _slideController,
-        curve: const Interval(0.1, 0.25, curve: Curves.elasticOut),
-      ),
-    );
-
-    _headerTitleAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(
-      CurvedAnimation(
-        parent: _slideController,
-        curve: const Interval(0.2, 0.35, curve: Curves.easeOut),
       ),
     );
 
@@ -126,36 +90,12 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
       ),
     );
 
-    _featuresAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(
-      CurvedAnimation(
-        parent: _slideController,
-        curve: const Interval(0.7, 0.85, curve: Curves.easeOut),
-      ),
-    );
-
-    _pulseAnimation = Tween<double>(
-      begin: 0.3,
-      end: 0.6,
-    ).animate(
-      CurvedAnimation(
-        parent: _pulseController,
-        curve: Curves.easeInOut,
-      ),
-    );
-
     _slideController.forward();
-    _pulseController.repeat(reverse: true);
-    _typingController.repeat();
   }
 
   @override
   void dispose() {
     _slideController.dispose();
-    _pulseController.dispose();
-    _typingController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -214,74 +154,31 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
                   opacity: _formAnimation.value.clamp(0.0, 1.0),
                   child: Container(
                     constraints:
-                        const BoxConstraints(maxWidth: 480, maxHeight: 590),
-                    child: Stack(
-                      children: [
-                        ...List.generate(8, (index) => NeuralDot(index: index)),
-                        Container(
+                        const BoxConstraints(maxWidth: 480, maxHeight: 400),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+                        child: Container(
+                          margin: const EdgeInsets.all(2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 32,
+                            vertical: 24,
+                          ),
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16),
-                            gradient: const LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                Color(0xFF1A1F2E),
-                                Color(0xFF0F1419),
-                              ],
-                            ),
-                            border: Border.all(
-                              width: 2,
-                              color: Colors.transparent,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFFFFC107)
-                                    .withValues(alpha: 0.2),
-                                blurRadius: 20,
-                                spreadRadius: 0,
-                              ),
+                            color: _glassBackground,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: _glassBorder, width: 1),
+                          ),
+                          child: Column(
+                            children: [
+                              _buildHeader(),
+                              const SizedBox(height: 32),
+                              _buildLoginForm(state),
                             ],
                           ),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(16),
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  const Color(0xFFFFC107)
-                                      .withValues(alpha: 0.1),
-                                  Colors.transparent,
-                                  const Color(0xFF1976D2)
-                                      .withValues(alpha: 0.1),
-                                ],
-                              ),
-                            ),
-                            child: Container(
-                              margin: const EdgeInsets.all(2),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 32,
-                                vertical: 20,
-                              ),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(14),
-                                color: const Color(0xFF1A1F2E)
-                                    .withValues(alpha: 0.9),
-                                backgroundBlendMode: BlendMode.multiply,
-                              ),
-                              child: Column(
-                                children: [
-                                  _buildHeader(),
-                                  const SizedBox(height: 24),
-                                  _buildLoginForm(state),
-                                  const SizedBox(height: 24),
-                                  _buildFeatures(),
-                                ],
-                              ),
-                            ),
-                          ),
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
@@ -296,96 +193,33 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
   Widget _buildHeader() {
     return Column(
       children: [
-        // Logo with staggered animation
         AnimatedBuilder(
-          animation: _headerIconAnimation,
-          builder: (context, child) {
-            return Transform.scale(
-              scale: _headerIconAnimation.value,
-              child: AnimatedBuilder(
-                animation: _pulseAnimation,
-                builder: (context, child) {
-                  return Container(
-                    width: 64,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFFFC107), Color(0xFFFFD54F)],
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFFFFC107)
-                              .withValues(alpha: _pulseAnimation.value),
-                          blurRadius: 30,
-                          spreadRadius: 5,
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.smart_toy_outlined,
-                      color: Color(0xFF0D47A1),
-                      size: 32,
-                    ),
-                  );
-                },
-              ),
-            );
-          },
-        ),
-
-        const SizedBox(height: 16),
-
-        AnimatedBuilder(
-          animation: _headerTitleAnimation,
+          animation: _headerSubtitleAnimation,
           builder: (context, child) {
             return Opacity(
-              opacity: _headerTitleAnimation.value,
-              child: ShaderMask(
-                shaderCallback: (bounds) => const LinearGradient(
-                  colors: [Color(0xFFFFC107), Color(0xFFFFD54F)],
-                ).createShader(bounds),
-                child: Text(
-                  "ANC-APP",
-                  style: GoogleFonts.inter(
-                    fontSize: 36,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                    letterSpacing: 2,
+              opacity: _headerSubtitleAnimation.value,
+              child: const Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "Bienvenido",
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
+                  SizedBox(height: 8),
+                  Text(
+                    "Ingresa tus credenciales para acceder a tu cuenta",
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w300,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
               ),
-            );
-          },
-        ),
-
-        const SizedBox(height: 8),
-
-        AnimatedBuilder(
-          animation: _headerSubtitleAnimation,
-          builder: (context, child) {
-            return Opacity(
-              opacity: _headerSubtitleAnimation.value,
-              child: const Text(
-                "AI Business Intelligence Assistant",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
-              ),
-            );
-          },
-        ),
-
-        const SizedBox(height: 8),
-
-        AnimatedBuilder(
-          animation: _headerSubtitleAnimation,
-          builder: (context, child) {
-            return Opacity(
-              opacity: _headerSubtitleAnimation.value,
-              child: TypingIndicator(controller: _typingController),
             );
           },
         ),
@@ -445,7 +279,9 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(8),
                     gradient: const LinearGradient(
-                      colors: [Color(0xFFFFC107), Color(0xFFFFD54F)],
+                      colors: [Color(0xFFFFD54F), Color(0xFFFFC107)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
                     boxShadow: [
                       BoxShadow(
@@ -462,50 +298,48 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
                       onTap: authState.isLoading ? null : _handleLogin,
                       child: Container(
                         alignment: Alignment.center,
-                        child: authState.isLoading
-                            ? const Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: authState.isLoading
+                              ? const [
+                                  Text(
+                                    "Conectando",
+                                    style: TextStyle(
+                                      color: Color(0xFF0B101A),
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  SizedBox(width: 12),
                                   SizedBox(
                                     width: 20,
                                     height: 20,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
                                       valueColor: AlwaysStoppedAnimation<Color>(
-                                        Color(0xFF0D47A1),
+                                        Color(0xFF0B101A),
                                       ),
                                     ),
                                   ),
-                                  SizedBox(width: 12),
+                                ]
+                              : const [
                                   Text(
-                                    "Conectando a IA...",
+                                    "Acceder al sistema",
                                     style: TextStyle(
-                                      color: Color(0xFF0D47A1),
+                                      color: Color(0xFF0B101A),
                                       fontWeight: FontWeight.w800,
                                       fontSize: 16,
                                     ),
-                                  ),
-                                ],
-                              )
-                            : const Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.flash_on,
-                                    color: Color(0xFF0D47A1),
-                                    size: 20,
                                   ),
                                   SizedBox(width: 8),
-                                  Text(
-                                    "Acceder al Asistente IA",
-                                    style: TextStyle(
-                                      color: Color(0xFF0D47A1),
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 16,
-                                    ),
+                                  Icon(
+                                    Icons.login,
+                                    color: Color(0xFF0B101A),
+                                    size: 20,
                                   ),
                                 ],
-                              ),
+                        ),
                       ),
                     ),
                   ),
@@ -532,8 +366,8 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
           label,
           style: const TextStyle(
             color: Colors.white,
-            fontWeight: FontWeight.w700,
-            fontSize: 16,
+            fontWeight: FontWeight.w300,
+            fontSize: 14,
           ),
         ),
         const SizedBox(height: 8),
@@ -549,13 +383,21 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
             controller: controller,
             keyboardType: keyboardType,
             obscureText: isPassword && !_isPasswordVisible,
-            style: const TextStyle(color: Colors.white),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 13,
+              fontWeight: FontWeight.w200,
+            ),
             decoration: InputDecoration(
               hintText: hintText,
-              hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
+              hintStyle: TextStyle(
+                color: Colors.white.withValues(alpha: 0.5),
+                fontSize: 13,
+                fontWeight: FontWeight.w200,
+              ),
               border: InputBorder.none,
               contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               suffixIcon: isPassword
                   ? IconButton(
                       icon: Icon(
@@ -563,6 +405,7 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
                             ? Icons.visibility_off
                             : Icons.visibility,
                         color: Colors.white.withValues(alpha: 0.7),
+                        size: 14,
                       ),
                       onPressed: () {
                         setState(() {
@@ -572,78 +415,6 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
                     )
                   : null,
             ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFeatures() {
-    return AnimatedBuilder(
-      animation: _featuresAnimation,
-      builder: (context, child) {
-        return Opacity(
-          opacity: _featuresAnimation.value,
-          child: Container(
-            padding: const EdgeInsets.only(top: 16),
-            decoration: BoxDecoration(
-              border: Border(
-                top: BorderSide(
-                  color: Colors.white.withValues(alpha: 0.1),
-                ),
-              ),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildFeatureItem(
-                    icon: Icons.psychology,
-                    label: "Análisis Inteligente",
-                    color: const Color(0xFF1976D2),
-                  ),
-                ),
-                Expanded(
-                  child: _buildFeatureItem(
-                    icon: Icons.security,
-                    label: "Acceso Seguro",
-                    color: const Color(0xFFFFC107),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildFeatureItem({
-    required IconData icon,
-    required String label,
-    required Color color,
-  }) {
-    return Column(
-      children: [
-        Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: color.withValues(alpha: 0.2),
-          ),
-          child: Icon(
-            icon,
-            color: color,
-            size: 16,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.85),
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
           ),
         ),
       ],
@@ -734,43 +505,6 @@ class _NeuralDotState extends State<NeuralDot>
           ),
         );
       },
-    );
-  }
-}
-
-class TypingIndicator extends StatelessWidget {
-  final AnimationController controller;
-
-  const TypingIndicator({super.key, required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(3, (index) {
-        return AnimatedBuilder(
-          animation: controller,
-          builder: (context, child) {
-            final progress = (controller.value * 3 - index).clamp(0.0, 1.0);
-            final bounceValue = math.sin(progress * math.pi);
-
-            return Container(
-              margin: const EdgeInsets.symmetric(horizontal: 2),
-              child: Transform.translate(
-                offset: Offset(0, -10 * bounceValue),
-                child: Container(
-                  width: 6,
-                  height: 6,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Color(0xFFFFC107),
-                  ),
-                ),
-              ),
-            );
-          },
-        );
-      }),
     );
   }
 }
