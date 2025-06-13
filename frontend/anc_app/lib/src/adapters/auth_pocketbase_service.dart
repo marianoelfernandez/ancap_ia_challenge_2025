@@ -97,4 +97,7 @@ class AuthPocketBaseService implements AuthService {
       return null;
     }
   }
+
+  @override
+  String? get token => pb.authStore.token;
 }

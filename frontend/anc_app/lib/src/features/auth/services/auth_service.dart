@@ -17,6 +17,8 @@ abstract interface class AuthService {
   /// Returns the current user if authenticated, or null if not authenticated
   User? getCurrentUserId();
 
+  String? get token;
+
   /// Returns true if the user is currently authenticated
   bool get isAuthenticated;
 }
