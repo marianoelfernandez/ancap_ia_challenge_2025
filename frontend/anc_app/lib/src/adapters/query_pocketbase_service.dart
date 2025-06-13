@@ -1,14 +1,14 @@
-import "package:anc_app/src/features/chatbot/screens/services/queries_service.dart";
+import "package:anc_app/src/features/chatbot/services/query_service.dart";
 import "package:anc_app/src/models/errors/queries_error.dart";
 import "package:anc_app/src/models/query.dart";
 import "package:oxidized/oxidized.dart";
 import "package:pocketbase/pocketbase.dart";
 
-class QueriesPocketbaseService implements QueriesService {
+class QueryPocketbaseService implements QueryService {
   final PocketBase _pb;
   static const String _collectionName = "queries";
 
-  QueriesPocketbaseService(this._pb);
+  QueryPocketbaseService(this._pb);
 
   @override
   Future<Result<QueriesResponse, QueriesError>> getQueries({
@@ -23,22 +23,23 @@ class QueriesPocketbaseService implements QueriesService {
       }
 
       final result = await _pb.collection(_collectionName).getList(
-        page: page,
-        perPage: perPage,
-        filter: filter.isNotEmpty ? filter : null,
-      );
+            page: page,
+            perPage: perPage,
+            filter: filter.isNotEmpty ? filter : null,
+          );
 
       final response = QueriesResponse(
         page: result.page,
         perPage: result.perPage,
         totalPages: result.totalPages,
         totalItems: result.totalItems,
-        items: result.items.map((item) => Query.fromJson(item.toJson())).toList(),
+        items:
+            result.items.map((item) => Query.fromJson(item.toJson())).toList(),
       );
 
       return Result.ok(response);
     } catch (e) {
-      return _handleError(e);
+      return Result.err(QueriesErrorUnknown());
     }
   }
 
@@ -48,7 +49,7 @@ class QueriesPocketbaseService implements QueriesService {
       final record = await _pb.collection(_collectionName).getOne(id);
       return Result.ok(Query.fromJson(record.toJson()));
     } catch (e) {
-      return _handleError(e);
+      return Result.err(QueriesErrorUnknown());
     }
   }
 
@@ -72,7 +73,7 @@ class QueriesPocketbaseService implements QueriesService {
       final record = await _pb.collection(_collectionName).create(body: body);
       return Result.ok(Query.fromJson(record.toJson()));
     } catch (e) {
-      return _handleError(e);
+      return Result.err(QueriesErrorUnknown());
     }
   }
 
@@ -99,10 +100,11 @@ class QueriesPocketbaseService implements QueriesService {
         return getQueryById(id);
       }
 
-      final record = await _pb.collection(_collectionName).update(id, body: body);
+      final record =
+          await _pb.collection(_collectionName).update(id, body: body);
       return Result.ok(Query.fromJson(record.toJson()));
     } catch (e) {
-      return _handleError(e);
+      return Result.err(QueriesErrorUnknown());
     }
   }
 
@@ -112,31 +114,7 @@ class QueriesPocketbaseService implements QueriesService {
       await _pb.collection(_collectionName).delete(id);
       return const Result.ok(null);
     } catch (e) {
-      return _handleError(e);
+      return Result.err(QueriesErrorUnknown());
     }
-  }
-
-  Result<T, QueriesError> _handleError<T>(dynamic error) {
-    if (error is ClientException) {
-      final status = error.statusCode;
-      final message = error.response["message"] ?? "Unknown error";
-
-      if (status == 404) {
-        return Result.err(QueriesErrorNotFound());
-      } else if (status == 400) {
-        return Result.err(QueriesErrorInvalidData());
-      } else if (status == 401 || status == 403) {
-        return Result.err(QueriesErrorUnauthorized());
-      } else if (status >= 500) {
-        return Result.err(QueriesErrorServerError());
-      }
-
-      return Result.err(QueriesErrorCustom(message));
-    } else if (error.toString().toLowerCase().contains("network") || 
-             error.toString().toLowerCase().contains("connection")) {
-      return Result.err(QueriesErrorNetworkError());
-    }
-
-    return Result.err(QueriesErrorUnknown());
   }
 }

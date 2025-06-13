@@ -1,10 +1,14 @@
 import "dart:ui";
 
-import "package:anc_app/src/models/chat_history_item.dart";
+import "package:anc_app/src/features/sidebar/cubits/sidebar_cubit.dart";
+// Removed unused import
+import "package:anc_app/src/models/conversation.dart";
 import "package:flutter/material.dart";
+import "package:flutter_bloc/flutter_bloc.dart";
 import "package:go_router/go_router.dart";
 import "package:google_fonts/google_fonts.dart";
 import "package:anc_app/src/router/router.dart";
+import "package:intl/intl.dart";
 
 const Color _ancapYellow = Color(0xFFFFC107);
 const Color _ancapDarkBlue = Color(0xFF002A53);
@@ -29,9 +33,29 @@ class Sidebar extends StatefulWidget {
 }
 
 class _SidebarState extends State<Sidebar> {
+  late SidebarCubit _sidebarCubit;
+
+  @override
+  void initState() {
+    super.initState();
+    _sidebarCubit = SidebarCubit();
+    if (widget.showChatFeatures) {
+      _sidebarCubit.loadRecentConversations();
+    }
+  }
+
+  @override
+  void dispose() {
+    _sidebarCubit.close();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return _buildSidebar(widget.showChatFeatures);
+    return BlocProvider.value(
+      value: _sidebarCubit,
+      child: _buildSidebar(widget.showChatFeatures),
+    );
   }
 }
 
@@ -233,97 +257,173 @@ Widget _buildSearchInput() {
 }
 
 Widget _buildChatHistoryList() {
-  final List<ChatHistoryItem> chatHistory = [
-    ChatHistoryItem(id: "1", title: "Sales Analysis", date: "2 hours ago"),
-    ChatHistoryItem(id: "2", title: "Revenue Forecast", date: "Yesterday"),
-    ChatHistoryItem(id: "3", title: "Market Trends", date: "2 days ago"),
-  ];
   return Expanded(
     child: Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 16.0),
-            child: Text(
-              "Recent Conversations",
-              style: GoogleFonts.inter(
-                color: _mutedForeground,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
+      padding: const EdgeInsets.all(24.0),
+      child: BlocBuilder<SidebarCubit, SidebarState>(
+        builder: (context, state) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Recent Conversations",
+                    style: GoogleFonts.inter(
+                      color: _mutedForeground,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  if (state.isLoading)
+                    const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(_ancapYellow),
+                      ),
+                    ),
+                  if (!state.isLoading && state.error != null)
+                    IconButton(
+                      icon: const Icon(
+                        Icons.refresh,
+                        color: _mutedForeground,
+                        size: 16,
+                      ),
+                      onPressed: () =>
+                          context.read<SidebarCubit>().refreshConversations(),
+                      tooltip: "Retry loading conversations",
+                    ),
+                ],
               ),
-            ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              physics: const AlwaysScrollableScrollPhysics(),
-              shrinkWrap: true,
-              padding: EdgeInsets.zero,
-              itemCount: chatHistory.length,
-              itemBuilder: (context, index) {
-                final chat = chatHistory[index];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 8.0),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () {/* Handle chat selection */},
-                      borderRadius: BorderRadius.circular(12.0),
-                      hoverColor: _foreground.withValues(alpha: 0.05),
-                      child: _buildGlassEffectContainer(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.message_outlined,
-                              color: _ancapYellow,
-                              size: 16,
+              const SizedBox(height: 16),
+              if (state.error != null && !state.isLoading)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: _buildGlassEffectContainer(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          color: Colors.redAccent,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            "Failed to load conversations",
+                            style: GoogleFonts.inter(
+                              color: _foreground,
+                              fontSize: 12,
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    chat.title,
-                                    style: GoogleFonts.inter(
-                                      color: _foreground,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Row(
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              Expanded(
+                child: state.recentConversations.isEmpty && !state.isLoading
+                    ? Center(
+                        child: Text(
+                          state.error == null
+                              ? "No conversations yet"
+                              : "No conversations to display",
+                          style: GoogleFonts.inter(
+                            color: _mutedForeground,
+                            fontSize: 14,
+                          ),
+                        ),
+                      )
+                    : ListView.builder(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        shrinkWrap: true,
+                        padding: EdgeInsets.zero,
+                        itemCount: state.recentConversations.length,
+                        itemBuilder: (context, index) {
+                          final conversation = state.recentConversations[index];
+                          // Format the date
+                          // The created field is already a DateTime object
+                          final DateTime createdDate = conversation.created;
+                          final String formattedDate =
+                              _formatConversationDate(createdDate);
+
+                          // Extract a title from the conversation content
+                          final String title =
+                              _extractConversationTitle(conversation);
+
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 8.0),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () {
+                                  // Handle conversation selection
+                                  // Navigate to conversation or load it in the chat
+                                },
+                                borderRadius: BorderRadius.circular(12.0),
+                                hoverColor: _foreground.withValues(alpha: 0.05),
+                                child: _buildGlassEffectContainer(
+                                  padding: const EdgeInsets.all(12.0),
+                                  child: Row(
                                     children: [
                                       const Icon(
-                                        Icons.access_time,
-                                        color: _mutedForeground,
-                                        size: 12,
+                                        Icons.message_outlined,
+                                        color: _ancapYellow,
+                                        size: 16,
                                       ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        chat.date,
-                                        style: GoogleFonts.inter(
-                                          color: _mutedForeground,
-                                          fontSize: 12,
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              title,
+                                              style: GoogleFonts.inter(
+                                                color: _foreground,
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Row(
+                                              children: [
+                                                const Icon(
+                                                  Icons.access_time,
+                                                  color: _mutedForeground,
+                                                  size: 12,
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Text(
+                                                  formattedDate,
+                                                  style: GoogleFonts.inter(
+                                                    color: _mutedForeground,
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ],
                                   ),
-                                ],
+                                ),
                               ),
                             ),
-                          ],
-                        ),
+                          );
+                        },
                       ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
+              ),
+            ],
+          );
+        },
       ),
     ),
   );
@@ -351,4 +451,48 @@ Widget _buildGlassEffectContainer({
       ),
     ),
   );
+}
+
+// Helper method to format conversation date
+String _formatConversationDate(DateTime date) {
+  final now = DateTime.now();
+  final difference = now.difference(date);
+
+  if (difference.inMinutes < 1) {
+    return "Just now";
+  } else if (difference.inHours < 1) {
+    return "${difference.inMinutes} min ago";
+  } else if (difference.inDays < 1) {
+    return "${difference.inHours} hours ago";
+  } else if (difference.inDays == 1) {
+    return "Yesterday";
+  } else if (difference.inDays < 7) {
+    return "${difference.inDays} days ago";
+  } else {
+    return DateFormat("MMM d, yyyy").format(date);
+  }
+}
+
+// Helper method to extract a title from conversation content
+String _extractConversationTitle(Conversation conversation) {
+  try {
+    // Try to extract a meaningful title from the conversation content
+    if (conversation.conversation.isNotEmpty) {
+      // Assuming conversation.conversation might be a JSON string or contain the first message
+      // This is a simple implementation - adjust based on your actual data structure
+      return conversation.conversation.split("\n").first.trim().substring(
+            0,
+            min(50, conversation.conversation.split("\n").first.trim().length),
+          );
+    }
+    return "Conversation ${conversation.id.substring(0, min(8, conversation.id.length))}";
+  } catch (e) {
+    // Fallback to using the ID if we can't extract a title
+    return "Conversation ${conversation.id.substring(0, min(8, conversation.id.length))}";
+  }
+}
+
+// Helper function for min value
+int min(int a, int b) {
+  return a < b ? a : b;
 }
