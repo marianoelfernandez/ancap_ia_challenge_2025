@@ -17,18 +17,17 @@ const Color _foreground = Color(0xFFF8FAFC);
 const Color _mutedForeground = Color(0xFF808EA2);
 const Color _border = Color(0xFF1A1F29);
 
-final Color _glassBackground = Colors.white.withOpacity(0.03);
+final Color _glassBackground = Colors.white.withValues(alpha: 0.03);
 const Color _glassBorder = Color(0x1AFFFFFF);
 
 class AuditScreen extends StatefulWidget {
-  const AuditScreen({Key? key}) : super(key: key);
+  const AuditScreen({super.key});
 
   @override
   State<AuditScreen> createState() => _AuditScreenState();
 }
 
 class _AuditScreenState extends State<AuditScreen> {
-  // Sample audit records
   final List<AuditRecord> _auditRecords = [
     AuditRecord(
       username: "john.doe",
@@ -67,17 +66,14 @@ class _AuditScreenState extends State<AuditScreen> {
     ),
   ];
 
-  // Filtered records
   List<AuditRecord> _filteredRecords = [];
 
-  // Filter controllers
   final TextEditingController _usernameFilter = TextEditingController();
   final TextEditingController _roleFilter = TextEditingController();
   final TextEditingController _dateFilter = TextEditingController();
   final TextEditingController _tablesFilter = TextEditingController();
   final TextEditingController _costFilter = TextEditingController();
 
-  // Selected tags for filtering
   final Set<String> _selectedTableTags = <String>{};
   final Set<String> _selectedRoleTags = <String>{};
 
@@ -86,7 +82,6 @@ class _AuditScreenState extends State<AuditScreen> {
     super.initState();
     _filteredRecords = List.from(_auditRecords);
 
-    // Add listeners to filter controllers
     _usernameFilter.addListener(_applyFilters);
     _roleFilter.addListener(_applyFilters);
     _dateFilter.addListener(_applyFilters);
@@ -112,11 +107,9 @@ class _AuditScreenState extends State<AuditScreen> {
                 .toLowerCase()
                 .contains(_usernameFilter.text.toLowerCase());
 
-        // Match if text filter is empty or matches role
         final textRoleMatch = _roleFilter.text.isEmpty ||
             record.role.toLowerCase().contains(_roleFilter.text.toLowerCase());
 
-        // Match if no role tags selected or record's role is in selected roles
         final tagRoleMatch = _selectedRoleTags.isEmpty ||
             _selectedRoleTags.contains(record.role);
 
@@ -125,7 +118,6 @@ class _AuditScreenState extends State<AuditScreen> {
                 .format(record.date)
                 .contains(_dateFilter.text);
 
-        // Match if text filter is empty or matches any table
         final textTablesMatch = _tablesFilter.text.isEmpty ||
             record.consultedTables.any(
               (table) => table
@@ -133,7 +125,6 @@ class _AuditScreenState extends State<AuditScreen> {
                   .contains(_tablesFilter.text.toLowerCase()),
             );
 
-        // Match if no tags selected or all selected tags are in the record's tables
         final tagTablesMatch = _selectedTableTags.isEmpty ||
             _selectedTableTags.every(
               (tag) => record.consultedTables.contains(tag),
@@ -153,7 +144,6 @@ class _AuditScreenState extends State<AuditScreen> {
     });
   }
 
-  // Clear all filters
   void _clearAllFilters() {
     setState(() {
       _usernameFilter.clear();
@@ -167,18 +157,16 @@ class _AuditScreenState extends State<AuditScreen> {
     });
   }
 
-  // Add a table tag to the filter
   void _addTableTag(String tag) {
     if (tag.isNotEmpty && !_selectedTableTags.contains(tag)) {
       setState(() {
         _selectedTableTags.add(tag);
-        _tablesFilter.clear(); // Clear the text input after adding a tag
+        _tablesFilter.clear();
         _applyFilters();
       });
     }
   }
 
-  // Remove a table tag from the filter
   void _removeTableTag(String tag) {
     setState(() {
       _selectedTableTags.remove(tag);
@@ -186,18 +174,16 @@ class _AuditScreenState extends State<AuditScreen> {
     });
   }
 
-  // Add a role tag to the filter
   void _addRoleTag(String tag) {
     if (tag.isNotEmpty && !_selectedRoleTags.contains(tag)) {
       setState(() {
         _selectedRoleTags.add(tag);
-        _roleFilter.clear(); // Clear the text input after adding a tag
+        _roleFilter.clear();
         _applyFilters();
       });
     }
   }
 
-  // Remove a role tag from the filter
   void _removeRoleTag(String tag) {
     setState(() {
       _selectedRoleTags.remove(tag);
@@ -205,7 +191,6 @@ class _AuditScreenState extends State<AuditScreen> {
     });
   }
 
-  // Show date picker and update the date filter
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -221,7 +206,9 @@ class _AuditScreenState extends State<AuditScreen> {
               surface: Color(0xFF1E1E1E),
               onSurface: Colors.white,
             ),
-            dialogBackgroundColor: const Color(0xFF1E1E1E),
+            dialogTheme: const DialogThemeData(
+              backgroundColor: Color(0xFF1E1E1E),
+            ),
           ),
           child: child!,
         );
@@ -296,7 +283,8 @@ class _AuditScreenState extends State<AuditScreen> {
       borderRadius: 0,
       child: Container(
         decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: _border.withOpacity(0.1))),
+          border:
+              Border(bottom: BorderSide(color: _border.withValues(alpha: 0.1))),
         ),
         child: Row(
           children: [
@@ -313,7 +301,7 @@ class _AuditScreenState extends State<AuditScreen> {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: _ancapYellow.withOpacity(0.3),
+                    color: _ancapYellow.withValues(alpha: 0.3),
                     blurRadius: 20,
                   ),
                 ],
@@ -428,8 +416,9 @@ class _AuditScreenState extends State<AuditScreen> {
                               fillColor: Colors.transparent,
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8.0),
-                                borderSide:
-                                    BorderSide(color: _border.withOpacity(0.3)),
+                                borderSide: BorderSide(
+                                  color: _border.withValues(alpha: 0.3),
+                                ),
                               ),
                               focusedBorder: const OutlineInputBorder(
                                 borderSide:
@@ -463,7 +452,7 @@ class _AuditScreenState extends State<AuditScreen> {
               Expanded(
                 child: TextField(
                   controller: _dateFilter,
-                  readOnly: true, // Prevent keyboard from appearing
+                  readOnly: true,
                   style: GoogleFonts.inter(
                     color: _foreground,
                     fontSize: 14,
@@ -491,7 +480,8 @@ class _AuditScreenState extends State<AuditScreen> {
                     fillColor: Colors.transparent,
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8.0),
-                      borderSide: BorderSide(color: _border.withOpacity(0.3)),
+                      borderSide:
+                          BorderSide(color: _border.withValues(alpha: 0.3)),
                     ),
                     focusedBorder: const OutlineInputBorder(
                       borderSide: BorderSide(color: _ancapYellow, width: 1.5),
@@ -542,8 +532,9 @@ class _AuditScreenState extends State<AuditScreen> {
                               fillColor: Colors.transparent,
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8.0),
-                                borderSide:
-                                    BorderSide(color: _border.withOpacity(0.3)),
+                                borderSide: BorderSide(
+                                  color: _border.withValues(alpha: 0.3),
+                                ),
                               ),
                               focusedBorder: const OutlineInputBorder(
                                 borderSide:
@@ -604,7 +595,7 @@ class _AuditScreenState extends State<AuditScreen> {
         fillColor: Colors.transparent,
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8.0),
-          borderSide: BorderSide(color: _border.withOpacity(0.3)),
+          borderSide: BorderSide(color: _border.withValues(alpha: 0.3)),
         ),
         focusedBorder: const OutlineInputBorder(
           borderSide: BorderSide(color: _ancapYellow, width: 1.5),
@@ -620,9 +611,9 @@ class _AuditScreenState extends State<AuditScreen> {
     return Container(
       margin: const EdgeInsets.only(right: 8),
       decoration: BoxDecoration(
-        color: _ancapYellow.withOpacity(0.15),
+        color: _ancapYellow.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _ancapYellow.withOpacity(0.3)),
+        border: Border.all(color: _ancapYellow.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -658,9 +649,9 @@ class _AuditScreenState extends State<AuditScreen> {
     return Container(
       margin: const EdgeInsets.only(right: 8),
       decoration: BoxDecoration(
-        color: _ancapYellow.withOpacity(0.15),
+        color: _ancapYellow.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _ancapYellow.withOpacity(0.3)),
+        border: Border.all(color: _ancapYellow.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -724,7 +715,6 @@ class _AuditScreenState extends State<AuditScreen> {
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final double availableWidth = constraints.maxWidth;
-                  // Calculate column widths as percentages of available width
                   final double usernameWidth = availableWidth * 0.18;
                   final double roleWidth = availableWidth * 0.15;
                   final double dateWidth = availableWidth * 0.22;
@@ -736,10 +726,10 @@ class _AuditScreenState extends State<AuditScreen> {
                     child: SizedBox(
                       width: availableWidth,
                       child: DataTable(
-                        headingRowColor: MaterialStateColor.resolveWith(
-                          (states) => _border.withOpacity(0.1),
+                        headingRowColor: WidgetStateColor.resolveWith(
+                          (states) => _border.withValues(alpha: 0.1),
                         ),
-                        dataRowColor: MaterialStateColor.resolveWith(
+                        dataRowColor: WidgetStateColor.resolveWith(
                           (states) => Colors.transparent,
                         ),
                         headingTextStyle: GoogleFonts.inter(
@@ -755,31 +745,31 @@ class _AuditScreenState extends State<AuditScreen> {
                         horizontalMargin: 8,
                         columns: [
                           DataColumn(
-                            label: Container(
+                            label: SizedBox(
                               width: usernameWidth,
                               child: const Text("Usuario"),
                             ),
                           ),
                           DataColumn(
-                            label: Container(
+                            label: SizedBox(
                               width: roleWidth,
                               child: const Text("Rol"),
                             ),
                           ),
                           DataColumn(
-                            label: Container(
+                            label: SizedBox(
                               width: dateWidth,
                               child: const Text("Fecha"),
                             ),
                           ),
                           DataColumn(
-                            label: Container(
+                            label: SizedBox(
                               width: tablesWidth,
                               child: const Text("Tablas consultadas"),
                             ),
                           ),
                           DataColumn(
-                            label: Container(
+                            label: SizedBox(
                               width: costWidth,
                               child: const Text("Costo"),
                             ),
@@ -789,13 +779,13 @@ class _AuditScreenState extends State<AuditScreen> {
                           return DataRow(
                             cells: [
                               DataCell(
-                                Container(
+                                SizedBox(
                                   width: usernameWidth,
                                   child: Text(record.username),
                                 ),
                               ),
                               DataCell(
-                                Container(
+                                SizedBox(
                                   width: roleWidth,
                                   child: Align(
                                     alignment: Alignment.centerLeft,
@@ -806,12 +796,15 @@ class _AuditScreenState extends State<AuditScreen> {
                                           vertical: 2,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: _ancapYellow.withOpacity(0.15),
+                                          color: _ancapYellow.withValues(
+                                            alpha: 0.15,
+                                          ),
                                           borderRadius:
                                               BorderRadius.circular(12),
                                           border: Border.all(
-                                            color:
-                                                _ancapYellow.withOpacity(0.3),
+                                            color: _ancapYellow.withValues(
+                                              alpha: 0.3,
+                                            ),
                                           ),
                                         ),
                                         child: Text(
@@ -828,7 +821,7 @@ class _AuditScreenState extends State<AuditScreen> {
                                 ),
                               ),
                               DataCell(
-                                Container(
+                                SizedBox(
                                   width: dateWidth,
                                   child: Text(
                                     DateFormat("yyyy-MM-dd HH:mm")
@@ -837,7 +830,7 @@ class _AuditScreenState extends State<AuditScreen> {
                                 ),
                               ),
                               DataCell(
-                                Container(
+                                SizedBox(
                                   width: tablesWidth,
                                   child: Wrap(
                                     spacing: 4,
@@ -854,12 +847,15 @@ class _AuditScreenState extends State<AuditScreen> {
                                           vertical: 2,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: _ancapYellow.withOpacity(0.15),
+                                          color: _ancapYellow.withValues(
+                                            alpha: 0.15,
+                                          ),
                                           borderRadius:
                                               BorderRadius.circular(12),
                                           border: Border.all(
-                                            color:
-                                                _ancapYellow.withOpacity(0.3),
+                                            color: _ancapYellow.withValues(
+                                              alpha: 0.3,
+                                            ),
                                           ),
                                         ),
                                         child: Text(
@@ -876,7 +872,7 @@ class _AuditScreenState extends State<AuditScreen> {
                                 ),
                               ),
                               DataCell(
-                                Container(
+                                SizedBox(
                                   width: costWidth,
                                   child: Text(
                                     "\$${record.cost.toStringAsFixed(2)}",

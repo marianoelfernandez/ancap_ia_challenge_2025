@@ -13,12 +13,17 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   // Colors
-  static const Color _ancapYellow = Color(0xFFFFD700);
-  static const Color _ancapDarkBlue = Color(0xFF0A1128);
-  final Color _background = const Color(0xFF121212);
+  static const Color _ancapYellow = Color(0xFFFFC107);
+  static const Color _ancapDarkBlue = Color(0xFF002A53);
+
+  // Background colors to match audit screen
+  static const Color _backgroundStart = Color(0xFF060912);
+  static const Color _backgroundMid = Color(0xFF0B101A);
+  static const Color _backgroundEnd = Color(0xFF050505);
+
   final Color _foreground = Colors.white;
-  final Color _mutedForeground = Colors.white.withOpacity(0.7);
-  final Color _border = Colors.white.withOpacity(0.1);
+  final Color _mutedForeground = Colors.white.withValues(alpha: 0.7);
+  final Color _border = Colors.white.withValues(alpha: 0.1);
 
   // Sample data for most consulted SQL queries
   final List<QueryData> _topQueries = [
@@ -53,14 +58,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
+            colors: [_backgroundStart, _backgroundMid, _backgroundEnd],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              _background,
-              _background.withBlue(30),
-            ],
           ),
         ),
         child: Row(
@@ -94,11 +96,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: _ancapYellow.withOpacity(0.1),
+              color: _ancapYellow.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: _ancapYellow.withOpacity(0.3),
+                  color: _backgroundMid.withValues(alpha: 0.2),
                   blurRadius: 20,
                 ),
               ],
@@ -270,7 +272,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       margin: margin,
       padding: padding,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: _border,
@@ -278,7 +280,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -296,7 +298,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         barTouchData: BarTouchData(
           enabled: true,
           touchTooltipData: BarTouchTooltipData(
-            tooltipBgColor: _background.withOpacity(0.8),
+            tooltipBgColor: _backgroundStart.withValues(alpha: 0.8),
             tooltipRoundedRadius: 8,
             getTooltipItem: (group, groupIndex, rod, rodIndex) {
               return BarTooltipItem(
@@ -368,7 +370,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               dashArray: [5, 5],
             );
           },
-          getDrawingVerticalLine: (value) => FlLine(color: Colors.transparent),
+          getDrawingVerticalLine: (value) =>
+              const FlLine(color: Colors.transparent),
         ),
         barGroups: _topQueries.asMap().entries.map((entry) {
           final index = entry.key;
@@ -421,7 +424,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         lineTouchData: LineTouchData(
           enabled: true,
           touchTooltipData: LineTouchTooltipData(
-            tooltipBgColor: _background.withOpacity(0.8),
+            tooltipBgColor: _backgroundStart.withValues(alpha: 0.8),
             tooltipRoundedRadius: 8,
             getTooltipItems: (touchedSpots) {
               return touchedSpots.map((spot) {

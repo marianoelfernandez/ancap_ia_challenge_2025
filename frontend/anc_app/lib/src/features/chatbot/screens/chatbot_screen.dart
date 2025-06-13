@@ -36,8 +36,6 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     ),
   ];
   final TextEditingController _inputController = TextEditingController();
-  // Chat history moved to Sidebar component
-
   void _handleSend() {
     final text = _inputController.text.trim();
     if (text.isEmpty) return;
@@ -107,7 +105,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         ),
         child: Row(
           children: [
-            const Sidebar(),
+            const Sidebar(showChatFeatures: true),
             Expanded(
               child: Column(
                 children: [

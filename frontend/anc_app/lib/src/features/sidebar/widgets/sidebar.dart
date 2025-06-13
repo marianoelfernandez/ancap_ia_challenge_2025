@@ -17,7 +17,12 @@ final Color _glassBackground = Colors.white.withValues(alpha: 0.03);
 const Color _glassBorder = Color(0x1AFFFFFF);
 
 class Sidebar extends StatefulWidget {
-  const Sidebar({super.key});
+  final bool showChatFeatures;
+
+  const Sidebar({
+    super.key,
+    this.showChatFeatures = false,
+  });
 
   @override
   State<Sidebar> createState() => _SidebarState();
@@ -26,11 +31,11 @@ class Sidebar extends StatefulWidget {
 class _SidebarState extends State<Sidebar> {
   @override
   Widget build(BuildContext context) {
-    return _buildSidebar();
+    return _buildSidebar(widget.showChatFeatures);
   }
 }
 
-Widget _buildSidebar() {
+Widget _buildSidebar(bool showChatFeatures) {
   return _buildGlassEffectContainer(
     margin: EdgeInsets.zero,
     borderRadius: 0,
@@ -41,8 +46,8 @@ Widget _buildSidebar() {
         children: [
           _buildUserProfile(),
           _buildNavigationTabs(),
-          _buildSearchInput(),
-          _buildChatHistoryList(),
+          if (showChatFeatures) _buildSearchInput(),
+          if (showChatFeatures) _buildChatHistoryList(),
         ],
       ),
     ),
@@ -131,17 +136,6 @@ Widget _buildNavigationTabs() {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 16.0),
-            child: Text(
-              "Navegación",
-              style: GoogleFonts.inter(
-                color: _mutedForeground,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
           _buildNavigationTab(
             icon: Icons.chat_bubble_outline,
             label: "Chatbot",
