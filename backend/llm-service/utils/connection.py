@@ -19,3 +19,14 @@ def call_server(query: str) -> dict:
         return {"error": f"[Error parsing MCP response] {e}"}
     
 
+def get_embeddings(text: str) -> dict:
+    payload = {
+        "query": text
+    }
+    uri = f"{settings.mcp_server_uri}/embeddings"
+    response = requests.post(uri, json=payload).json()
+    try:
+        return response
+    except Exception as e:
+        return {"error": f"[Error parsing MCP embeddings response] {e}"}
+
