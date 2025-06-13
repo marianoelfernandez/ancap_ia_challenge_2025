@@ -7,6 +7,8 @@ import "package:anc_app/src/router/screen_params.dart";
 import "package:anc_app/src/features/auth/screens/login_screen.dart";
 import "package:anc_app/src/features/chatbot/screens/chatbot_screen.dart";
 import "package:anc_app/src/features/splash/screens/splash_screen.dart"; // Added splash screen import
+import "package:anc_app/src/features/auth/cubits/auth_cubit.dart";
+import "package:flutter_bloc/flutter_bloc.dart";
 
 /// All the routes in the app are defined here
 ///
@@ -135,8 +137,14 @@ Widget _wrapWithAuthEnforcer(
 ) {
   final appRoute = AppRoute.fromString(state.name ?? state.fullPath ?? "");
   if (appRoute.isAuthEnforcementRequired) {
-    // return AuthEnforce(child: child);
-    return child;
+    return BlocBuilder<AuthCubit, AuthState>(
+      builder: (context, authState) {
+        if (!authState.isAuthenticated) {
+          return const LoginScreen();
+        }
+        return child;
+      },
+    );
   } else {
     return child;
   }

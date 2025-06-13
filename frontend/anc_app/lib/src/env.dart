@@ -49,6 +49,10 @@ enum EnvKey<T> {
     path: "general.api_url",
     defaultValue: "",
   ),
+  llmServiceUrl(
+    path: "general.llm_service_url",
+    defaultValue: "http://localhost:8000",
+  ),
   ;
 
   final String path;
