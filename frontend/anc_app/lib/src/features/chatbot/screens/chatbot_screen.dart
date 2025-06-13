@@ -3,6 +3,11 @@ import "package:flutter/material.dart";
 import "package:google_fonts/google_fonts.dart";
 import "package:anc_app/src/models/chat_message.dart";
 import "package:anc_app/src/models/chat_history_item.dart";
+import "package:anc_app/src/features/chatbot/services/chat_service.dart";
+import "package:get_it/get_it.dart";
+import "package:flutter_bloc/flutter_bloc.dart";
+import "package:anc_app/src/features/auth/cubits/auth_cubit.dart";
+import "package:anc_app/src/router/router.dart";
 
 const Color _ancapYellow = Color(0xFFFFC107);
 const Color _ancapDarkBlue = Color(0xFF002A53);
@@ -41,8 +46,22 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     ChatHistoryItem(id: "2", title: "Revenue Forecast", date: "Yesterday"),
     ChatHistoryItem(id: "3", title: "Market Trends", date: "2 days ago"),
   ];
+  String? _currentConversationId;
+  final ChatService _chatService = GetIt.instance<ChatService>();
 
-  void _handleSend() {
+  @override
+  void initState() {
+    super.initState();
+    // Check authentication status
+    final authState = context.read<AuthCubit>().state;
+    if (!authState.isAuthenticated) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.goToAppRoute(AppRoute.initial);
+      });
+    }
+  }
+
+  void _handleSend() async {
     final text = _inputController.text.trim();
     if (text.isEmpty) return;
 
@@ -58,20 +77,35 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     });
     _inputController.clear();
 
-    // Simulate AI response
-    Future.delayed(const Duration(seconds: 1), () {
+    try {
+      final response = await _chatService.sendMessage(
+        text,
+        conversationId: _currentConversationId,
+      );
+
       setState(() {
         _messages.add(
           ChatMessage(
-            id: (DateTime.now().millisecondsSinceEpoch + 1).toString(),
-            text:
-                "I'm analyzing your request. Let me process that data for you...",
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            text: response["response"] as String,
+            isAi: true,
+            timestamp: DateTime.now(),
+          ),
+        );
+        _currentConversationId = response["conversation_id"] as String;
+      });
+    } catch (e) {
+      setState(() {
+        _messages.add(
+          ChatMessage(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            text: "Sorry, I encountered an error: $e",
             isAi: true,
             timestamp: DateTime.now(),
           ),
         );
       });
-    });
+    }
   }
 
   Widget _buildGlassEffectContainer({
@@ -103,28 +137,35 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     final screenWidth = MediaQuery.of(context).size.width;
     final bool isSmallScreen = screenWidth < 768;
 
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [_backgroundStart, _backgroundMid, _backgroundEnd],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: Row(
-          children: [
-            if (!isSmallScreen) _buildSidebar(),
-            Expanded(
-              child: Column(
-                children: [
-                  _buildChatHeader(),
-                  _buildMessagesList(),
-                  _buildInputArea(),
-                ],
-              ),
+    return BlocListener<AuthCubit, AuthState>(
+      listener: (context, state) {
+        if (!state.isAuthenticated) {
+          context.goToAppRoute(AppRoute.initial);
+        }
+      },
+      child: Scaffold(
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [_backgroundStart, _backgroundMid, _backgroundEnd],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-          ],
+          ),
+          child: Row(
+            children: [
+              if (!isSmallScreen) _buildSidebar(),
+              Expanded(
+                child: Column(
+                  children: [
+                    _buildChatHeader(),
+                    _buildMessagesList(),
+                    _buildInputArea(),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -510,13 +551,6 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(.0),
                     borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(.0),
-                    borderSide: const BorderSide(
-                      color: _ancapYellow,
-                      width: 1.5,
-                    ),
                   ),
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 18),

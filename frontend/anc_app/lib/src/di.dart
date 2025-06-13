@@ -5,6 +5,7 @@ import "package:pocketbase/pocketbase.dart";
 import "package:shared_preferences/shared_preferences.dart";
 import "package:anc_app/src/features/auth/services/auth_service.dart";
 import "package:anc_app/src/adapters/auth_pocketbase_service.dart";
+import "package:anc_app/src/features/chatbot/services/chat_service.dart";
 
 Future<void> setupDI() async {
   final getIt = GetIt.instance;
@@ -20,4 +21,6 @@ Future<void> setupDI() async {
       pocketBase: pb,
     ),
   );
+
+  getIt.registerSingleton<ChatService>(ChatService());
 }
