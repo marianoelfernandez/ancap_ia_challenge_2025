@@ -125,23 +125,12 @@ class _LoginScreenState extends State<LoginScreen>
                                   child: _buildBrandingSection(isLargeScreen),
                                 ),
                                 const SizedBox(width: 48),
-                                // Right Side - Login Form
+
                                 Expanded(
                                   flex: 6,
                                   child: Align(
                                     alignment: Alignment.centerRight,
-                                    child: LoginForm(
-                                      onLoginSuccess: () {
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          const SnackBar(
-                                            content:
-                                                Text("Login Successful! 🚀"),
-                                            backgroundColor: Color(0xFFFBBF24),
-                                          ),
-                                        );
-                                      },
-                                    ),
+                                    child: LoginForm(),
                                   ),
                                 ),
                               ],
@@ -151,17 +140,7 @@ class _LoginScreenState extends State<LoginScreen>
                                 children: [
                                   _buildBrandingSection(isLargeScreen),
                                   const SizedBox(height: 48),
-                                  LoginForm(
-                                    onLoginSuccess: () {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        const SnackBar(
-                                          content: Text("Login Successful! 🚀"),
-                                          backgroundColor: Color(0xFFFBBF24),
-                                        ),
-                                      );
-                                    },
-                                  ),
+                                  LoginForm(),
                                 ],
                               ),
                             ),
