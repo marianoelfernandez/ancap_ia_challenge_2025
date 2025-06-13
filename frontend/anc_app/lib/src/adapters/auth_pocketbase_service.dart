@@ -63,7 +63,7 @@ class AuthPocketBaseService implements AuthService {
   }
 
   @override
-  Future<Result<User, AuthError>> signOut() async {
+  Future<Result<void, AuthError>> signOut() async {
     try {
       pb.authStore.clear();
       return Result.ok(

@@ -1,7 +1,9 @@
 // GoRouter configuration
 import "dart:async";
 
+import "package:anc_app/src/features/auth/cubits/auth_cubit.dart";
 import "package:flutter/material.dart";
+import "package:flutter_bloc/flutter_bloc.dart";
 import "package:go_router/go_router.dart";
 import "package:anc_app/src/router/screen_params.dart";
 import "package:anc_app/src/features/auth/screens/login_screen.dart";
@@ -155,8 +157,14 @@ Widget _wrapWithAuthEnforcer(
 ) {
   final appRoute = AppRoute.fromString(state.name ?? state.fullPath ?? "");
   if (appRoute.isAuthEnforcementRequired) {
-    // return AuthEnforce(child: child);
-    return child;
+    return BlocBuilder<AuthCubit, AuthState>(
+      builder: (context, authState) {
+        if (!authState.isAuthenticated) {
+          return const LoginScreen();
+        }
+        return child;
+      },
+    );
   } else {
     return child;
   }

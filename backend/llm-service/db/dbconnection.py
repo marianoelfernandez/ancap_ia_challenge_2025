@@ -1,6 +1,7 @@
 from pocketbase import PocketBase
 from pocketbase.models import Record
 from pocketbase.errors import ClientResponseError
+from pocketbase.models.utils.list_result import ListResult
 from threading import Lock
 from utils.settings import Settings
 from typing import cast
@@ -117,7 +118,7 @@ def get_user(user_id: str) -> Record | None:
         logger.error(f"Unexpected error getting user {user_id}: {e}")
         return None
     
-def build_memory_of_conversation(conversation_id: str) -> list:
+def build_memory_of_conversation(conversation_id: str) -> ConversationBufferMemory:
     """
     Builds a memory of the conversation by retrieving messages from PocketBase.
 
@@ -125,7 +126,7 @@ def build_memory_of_conversation(conversation_id: str) -> list:
         conversation_id (str): ID of the conversation to retrieve messages for.
 
     Returns:
-        list: List of messages in the conversation.
+        ConversationBufferMemory: Memory object containing the conversation history.
     """
     client = PocketBaseClient().get_client()
     try:
@@ -135,15 +136,14 @@ def build_memory_of_conversation(conversation_id: str) -> list:
             "sort":"-created"
             }
         )
-        memory = parse_memory(messages)
-        return memory
+        return parse_memory(messages)
     except Exception as e:
         logger.error(f"Error building memory for conversation {conversation_id}: {e}")
-        return []
+        return ConversationBufferMemory(return_messages=True, memory_key="chat_history")
     
-def parse_memory(chat_history_list):
+def parse_memory(chat_history_list: ListResult[Record]) -> ConversationBufferMemory:
     messages = []
-    for entry in chat_history_list:
+    for entry in chat_history_list.items:  # Access the items property of ListResult
         query = getattr(entry, "natural_query")
         output = getattr(entry, "output")
         messages.append(HumanMessage(content=query))

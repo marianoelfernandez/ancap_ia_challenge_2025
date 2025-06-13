@@ -13,10 +13,10 @@ abstract interface class AuthService {
     required String password,
   });
   Future<Result<void, AuthError>> signOut();
-  
+
   /// Returns the current user if authenticated, or null if not authenticated
   User? getCurrentUserId();
-  
+
   /// Returns true if the user is currently authenticated
   bool get isAuthenticated;
 }
