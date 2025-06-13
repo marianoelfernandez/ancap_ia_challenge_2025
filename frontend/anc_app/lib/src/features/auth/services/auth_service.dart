@@ -13,4 +13,6 @@ abstract interface class AuthService {
     required String password,
   });
   Future<Result<void, AuthError>> signOut();
+
+  String? get token;
 }
