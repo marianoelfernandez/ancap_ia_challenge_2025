@@ -8,6 +8,7 @@ import "package:anc_app/src/features/auth/screens/login_screen.dart";
 import "package:anc_app/src/features/chatbot/screens/chatbot_screen.dart";
 import "package:anc_app/src/features/splash/screens/splash_screen.dart"; // Added splash screen import
 import "package:anc_app/src/features/audit/screen/audit_screen.dart"; // Added audit screen import
+import "package:anc_app/src/features/dashboard/screen/dashboard_screen.dart";
 
 /// All the routes in the app are defined here
 ///
@@ -28,6 +29,10 @@ enum AppRoute<ParamsType extends ScreenParams<ParamsType>> {
   ),
   home<NoParams>(
     path: "/home",
+    isAuthEnforcementRequired: true,
+  ),
+  dashboard<NoParams>(
+    path: "/dashboard",
     isAuthEnforcementRequired: true,
   ),
   chatbot<NoParams>(
@@ -91,7 +96,7 @@ GoRouter buildRouter({
             GoRoute(
               name: AppRoute.initial.name,
               path: AppRoute.initial.path,
-              builder: (context, state) => LoginScreen(),
+              builder: (context, state) => const LoginScreen(),
             ),
             GoRoute(
               name: AppRoute.chatbot.name,
@@ -107,6 +112,11 @@ GoRouter buildRouter({
               name: AppRoute.audit.name,
               path: AppRoute.audit.path,
               builder: (context, state) => const AuditScreen(),
+            ),
+            GoRoute(
+              name: AppRoute.dashboard.name,
+              path: AppRoute.dashboard.path,
+              builder: (context, state) => const DashboardScreen(),
             ),
           ],
         ),

@@ -24,6 +24,8 @@ dependencies:
   pocketbase: ^0.21.0
   oxidized: ^6.2.0
   google_fonts: ^6.1.0
+  fl_chart: ^0.65.0
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter

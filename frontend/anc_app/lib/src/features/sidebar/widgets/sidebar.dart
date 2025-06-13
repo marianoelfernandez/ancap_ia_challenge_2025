@@ -2,7 +2,9 @@ import "dart:ui";
 
 import "package:anc_app/src/models/chat_history_item.dart";
 import "package:flutter/material.dart";
+import "package:go_router/go_router.dart";
 import "package:google_fonts/google_fonts.dart";
+import "package:anc_app/src/router/router.dart";
 
 const Color _ancapYellow = Color(0xFFFFC107);
 const Color _ancapDarkBlue = Color(0xFF002A53);
@@ -38,6 +40,7 @@ Widget _buildSidebar() {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _buildUserProfile(),
+          _buildNavigationTabs(),
           _buildSearchInput(),
           _buildChatHistoryList(),
         ],
@@ -111,6 +114,92 @@ Widget _buildUserProfile() {
             ],
           ),
         ],
+      ),
+    ),
+  );
+}
+
+Widget _buildNavigationTabs() {
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+    child: Container(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      decoration: BoxDecoration(
+        border:
+            Border(bottom: BorderSide(color: _border.withValues(alpha: 0.1))),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16.0),
+            child: Text(
+              "Navegación",
+              style: GoogleFonts.inter(
+                color: _mutedForeground,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          _buildNavigationTab(
+            icon: Icons.chat_bubble_outline,
+            label: "Chatbot",
+            route: AppRoute.chatbot,
+          ),
+          const SizedBox(height: 8),
+          _buildNavigationTab(
+            icon: Icons.dashboard_outlined,
+            label: "Dashboard",
+            route: AppRoute.dashboard,
+          ),
+          const SizedBox(height: 8),
+          _buildNavigationTab(
+            icon: Icons.analytics_outlined,
+            label: "Auditoría",
+            route: AppRoute.audit,
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+Widget _buildNavigationTab({
+  required IconData icon,
+  required String label,
+  required AppRoute route,
+}) {
+  return Builder(
+    builder: (context) => Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          context.goNamed(route.name);
+        },
+        borderRadius: BorderRadius.circular(8.0),
+        hoverColor: _foreground.withValues(alpha: 0.05),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 12.0),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                color: _ancapYellow,
+                size: 20,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                label,
+                style: GoogleFonts.inter(
+                  color: _foreground,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     ),
   );
