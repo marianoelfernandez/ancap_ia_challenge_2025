@@ -24,6 +24,7 @@ dependencies:
   pocketbase: ^0.21.0
   oxidized: ^6.2.0
   google_fonts: ^6.1.0
+  fl_chart: ^0.65.0
   http: ^1.2.1
 
 dev_dependencies:

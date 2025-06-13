@@ -1,14 +1,16 @@
 // GoRouter configuration
 import "dart:async";
 
+import "package:anc_app/src/features/auth/cubits/auth_cubit.dart";
 import "package:flutter/material.dart";
+import "package:flutter_bloc/flutter_bloc.dart";
 import "package:go_router/go_router.dart";
 import "package:anc_app/src/router/screen_params.dart";
 import "package:anc_app/src/features/auth/screens/login_screen.dart";
 import "package:anc_app/src/features/chatbot/screens/chatbot_screen.dart";
 import "package:anc_app/src/features/splash/screens/splash_screen.dart"; // Added splash screen import
-import "package:anc_app/src/features/auth/cubits/auth_cubit.dart";
-import "package:flutter_bloc/flutter_bloc.dart";
+import "package:anc_app/src/features/audit/screen/audit_screen.dart"; // Added audit screen import
+import "package:anc_app/src/features/dashboard/screen/dashboard_screen.dart";
 
 /// All the routes in the app are defined here
 ///
@@ -31,6 +33,10 @@ enum AppRoute<ParamsType extends ScreenParams<ParamsType>> {
     path: "/home",
     isAuthEnforcementRequired: true,
   ),
+  dashboard<NoParams>(
+    path: "/dashboard",
+    isAuthEnforcementRequired: true,
+  ),
   chatbot<NoParams>(
     path: "/chatbot",
     isAuthEnforcementRequired: true,
@@ -38,6 +44,10 @@ enum AppRoute<ParamsType extends ScreenParams<ParamsType>> {
   splash<NoParams>(
     path: "/splash",
     isAuthEnforcementRequired: false,
+  ),
+  audit<NoParams>(
+    path: "/audit",
+    isAuthEnforcementRequired: true,
   ),
   ;
 
@@ -88,7 +98,7 @@ GoRouter buildRouter({
             GoRoute(
               name: AppRoute.initial.name,
               path: AppRoute.initial.path,
-              builder: (context, state) => LoginScreen(),
+              builder: (context, state) => const LoginScreen(),
             ),
             GoRoute(
               name: AppRoute.chatbot.name,
@@ -99,6 +109,16 @@ GoRouter buildRouter({
               name: AppRoute.splash.name,
               path: AppRoute.splash.path,
               builder: (context, state) => const SplashScreen(),
+            ),
+            GoRoute(
+              name: AppRoute.audit.name,
+              path: AppRoute.audit.path,
+              builder: (context, state) => const AuditScreen(),
+            ),
+            GoRoute(
+              name: AppRoute.dashboard.name,
+              path: AppRoute.dashboard.path,
+              builder: (context, state) => const DashboardScreen(),
             ),
           ],
         ),

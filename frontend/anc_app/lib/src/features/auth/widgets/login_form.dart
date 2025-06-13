@@ -10,10 +10,9 @@ final Color _glassBackground = Colors.white.withValues(alpha: 0.03);
 const Color _glassBorder = Color(0x1AFFFFFF);
 
 class LoginForm extends StatefulWidget {
-  final VoidCallback onLoginSuccess;
   final AuthCubit authCubit = AuthCubit();
 
-  LoginForm({super.key, required this.onLoginSuccess});
+  LoginForm({super.key});
 
   @override
   State<LoginForm> createState() => _LoginFormState();
@@ -135,11 +134,8 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
     return BlocListener<AuthCubit, AuthState>(
       listener: (context, state) {
         if (state.isAuthenticated) {
-          // Navigate to splash screen on successful login
           context.goToAppRoute(AppRoute.splash);
-          widget.onLoginSuccess();
         } else if (state.hasError) {
-          // Show error message
           _showErrorSnackBar(state.redactedError);
         }
       },
