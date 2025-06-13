@@ -2,6 +2,7 @@
 import "package:anc_app/src/features/auth/services/auth_service.dart";
 import "package:anc_app/src/features/chatbot/services/conversation_service.dart";
 import "package:anc_app/src/models/conversation.dart";
+import "package:anc_app/src/models/user.dart";
 import "package:bloc/bloc.dart";
 import "package:equatable/equatable.dart";
 import "package:flutter/foundation.dart";
@@ -12,11 +13,13 @@ class SidebarState extends Equatable {
   final List<Conversation> recentConversations;
   final bool isLoading;
   final String? error;
+  final User? currentUser;
 
   const SidebarState({
     this.recentConversations = const [],
     this.isLoading = false,
     this.error,
+    this.currentUser,
   });
 
   // Create a copy of the state with updated values
@@ -24,16 +27,18 @@ class SidebarState extends Equatable {
     List<Conversation>? recentConversations,
     bool? isLoading,
     String? error,
+    User? currentUser,
   }) {
     return SidebarState(
       recentConversations: recentConversations ?? this.recentConversations,
       isLoading: isLoading ?? this.isLoading,
       error: error,
+      currentUser: currentUser ?? this.currentUser,
     );
   }
 
   @override
-  List<Object?> get props => [recentConversations, isLoading, error];
+  List<Object?> get props => [recentConversations, isLoading, error, currentUser];
 }
 
 // Define the sidebar cubit
@@ -66,9 +71,11 @@ class SidebarCubit extends Cubit<SidebarState> {
         emit(state.copyWith(error: "User not authenticated", isLoading: false));
         return;
       }
-
-      // Extract user ID from the PocketBase model
-      // For now, we'll use the user's email as the identifier since we don't have ID in the User model
+      
+      // Store the user in the state
+      emit(state.copyWith(currentUser: user));
+      
+      // Extract user ID from the User model
       final userId = user.id;
 
       debugPrint("SidebarCubit: Fetching conversations for user: $userId");

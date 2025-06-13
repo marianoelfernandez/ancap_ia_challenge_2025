@@ -79,72 +79,80 @@ Widget _buildSidebar(bool showChatFeatures) {
 }
 
 Widget _buildUserProfile() {
-  return Padding(
-    padding: const EdgeInsets.all(24.0),
-    child: Container(
-      padding: const EdgeInsets.only(bottom: 24.0),
-      decoration: BoxDecoration(
-        border:
-            Border(bottom: BorderSide(color: _border.withValues(alpha: 0.1))),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: const LinearGradient(
-                colors: [
-                  _ancapYellow,
-                  Color(0xFFF59E0B),
-                ],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: _ancapYellow.withValues(alpha: 0.3),
-                  blurRadius: 20,
-                ),
-                BoxShadow(
-                  color: _ancapYellow.withValues(alpha: 0.2),
-                  blurRadius: 40,
-                ),
-                BoxShadow(
-                  color: _ancapYellow.withValues(alpha: 0.1),
-                  blurRadius: 60,
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.person_outline,
-              color: _ancapDarkBlue,
-              size: 24,
-            ), // User icon
+  return BlocBuilder<SidebarCubit, SidebarState>(
+    builder: (context, state) {
+      final user = state.currentUser;
+      final userName = user?.name ?? "Guest User";
+      final userRole = user?.role ?? "No Role";
+      
+      return Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Container(
+          padding: const EdgeInsets.only(bottom: 24.0),
+          decoration: BoxDecoration(
+            border:
+                Border(bottom: BorderSide(color: _border.withValues(alpha: 0.1))),
           ),
-          const SizedBox(width: 16), // gap-4
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
             children: [
-              Text(
-                "John Doe",
-                style: GoogleFonts.inter(
-                  fontWeight: FontWeight.w600,
-                  color: _foreground,
-                  fontSize: 16,
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const LinearGradient(
+                    colors: [
+                      _ancapYellow,
+                      Color(0xFFF59E0B),
+                    ],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _ancapYellow.withValues(alpha: 0.3),
+                      blurRadius: 20,
+                    ),
+                    BoxShadow(
+                      color: _ancapYellow.withValues(alpha: 0.2),
+                      blurRadius: 40,
+                    ),
+                    BoxShadow(
+                      color: _ancapYellow.withValues(alpha: 0.1),
+                      blurRadius: 60,
+                    ),
+                  ],
                 ),
+                child: const Icon(
+                  Icons.person_outline,
+                  color: _ancapDarkBlue,
+                  size: 24,
+                ), // User icon
               ),
-              Text(
-                "Business Analyst",
-                style: GoogleFonts.inter(
-                  color: _mutedForeground,
-                  fontSize: 14,
-                ),
+              const SizedBox(width: 16), // gap-4
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    userName,
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w600,
+                      color: _foreground,
+                      fontSize: 16,
+                    ),
+                  ),
+                  Text(
+                    userRole,
+                    style: GoogleFonts.inter(
+                      color: _mutedForeground,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
-      ),
-    ),
+        ),
+      );
+    },
   );
 }
 
