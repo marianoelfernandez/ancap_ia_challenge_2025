@@ -46,7 +46,7 @@ class AuthCubit extends Cubit<AuthState> {
     );
     final nextState = result.match(
       (user) => state.copyWith(currentUser: Some(user)),
-      (error) => state.toError(error),
+      (error) => state.toError(AuthErrorInvalidCredentials()),
     );
     emit(nextState);
   }
@@ -76,9 +76,10 @@ class AuthState extends Equatable {
   bool get isAuthenticated => currentUser.isSome();
   bool get hasError => error.isSome();
   String get redactedError => switch (error) {
-        Some(some: AuthErrorUnknown()) => "Unknown error",
-        Some(some: AuthErrorEmailAlreadyInUse()) => "Email already in use",
-        Some(some: AuthErrorInvalidCredentials()) => "Invalid credentials",
+        Some(some: AuthErrorUnknown()) => "Error desconocido",
+        Some(some: AuthErrorEmailAlreadyInUse()) =>
+          "El correo electrónico ya está en uso",
+        Some(some: AuthErrorInvalidCredentials()) => "Credenciales inválidas",
         None<AuthError>() => "",
       };
 
