@@ -99,7 +99,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         _messages.add(
           ChatMessage(
             id: DateTime.now().millisecondsSinceEpoch.toString(),
-            text: "Sorry, I encountered an error: $e",
+            text: "Lo siento en este momento no puedo ayudarte",
             isAi: true,
             timestamp: DateTime.now(),
           ),
@@ -115,7 +115,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     double? borderRadius,
   }) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(borderRadius ?? 12.0),
+      borderRadius: BorderRadius.circular(borderRadius ?? 8.0),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
         child: Container(
@@ -123,7 +123,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
           padding: padding,
           decoration: BoxDecoration(
             color: _glassBackground,
-            borderRadius: BorderRadius.circular(borderRadius ?? 12.0),
+            borderRadius: BorderRadius.circular(borderRadius ?? 8.0),
             border: Border.all(color: _glassBorder, width: 1),
           ),
           child: child,
