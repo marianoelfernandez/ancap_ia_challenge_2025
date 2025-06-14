@@ -369,13 +369,17 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                   hintText: "Habla con tu base de datos...",
                   hintStyle:
                       GoogleFonts.inter(color: _mutedForeground, fontSize: 15),
-                  filled: true,
+                  filled: false,
                   fillColor: Colors.transparent,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(.0),
                     borderSide: BorderSide.none,
                   ),
                   enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(.0),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(.0),
                     borderSide: BorderSide.none,
                   ),
