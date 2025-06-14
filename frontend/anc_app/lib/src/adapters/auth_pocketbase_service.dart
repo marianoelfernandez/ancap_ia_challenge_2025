@@ -48,12 +48,13 @@ class AuthPocketBaseService implements AuthService {
     required String password,
   }) async {
     try {
-      await pb.collection("users").authWithPassword(email, password);
+      final authData =
+          await pb.collection("users").authWithPassword(email, password);
       return Result.ok(
         User(
-          id: "",
-          email: email,
-          name: "",
+          id: authData.record?.id ?? "",
+          email: authData.record?.getStringValue("email") ?? email,
+          name: authData.record?.getStringValue("name") ?? "",
         ),
       );
     } catch (e, s) {

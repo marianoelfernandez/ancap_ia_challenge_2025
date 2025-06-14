@@ -10,7 +10,18 @@ import "package:oxidized/oxidized.dart";
 class AuthCubit extends Cubit<AuthState> {
   AuthService authService = GetIt.I.get<AuthService>();
 
-  AuthCubit() : super(const AuthState());
+  AuthCubit() : super(const AuthState()) {
+    checkSession();
+  }
+
+  Future<void> checkSession() async {
+    if (authService.isAuthenticated) {
+      final user = authService.getCurrentUserId();
+      if (user != null) {
+        emit(state.copyWith(currentUser: Some(user)));
+      }
+    }
+  }
 
   Future<void> signUp(String email, String name, String password) async {
     emit(state.toLoading());
