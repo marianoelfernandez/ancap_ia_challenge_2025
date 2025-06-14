@@ -287,6 +287,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                           decoration: BoxDecoration(
                             color: _glassBackground,
                             borderRadius: BorderRadius.circular(19.0),
+                            backgroundBlendMode: BlendMode.color,
                           ),
                           padding: const EdgeInsets.all(
                             0.1,
@@ -337,6 +338,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               decoration: BoxDecoration(
                 color: _glassBackground,
                 borderRadius: BorderRadius.circular(19.0),
+                backgroundBlendMode: BlendMode.color,
               ),
               padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 8),
               child: const _TypingIndicator(),
