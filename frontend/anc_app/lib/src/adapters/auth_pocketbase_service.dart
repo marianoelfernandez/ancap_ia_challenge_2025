@@ -65,7 +65,6 @@ class AuthPocketBaseService implements AuthService {
 
   @override
   Future<Result<void, AuthError>> signOut() async {
-  Future<Result<void, AuthError>> signOut() async {
     try {
       pb.authStore.clear();
       return Result.ok(
@@ -82,7 +81,7 @@ class AuthPocketBaseService implements AuthService {
 
   /// Returns the current user if authenticated, or null if not authenticated
   @override
-  User? getCurrentUserId() {
+  User? getCurrentUser() {
     if (!isAuthenticated) return null;
 
     try {
@@ -98,6 +97,12 @@ class AuthPocketBaseService implements AuthService {
       debugPrint("Error getting current user: $e");
       return null;
     }
+  }
+
+  // TODO: wierd
+  @override
+  User? getCurrentUserId() {
+    return getCurrentUser();
   }
 
   @override

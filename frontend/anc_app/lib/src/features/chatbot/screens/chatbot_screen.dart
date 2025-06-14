@@ -41,11 +41,6 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     ),
   ];
   final TextEditingController _inputController = TextEditingController();
-  final List<ChatHistoryItem> _chatHistory = [
-    ChatHistoryItem(id: "1", title: "Sales Analysis", date: "2 hours ago"),
-    ChatHistoryItem(id: "2", title: "Revenue Forecast", date: "Yesterday"),
-    ChatHistoryItem(id: "3", title: "Market Trends", date: "2 days ago"),
-  ];
   String? _currentConversationId;
   final ChatService _chatService = GetIt.instance<ChatService>();
 
