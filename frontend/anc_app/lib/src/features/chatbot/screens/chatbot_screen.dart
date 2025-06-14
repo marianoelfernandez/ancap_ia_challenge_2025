@@ -264,7 +264,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               padding: const EdgeInsets.all(16.0),
               decoration: BoxDecoration(
                 color: isAi ? null : _ancapYellow,
-                borderRadius: BorderRadius.circular(20.0),
+                borderRadius: BorderRadius.circular(8.0),
                 border: isAi ? Border.all(color: _glassBorder, width: 1) : null,
                 boxShadow: isAi
                     ? null
@@ -279,14 +279,14 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               child: isAi
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(
-                        19.0,
+                        8.0,
                       ),
                       child: BackdropFilter(
                         filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
                         child: Container(
                           decoration: BoxDecoration(
                             color: _glassBackground,
-                            borderRadius: BorderRadius.circular(19.0),
+                            borderRadius: BorderRadius.circular(8.0),
                             backgroundBlendMode: BlendMode.color,
                           ),
                           padding: const EdgeInsets.all(
@@ -327,20 +327,20 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         margin: const EdgeInsets.symmetric(vertical: 8.0),
         padding: const EdgeInsets.all(16.0),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20.0),
+          borderRadius: BorderRadius.circular(8.0),
           border: Border.all(color: _glassBorder, width: 1),
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(19.0),
+          borderRadius: BorderRadius.circular(8.0),
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
             child: Container(
               decoration: BoxDecoration(
                 color: _glassBackground,
-                borderRadius: BorderRadius.circular(19.0),
+                borderRadius: BorderRadius.circular(8.0),
                 backgroundBlendMode: BlendMode.color,
               ),
-              padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 8),
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
               child: const _TypingIndicator(),
             ),
           ),
