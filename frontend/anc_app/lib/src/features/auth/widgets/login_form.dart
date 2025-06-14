@@ -104,7 +104,7 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Please fill in all fields"),
+          content: Text("Por favor, complete todos los campos"),
           backgroundColor: Colors.red,
         ),
       );
