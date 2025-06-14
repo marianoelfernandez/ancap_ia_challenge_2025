@@ -1,14 +1,16 @@
-import "dart:ui";
 import "dart:math";
-import "package:flutter/material.dart";
-import "package:google_fonts/google_fonts.dart";
-import "package:anc_app/src/models/chat_message.dart";
-import "package:anc_app/src/features/sidebar/widgets/sidebar.dart";
-import "package:anc_app/src/features/chatbot/services/chat_service.dart";
-import "package:get_it/get_it.dart";
-import "package:flutter_bloc/flutter_bloc.dart";
+import "dart:ui";
+
 import "package:anc_app/src/features/auth/cubits/auth_cubit.dart";
+import "package:anc_app/src/features/chatbot/services/chat_service.dart";
+import "package:anc_app/src/features/sidebar/widgets/sidebar.dart";
+import "package:anc_app/src/models/chat_message.dart";
 import "package:anc_app/src/router/router.dart";
+import "package:flutter/material.dart";
+import "package:flutter_bloc/flutter_bloc.dart";
+import "package:flutter_markdown/flutter_markdown.dart";
+import "package:get_it/get_it.dart";
+import "package:google_fonts/google_fonts.dart";
 
 const Color _ancapYellow = Color(0xFFFFC107);
 const Color _ancapDarkBlue = Color(0xFF002A53);
@@ -292,11 +294,25 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                           padding: const EdgeInsets.all(
                             0.1,
                           ),
-                          child: Text(
-                            message.text,
-                            style: GoogleFonts.inter(
-                              color: _foreground,
-                              fontSize: 14,
+                          child: MarkdownBody(
+                            data: message.text,
+                            styleSheet: MarkdownStyleSheet.fromTheme(
+                              Theme.of(context).copyWith(
+                                textTheme: Theme.of(context).textTheme.apply(
+                                      bodyColor: _foreground,
+                                      displayColor: _foreground,
+                                    ),
+                              ),
+                            ).copyWith(
+                              p: GoogleFonts.inter(
+                                color: _foreground,
+                                fontSize: 14,
+                              ),
+                              code: GoogleFonts.firaCode(
+                                backgroundColor: Colors.grey[850],
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
                             ),
                           ),
                         ),
