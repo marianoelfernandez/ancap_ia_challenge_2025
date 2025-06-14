@@ -224,127 +224,139 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
   }
 
   Widget _buildLoginForm(AuthState authState) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        AnimatedBuilder(
-          animation: _emailFieldAnimation,
-          builder: (context, child) {
-            return Transform.translate(
-              offset: Offset(-20 * (1 - _emailFieldAnimation.value), 0),
-              child: Opacity(
-                opacity: _emailFieldAnimation.value,
-                child: _buildInputField(
-                  label: "Correo Electrónico",
-                  controller: _emailController,
-                  hintText: "Ingrese su correo",
-                  keyboardType: TextInputType.emailAddress,
-                ),
-              ),
-            );
-          },
-        ),
-        const SizedBox(height: 20),
-        AnimatedBuilder(
-          animation: _passwordFieldAnimation,
-          builder: (context, child) {
-            return Transform.translate(
-              offset: Offset(-20 * (1 - _passwordFieldAnimation.value), 0),
-              child: Opacity(
-                opacity: _passwordFieldAnimation.value,
-                child: _buildInputField(
-                  label: "Contraseña",
-                  controller: _passwordController,
-                  hintText: "Ingrese su contraseña",
-                  isPassword: true,
-                ),
-              ),
-            );
-          },
-        ),
-        const SizedBox(height: 24),
-        AnimatedBuilder(
-          animation: _loginButtonAnimation,
-          builder: (context, child) {
-            return Transform.translate(
-              offset: Offset(0, 20 * (1 - _loginButtonAnimation.value)),
-              child: Opacity(
-                opacity: _loginButtonAnimation.value,
-                child: Container(
-                  height: 48,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFFFD54F), Color(0xFFFFC107)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFFFC107).withValues(alpha: 0.3),
-                        blurRadius: 15,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
+    return Form(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AnimatedBuilder(
+            animation: _emailFieldAnimation,
+            builder: (context, child) {
+              return Transform.translate(
+                offset: Offset(-20 * (1 - _emailFieldAnimation.value), 0),
+                child: Opacity(
+                  opacity: _emailFieldAnimation.value,
+                  child: _buildInputField(
+                    label: "Correo Electrónico",
+                    controller: _emailController,
+                    hintText: "Ingrese su correo",
+                    keyboardType: TextInputType.emailAddress,
+                    onFieldSubmitted: (_) {
+                      // Move focus to password field when Enter is pressed
+                      FocusScope.of(context).nextFocus();
+                    },
                   ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 20),
+          AnimatedBuilder(
+            animation: _passwordFieldAnimation,
+            builder: (context, child) {
+              return Transform.translate(
+                offset: Offset(-20 * (1 - _passwordFieldAnimation.value), 0),
+                child: Opacity(
+                  opacity: _passwordFieldAnimation.value,
+                  child: _buildInputField(
+                    label: "Contraseña",
+                    controller: _passwordController,
+                    hintText: "Ingrese su contraseña",
+                    isPassword: true,
+                    onFieldSubmitted: (_) {
+                      if (!authState.isLoading) {
+                        _handleLogin();
+                      }
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 24),
+          AnimatedBuilder(
+            animation: _loginButtonAnimation,
+            builder: (context, child) {
+              return Transform.translate(
+                offset: Offset(0, 20 * (1 - _loginButtonAnimation.value)),
+                child: Opacity(
+                  opacity: _loginButtonAnimation.value,
+                  child: Container(
+                    height: 48,
+                    decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(8),
-                      onTap: authState.isLoading ? null : _handleLogin,
-                      child: Container(
-                        alignment: Alignment.center,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: authState.isLoading
-                              ? const [
-                                  Text(
-                                    "Conectando",
-                                    style: TextStyle(
-                                      color: Color(0xFF0B101A),
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                  SizedBox(width: 12),
-                                  SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        Color(0xFF0B101A),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFFD54F), Color(0xFFFFC107)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFFFC107).withValues(alpha: 0.3),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(8),
+                        onTap: authState.isLoading ? null : _handleLogin,
+                        child: Container(
+                          alignment: Alignment.center,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: authState.isLoading
+                                ? const [
+                                    Text(
+                                      "Conectando",
+                                      style: TextStyle(
+                                        color: Color(0xFF0B101A),
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 16,
                                       ),
                                     ),
-                                  ),
-                                ]
-                              : const [
-                                  Text(
-                                    "Acceder al sistema",
-                                    style: TextStyle(
-                                      color: Color(0xFF0B101A),
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 16,
+                                    SizedBox(width: 12),
+                                    SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                          Color(0xFF0B101A),
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                  SizedBox(width: 8),
-                                  Icon(
-                                    Icons.login,
-                                    color: Color(0xFF0B101A),
-                                    size: 20,
-                                  ),
-                                ],
+                                  ]
+                                : const [
+                                    Text(
+                                      "Acceder al sistema",
+                                      style: TextStyle(
+                                        color: Color(0xFF0B101A),
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    SizedBox(width: 8),
+                                    Icon(
+                                      Icons.login,
+                                      color: Color(0xFF0B101A),
+                                      size: 20,
+                                    ),
+                                  ],
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            );
-          },
-        ),
-      ],
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 
@@ -354,6 +366,7 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
     required String hintText,
     TextInputType? keyboardType,
     bool isPassword = false,
+    void Function(String)? onFieldSubmitted,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -375,10 +388,11 @@ class _LoginFormState extends State<LoginForm> with TickerProviderStateMixin {
               color: Colors.white.withValues(alpha: 0.1),
             ),
           ),
-          child: TextField(
+          child: TextFormField(
             controller: controller,
             keyboardType: keyboardType,
             obscureText: isPassword && !_isPasswordVisible,
+            onFieldSubmitted: onFieldSubmitted,
             style: const TextStyle(
               color: Colors.white,
               fontSize: 13,
