@@ -16,7 +16,7 @@ class AuthCubit extends Cubit<AuthState> {
 
   Future<void> checkSession() async {
     if (authService.isAuthenticated) {
-      final user = authService.getCurrentUserId();
+      final user = authService.getCurrentUser();
       if (user != null) {
         emit(state.copyWith(currentUser: Some(user)));
       }

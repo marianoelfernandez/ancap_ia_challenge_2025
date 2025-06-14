@@ -99,12 +99,6 @@ class AuthPocketBaseService implements AuthService {
     }
   }
 
-  // TODO: wierd
-  @override
-  User? getCurrentUserId() {
-    return getCurrentUser();
-  }
-
   @override
   String? get token => pb.authStore.token;
 }

@@ -57,7 +57,7 @@ class SidebarCubit extends Cubit<SidebarState> {
 
     try {
       // Get the current user using the updated function
-      final user = _authService.getCurrentUserId();
+      final user = _authService.getCurrentUser();
       debugPrint("SidebarCubit: Got user: $user");
 
       // If user is null, the user is not authenticated

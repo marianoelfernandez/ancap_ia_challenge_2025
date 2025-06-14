@@ -15,7 +15,7 @@ abstract interface class AuthService {
   Future<Result<void, AuthError>> signOut();
 
   /// Returns the current user if authenticated, or null if not authenticated
-  User? getCurrentUserId();
+  User? getCurrentUser();
 
   String? get token;
 
