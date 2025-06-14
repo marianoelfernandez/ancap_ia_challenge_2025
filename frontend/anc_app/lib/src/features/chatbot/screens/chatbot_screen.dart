@@ -1,13 +1,16 @@
+import "dart:math";
 import "dart:ui";
-import "package:flutter/material.dart";
-import "package:google_fonts/google_fonts.dart";
-import "package:anc_app/src/models/chat_message.dart";
-import "package:anc_app/src/features/sidebar/widgets/sidebar.dart";
-import "package:anc_app/src/features/chatbot/services/chat_service.dart";
-import "package:get_it/get_it.dart";
-import "package:flutter_bloc/flutter_bloc.dart";
+
 import "package:anc_app/src/features/auth/cubits/auth_cubit.dart";
+import "package:anc_app/src/features/chatbot/services/chat_service.dart";
+import "package:anc_app/src/features/sidebar/widgets/sidebar.dart";
+import "package:anc_app/src/models/chat_message.dart";
 import "package:anc_app/src/router/router.dart";
+import "package:flutter/material.dart";
+import "package:flutter_bloc/flutter_bloc.dart";
+import "package:flutter_markdown/flutter_markdown.dart";
+import "package:get_it/get_it.dart";
+import "package:google_fonts/google_fonts.dart";
 
 const Color _ancapYellow = Color(0xFFFFC107);
 const Color _ancapDarkBlue = Color(0xFF002A53);
@@ -43,6 +46,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   final TextEditingController _inputController = TextEditingController();
   String? _currentConversationId;
   final ChatService _chatService = GetIt.instance<ChatService>();
+  bool _isAiTyping = false;
 
   @override
   void initState() {
@@ -69,6 +73,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
           timestamp: DateTime.now(),
         ),
       );
+      _isAiTyping = true;
     });
     _inputController.clear();
 
@@ -79,6 +84,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       );
 
       setState(() {
+        _isAiTyping = false;
         _messages.add(
           ChatMessage(
             id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -91,10 +97,11 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       });
     } catch (e) {
       setState(() {
+        _isAiTyping = false;
         _messages.add(
           ChatMessage(
             id: DateTime.now().millisecondsSinceEpoch.toString(),
-            text: "Sorry, I encountered an error: $e",
+            text: "Lo siento en este momento no puedo ayudarte",
             isAi: true,
             timestamp: DateTime.now(),
           ),
@@ -110,7 +117,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     double? borderRadius,
   }) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(borderRadius ?? 12.0),
+      borderRadius: BorderRadius.circular(borderRadius ?? 8.0),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
         child: Container(
@@ -118,7 +125,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
           padding: padding,
           decoration: BoxDecoration(
             color: _glassBackground,
-            borderRadius: BorderRadius.circular(borderRadius ?? 12.0),
+            borderRadius: BorderRadius.circular(borderRadius ?? 8.0),
             border: Border.all(color: _glassBorder, width: 1),
           ),
           child: child,
@@ -238,9 +245,14 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       child: ListView.builder(
         padding: const EdgeInsets.all(24.0),
         reverse: true,
-        itemCount: _messages.length,
+        itemCount: _messages.length + (_isAiTyping ? 1 : 0),
         itemBuilder: (context, index) {
-          final message = _messages[_messages.length - 1 - index];
+          if (_isAiTyping && index == 0) {
+            return _buildTypingIndicator();
+          }
+
+          final messageIndex = _isAiTyping ? index - 1 : index;
+          final message = _messages[_messages.length - 1 - messageIndex];
           final isAi = message.isAi;
           return Align(
             alignment: isAi ? Alignment.centerLeft : Alignment.centerRight,
@@ -254,7 +266,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               padding: const EdgeInsets.all(16.0),
               decoration: BoxDecoration(
                 color: isAi ? null : _ancapYellow,
-                borderRadius: BorderRadius.circular(20.0),
+                borderRadius: BorderRadius.circular(8.0),
                 border: isAi ? Border.all(color: _glassBorder, width: 1) : null,
                 boxShadow: isAi
                     ? null
@@ -269,23 +281,38 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               child: isAi
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(
-                        19.0,
+                        8.0,
                       ),
                       child: BackdropFilter(
                         filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
                         child: Container(
                           decoration: BoxDecoration(
                             color: _glassBackground,
-                            borderRadius: BorderRadius.circular(19.0),
+                            borderRadius: BorderRadius.circular(8.0),
+                            backgroundBlendMode: BlendMode.color,
                           ),
                           padding: const EdgeInsets.all(
                             0.1,
                           ),
-                          child: Text(
-                            message.text,
-                            style: GoogleFonts.inter(
-                              color: _foreground,
-                              fontSize: 14,
+                          child: MarkdownBody(
+                            data: message.text,
+                            styleSheet: MarkdownStyleSheet.fromTheme(
+                              Theme.of(context).copyWith(
+                                textTheme: Theme.of(context).textTheme.apply(
+                                      bodyColor: _foreground,
+                                      displayColor: _foreground,
+                                    ),
+                              ),
+                            ).copyWith(
+                              p: GoogleFonts.inter(
+                                color: _foreground,
+                                fontSize: 14,
+                              ),
+                              code: GoogleFonts.firaCode(
+                                backgroundColor: Colors.grey[850],
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
                             ),
                           ),
                         ),
@@ -302,6 +329,38 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildTypingIndicator() {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.75,
+        ),
+        margin: const EdgeInsets.symmetric(vertical: 8.0),
+        padding: const EdgeInsets.all(16.0),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8.0),
+          border: Border.all(color: _glassBorder, width: 1),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8.0),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+            child: Container(
+              decoration: BoxDecoration(
+                color: _glassBackground,
+                borderRadius: BorderRadius.circular(8.0),
+                backgroundBlendMode: BlendMode.color,
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+              child: const _TypingIndicator(),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -326,13 +385,17 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                   hintText: "Habla con tu base de datos...",
                   hintStyle:
                       GoogleFonts.inter(color: _mutedForeground, fontSize: 15),
-                  filled: true,
+                  filled: false,
                   fillColor: Colors.transparent,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(.0),
                     borderSide: BorderSide.none,
                   ),
                   enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(.0),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(.0),
                     borderSide: BorderSide.none,
                   ),
@@ -377,5 +440,73 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         ),
       ),
     );
+  }
+}
+
+class _TypingIndicator extends StatefulWidget {
+  const _TypingIndicator();
+
+  @override
+  __TypingIndicatorState createState() => __TypingIndicatorState();
+}
+
+class __TypingIndicatorState extends State<_TypingIndicator>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: List.generate(3, (index) {
+            final animation = Tween(begin: 0.0, end: 1.0).animate(
+              CurvedAnimation(
+                parent: _controller,
+                curve: Interval(
+                  0.15 * index,
+                  0.4 + 0.15 * index,
+                  curve: Curves.decelerate,
+                ),
+              ),
+            );
+            final double jumpHeight = -9.0 * sin(pi * animation.value);
+
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2.0),
+              child: Transform.translate(
+                offset: Offset(0, jumpHeight),
+                child: child,
+              ),
+            );
+          }),
+        );
+      },
+      child: Container(
+        width: 8,
+        height: 8,
+        decoration: const BoxDecoration(
+          color: _foreground,
+          shape: BoxShape.circle,
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 }

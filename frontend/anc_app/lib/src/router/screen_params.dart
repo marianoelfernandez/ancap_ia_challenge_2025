@@ -12,4 +12,3 @@ class NoParams extends ScreenParams<NoParams> {
   @override
   Map<String, String> toMap() => {};
 }
-
