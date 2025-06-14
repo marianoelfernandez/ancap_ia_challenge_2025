@@ -39,6 +39,7 @@ class Settings(BaseSettings):
         default="", 
         description="Path to GCP service account JSON file"
     )
+    GCS_BUCKET_NAME: str = Field(..., description="GCS bucket name for cache, query storage")
     
     # BigQuery Settings
     BIGQUERY_DATASET: str = Field(..., description="BigQuery dataset name")

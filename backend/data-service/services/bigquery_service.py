@@ -154,3 +154,14 @@ class BigQueryService:
             return {k: self._serialize_value(v) for k, v in value.items()}
         else:
             return value
+        
+    async def get_embedding_of_query(self, text: str) -> Dict[str, Any]:
+        """
+        Get embeddings for a given text query
+        """
+        try:
+           
+            return response
+        except Exception as e:
+            self.logger.error(f"Error getting embeddings: {str(e)}")
+            return {"error": f"[Error parsing embeddings response] {e}"}

@@ -71,3 +71,6 @@ class BatchQueryResponse(BaseModel):
     total_execution_time: float
     successful_queries: int
     failed_queries: int
+
+class QueryEmbeddingRequest(BaseModel):
+    text: str = Field(..., description="Text to check for embeddings in DB")
