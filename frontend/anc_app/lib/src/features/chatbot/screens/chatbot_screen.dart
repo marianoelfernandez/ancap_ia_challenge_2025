@@ -30,7 +30,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     ChatMessage(
       id: "1",
       text:
-          "Hello! I'm your ANCAPP AI Assistant. How can I help you analyze your business data today?",
+          "Hola! Soy tu asistente de ANCAP. ¿Cómo puedo ayudarte a analizar tus datos de negocio hoy?",
       isAi: true,
       timestamp: DateTime.now(),
     ),
