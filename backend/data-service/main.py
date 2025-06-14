@@ -44,7 +44,7 @@ def create_app() -> FastAPI:
 
     # Include routers
     app.include_router(query_router)
-
+    setup_cache_environment()
     return app
 
 app = create_app()

@@ -6,6 +6,7 @@ from services.bigquery_service import BigQueryService
 from services.data_service import DataService
 from models.query.model import SQLQueryRequest, SQLQueryResponse, QueryStatus, QueryMetadata, ValidateQueryResponse, QueryEmbeddingRequest
 from models.data.model import FlChartType
+from utils.cache_connection import retrieve_query
 from utils.text_parser import extract_sql_from_text
 
 router = APIRouter(
@@ -123,32 +124,14 @@ async def get_embedding_of_query(
     try:
         
         query = request.text.strip()
-        raw_results = await bigquery_service.get_embedding_of_query(
-            query=query,
-            timeout=request.timeout,
-            limit=request.limit
-        )
-        start_time = raw_results.get("start_time")
-        end_time = raw_results.get("end_time")
-        bytes_billed = raw_results.get("bytes_billed", 0)
-        estimated_cost = bigquery_service._estimate_cost(bytes_billed)
-        job_id = raw_results.get("job_id", "null")
 
-        execution_duration = 0.0
-        if start_time and end_time:
-            execution_duration = (end_time - start_time).total_seconds()
-        
+        cached_results = retrieve_query(query_text=query, num_results=1)
+
+        print("Cache results retrieved:", cached_results)
         
         return SQLQueryResponse(
             status=QueryStatus.SUCCESS,
-            data=raw_results.get("data", []),
-            metadata=QueryMetadata(
-                execution_time=execution_duration,
-                bytes_processed=bytes_billed,
-                query_id=job_id,
-                timestamp=datetime.now(),
-                cost_estimate=estimated_cost
-            )
+            data=cached_results,
         )
         
     except TimeoutError:
@@ -160,10 +143,10 @@ async def get_embedding_of_query(
                 query_id=f"timeout_{int(datetime.now().timestamp())}",
                 timestamp=datetime.now()
             ),
-            error_message="Query execution timed out"
+            error_message="Cache retrieval timed out"
         )
     except Exception as e:
-        logging.error(f"Query execution error: {str(e)}")
+        logging.error(f"Cache error: {str(e)}")
         return SQLQueryResponse(
             status=QueryStatus.ERROR,
             metadata=QueryMetadata(
