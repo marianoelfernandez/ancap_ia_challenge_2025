@@ -379,94 +379,112 @@ Widget _buildChatHistoryList() {
                           ),
                         ),
                       )
-                    : ListView.builder(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        shrinkWrap: true,
-                        padding: EdgeInsets.zero,
-                        itemCount: state.filteredConversations.length,
-                        itemBuilder: (context, index) {
-                          final conversation =
-                              state.filteredConversations[index];
-                          // Format the date
-                          // The created field is already a DateTime object
-                          final DateTime createdDate = conversation.created;
-                          final String formattedDate =
-                              _formatConversationDate(createdDate);
+                    : ShaderMask(
+                        shaderCallback: (bounds) {
+                          return LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.white.withOpacity(0.0),
+                              Colors.white,
+                              Colors.white,
+                              Colors.white.withOpacity(0.0),
+                            ],
+                            stops: const [0.0, 0.05, 0.95, 1.0],
+                          ).createShader(bounds);
+                        },
+                        blendMode: BlendMode.dstIn,
+                        child: ListView.builder(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          shrinkWrap: true,
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 16.0,
+                          ),
+                          itemCount: state.filteredConversations.length,
+                          itemBuilder: (context, index) {
+                            final conversation =
+                                state.filteredConversations[index];
+                            // Format the date
+                            // The created field is already a DateTime object
+                            final DateTime createdDate = conversation.created;
+                            final String formattedDate =
+                                _formatConversationDate(createdDate);
 
-                          // Extract a title from the conversation content
-                          final String title =
-                              _extractConversationTitle(conversation);
+                            // Extract a title from the conversation content
+                            final String title =
+                                _extractConversationTitle(conversation);
 
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 8.0),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                onTap: () {
-                                  // Handle conversation selection
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8.0),
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: () {
+                                    // Handle conversation selection
                                   final sidebar = context
                                       .findAncestorWidgetOfExactType<Sidebar>();
                                   if (sidebar?.onConversationSelected != null) {
-                                    sidebar!.onConversationSelected!(
-                                      conversation.id,
-                                    );
-                                  }
-                                },
-                                borderRadius: BorderRadius.circular(12.0),
+                                      sidebar!.onConversationSelected!(
+                                        conversation.id,
+                                      );
+                                    }
+                                  },
+                                  borderRadius: BorderRadius.circular(12.0),
                                 hoverColor: _foreground.withValues(alpha: 0.05),
-                                child: _buildGlassEffectContainer(
-                                  padding: const EdgeInsets.all(12.0),
-                                  child: Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.message_outlined,
-                                        color: _ancapYellow,
-                                        size: 16,
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              title,
-                                              style: GoogleFonts.inter(
-                                                color: _foreground,
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Row(
-                                              children: [
-                                                const Icon(
-                                                  Icons.access_time,
-                                                  color: _mutedForeground,
-                                                  size: 12,
-                                                ),
-                                                const SizedBox(width: 8),
-                                                Text(
-                                                  formattedDate,
-                                                  style: GoogleFonts.inter(
-                                                    color: _mutedForeground,
-                                                    fontSize: 12,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
+                                  child: _buildGlassEffectContainer(
+                                    padding: const EdgeInsets.all(12.0),
+                                    child: Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.message_outlined,
+                                          color: _ancapYellow,
+                                          size: 16,
                                         ),
-                                      ),
-                                    ],
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                title,
+                                                style: GoogleFonts.inter(
+                                                  color: _foreground,
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Row(
+                                                children: [
+                                                  const Icon(
+                                                    Icons.access_time,
+                                                    color: _mutedForeground,
+                                                    size: 12,
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  Text(
+                                                    formattedDate,
+                                                    style: GoogleFonts.inter(
+                                                      color: _mutedForeground,
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                          );
-                        },
+                            );
+                          },
+                        ),
                       ),
               ),
             ],
