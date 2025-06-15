@@ -22,10 +22,12 @@ const Color _glassBorder = Color(0x1AFFFFFF);
 
 class Sidebar extends StatefulWidget {
   final bool showChatFeatures;
+  final Function(String conversationId)? onConversationSelected;
 
   const Sidebar({
     super.key,
     this.showChatFeatures = false,
+    this.onConversationSelected,
   });
 
   @override
@@ -34,11 +36,13 @@ class Sidebar extends StatefulWidget {
 
 class _SidebarState extends State<Sidebar> {
   late SidebarCubit _sidebarCubit;
+  late TextEditingController _searchController;
 
   @override
   void initState() {
     super.initState();
     _sidebarCubit = SidebarCubit();
+    _searchController = TextEditingController();
     if (widget.showChatFeatures) {
       _sidebarCubit.loadRecentConversations();
     }
@@ -46,8 +50,86 @@ class _SidebarState extends State<Sidebar> {
 
   @override
   void dispose() {
+    _searchController.dispose();
     _sidebarCubit.close();
     super.dispose();
+  }
+
+  Widget _buildSearchInput() {
+    return BlocBuilder<SidebarCubit, SidebarState>(
+      buildWhen: (previous, current) =>
+          previous.searchQuery != current.searchQuery,
+      builder: (context, state) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: TextField(
+            style: GoogleFonts.inter(color: _foreground),
+            decoration: InputDecoration(
+              hintText: "Search conversations...",
+              hintStyle:
+                  GoogleFonts.inter(color: _mutedForeground, fontSize: 14),
+              prefixIcon:
+                  const Icon(Icons.search, color: _mutedForeground, size: 16),
+              suffixIcon: _searchController.text.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(
+                        Icons.clear,
+                        color: _mutedForeground,
+                        size: 16,
+                      ),
+                      onPressed: () {
+                        _searchController.clear();
+                        context.read<SidebarCubit>().clearSearchQuery();
+                      },
+                    )
+                  : null,
+              filled: true,
+              fillColor: Colors.transparent,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8.0),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8.0),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8.0),
+                borderSide: const BorderSide(
+                  color: _ancapYellow,
+                  width: 1,
+                ), // Ring effect on focus
+              ),
+            ),
+            onChanged: (query) {
+              context.read<SidebarCubit>().updateSearchQuery(query);
+            },
+            controller: _searchController,
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSidebar(bool showChatFeatures) {
+    return _buildGlassEffectContainer(
+      margin: EdgeInsets.zero,
+      borderRadius: 0,
+      child: SizedBox(
+        width: 300,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildUserProfile(),
+            _buildNavigationTabs(),
+            if (showChatFeatures) _buildSearchInput(),
+            if (showChatFeatures) _buildChatHistoryList(),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -59,39 +141,21 @@ class _SidebarState extends State<Sidebar> {
   }
 }
 
-Widget _buildSidebar(bool showChatFeatures) {
-  return _buildGlassEffectContainer(
-    margin: EdgeInsets.zero,
-    borderRadius: 0,
-    child: SizedBox(
-      width: 300,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildUserProfile(),
-          _buildNavigationTabs(),
-          if (showChatFeatures) _buildSearchInput(),
-          if (showChatFeatures) _buildChatHistoryList(),
-        ],
-      ),
-    ),
-  );
-}
-
 Widget _buildUserProfile() {
   return BlocBuilder<SidebarCubit, SidebarState>(
     builder: (context, state) {
       final user = state.currentUser;
       final userName = user?.name ?? "Guest User";
       final userRole = user?.role ?? "No Role";
-      
+
       return Padding(
         padding: const EdgeInsets.all(24.0),
         child: Container(
           padding: const EdgeInsets.only(bottom: 24.0),
           decoration: BoxDecoration(
-            border:
-                Border(bottom: BorderSide(color: _border.withValues(alpha: 0.1))),
+            border: Border(
+              bottom: BorderSide(color: _border.withValues(alpha: 0.1)),
+            ),
           ),
           child: Row(
             children: [
@@ -231,39 +295,6 @@ Widget _buildNavigationTab({
   );
 }
 
-Widget _buildSearchInput() {
-  return Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-    child: TextField(
-      style: GoogleFonts.inter(color: _foreground),
-      decoration: InputDecoration(
-        hintText: "Search conversations...",
-        hintStyle: GoogleFonts.inter(color: _mutedForeground, fontSize: 14),
-        prefixIcon: const Icon(Icons.search, color: _mutedForeground, size: 16),
-        filled: true,
-        fillColor: Colors.transparent,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8.0),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8.0),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8.0),
-          borderSide: const BorderSide(
-            color: _ancapYellow,
-            width: 1,
-          ), // Ring effect on focus
-        ),
-      ),
-    ),
-  );
-}
-
 Widget _buildChatHistoryList() {
   return Expanded(
     child: Padding(
@@ -334,12 +365,14 @@ Widget _buildChatHistoryList() {
                   ),
                 ),
               Expanded(
-                child: state.recentConversations.isEmpty && !state.isLoading
+                child: state.filteredConversations.isEmpty && !state.isLoading
                     ? Center(
                         child: Text(
-                          state.error == null
-                              ? "No conversations yet"
-                              : "No conversations to display",
+                          state.searchQuery.isNotEmpty
+                              ? "No matching conversations found"
+                              : state.error == null
+                                  ? "No conversations yet"
+                                  : "No conversations to display",
                           style: GoogleFonts.inter(
                             color: _mutedForeground,
                             fontSize: 14,
@@ -350,9 +383,10 @@ Widget _buildChatHistoryList() {
                         physics: const AlwaysScrollableScrollPhysics(),
                         shrinkWrap: true,
                         padding: EdgeInsets.zero,
-                        itemCount: state.recentConversations.length,
+                        itemCount: state.filteredConversations.length,
                         itemBuilder: (context, index) {
-                          final conversation = state.recentConversations[index];
+                          final conversation =
+                              state.filteredConversations[index];
                           // Format the date
                           // The created field is already a DateTime object
                           final DateTime createdDate = conversation.created;
@@ -370,7 +404,13 @@ Widget _buildChatHistoryList() {
                               child: InkWell(
                                 onTap: () {
                                   // Handle conversation selection
-                                  // Navigate to conversation or load it in the chat
+                                  final sidebar = context
+                                      .findAncestorWidgetOfExactType<Sidebar>();
+                                  if (sidebar?.onConversationSelected != null) {
+                                    sidebar!.onConversationSelected!(
+                                      conversation.id,
+                                    );
+                                  }
                                 },
                                 borderRadius: BorderRadius.circular(12.0),
                                 hoverColor: _foreground.withValues(alpha: 0.05),

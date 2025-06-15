@@ -1,4 +1,3 @@
-// Auth service not directly used, only PocketBase for user ID
 import "package:anc_app/src/features/auth/services/auth_service.dart";
 import "package:anc_app/src/features/chatbot/services/conversation_service.dart";
 import "package:anc_app/src/models/conversation.dart";
@@ -8,37 +7,73 @@ import "package:equatable/equatable.dart";
 import "package:flutter/foundation.dart";
 import "package:get_it/get_it.dart";
 
-// Define the sidebar state
 class SidebarState extends Equatable {
   final List<Conversation> recentConversations;
   final bool isLoading;
   final String? error;
   final User? currentUser;
+  final String searchQuery;
+
+  List<Conversation> get filteredConversations {
+    if (searchQuery.isEmpty) {
+      return recentConversations;
+    }
+
+    final query = searchQuery.toLowerCase();
+    return recentConversations.where((conversation) {
+      final title = _extractConversationTitle(conversation).toLowerCase();
+      return title.contains(query);
+    }).toList();
+  }
+
+  String _extractConversationTitle(Conversation conversation) {
+    try {
+      if (conversation.conversation.isNotEmpty) {
+        return conversation.conversation.split("\n").first.trim().substring(
+              0,
+              min(
+                50,
+                conversation.conversation.split("\n").first.trim().length,
+              ),
+            );
+      }
+      return "Conversation ${conversation.id.substring(0, min(8, conversation.id.length))}";
+    } catch (e) {
+      return "Conversation ${conversation.id.substring(0, min(8, conversation.id.length))}";
+    }
+  }
+
+  int min(int a, int b) {
+    return a < b ? a : b;
+  }
 
   const SidebarState({
     this.recentConversations = const [],
     this.isLoading = false,
     this.error,
     this.currentUser,
+    this.searchQuery = "",
   });
 
-  // Create a copy of the state with updated values
   SidebarState copyWith({
     List<Conversation>? recentConversations,
     bool? isLoading,
     String? error,
     User? currentUser,
+    String? searchQuery,
   }) {
     return SidebarState(
       recentConversations: recentConversations ?? this.recentConversations,
       isLoading: isLoading ?? this.isLoading,
       error: error,
       currentUser: currentUser ?? this.currentUser,
+      searchQuery: searchQuery ?? this.searchQuery,
     );
   }
 
   @override
-  List<Object?> get props => [recentConversations, isLoading, error, currentUser];
+  List<Object?> get props =>
+      [recentConversations, isLoading, error, currentUser, searchQuery];
 }
 
 // Define the sidebar cubit
@@ -54,55 +89,39 @@ class SidebarCubit extends Cubit<SidebarState> {
         _authService = authService ?? GetIt.instance<AuthService>(),
         super(const SidebarState());
 
-  // Load recent conversations for the current user
   Future<void> loadRecentConversations() async {
-    debugPrint("SidebarCubit: Loading recent conversations");
-
     emit(state.copyWith(isLoading: true, error: null));
 
     try {
-      // Get the current user using the updated function
       final user = _authService.getCurrentUserId();
       debugPrint("SidebarCubit: Got user: $user");
 
-      // If user is null, the user is not authenticated
       if (user == null) {
         debugPrint("SidebarCubit: User is null");
         emit(state.copyWith(error: "User not authenticated", isLoading: false));
         return;
       }
-      
-      // Store the user in the state
+
       emit(state.copyWith(currentUser: user));
-      
-      // Extract user ID from the User model
+
       final userId = user.id;
 
       debugPrint("SidebarCubit: Fetching conversations for user: $userId");
+
       final result = await _conversationService.getConversations(
         page: 1,
-        perPage: 10, // Limit to 10 recent conversations
+        perPage: 20,
         userId: userId,
       );
 
       result.when(
-        ok: (response) {
+        ok: (conversationsResponse) {
           debugPrint(
-            "SidebarCubit: Successfully got conversations: ${response.items.length} items",
+            "SidebarCubit: Loaded ${conversationsResponse.items.length} conversations",
           );
-          if (response.items.isEmpty) {
-            debugPrint("SidebarCubit: No conversations found for user");
-          } else {
-            for (var conversation in response.items) {
-              debugPrint(
-                "SidebarCubit: Conversation ID: ${conversation.id}, userId: ${conversation.userId}",
-              );
-            }
-          }
-
           emit(
             state.copyWith(
-              recentConversations: response.items,
+              recentConversations: conversationsResponse.items,
               isLoading: false,
             ),
           );
@@ -128,8 +147,17 @@ class SidebarCubit extends Cubit<SidebarState> {
     }
   }
 
-  // Refresh conversations (useful after creating a new conversation)
   void refreshConversations() {
     loadRecentConversations();
+  }
+
+  void updateSearchQuery(String query) {
+    emit(state.copyWith(searchQuery: query));
+    debugPrint("SidebarCubit: Search query updated to: $query");
+  }
+
+  void clearSearchQuery() {
+    emit(state.copyWith(searchQuery: ""));
+    debugPrint("SidebarCubit: Search query cleared");
   }
 }
