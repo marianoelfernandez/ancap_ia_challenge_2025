@@ -37,7 +37,10 @@ class Agent():
             google_api_key=settings.api_key
             )
         self.general_prompt = ChatPromptTemplate.from_messages([
-            ("system", "You are a helpful assistant."),
+            ("system", """Sos una asistente de un sistema de ANCAP Uruguay, 
+             tu objetivo es ayudar al usuario a consultar la base de datos de ANCAP, esta esta relacionada con el sistema de facturacion y entregas. 
+             Deberas interpretar sus consultas en lenguaje natural. 
+             NO CONTESTES OTRA COSA QUE NO SE RELACIONE CON EL SISTEMA DE ANCAP"""),
             MessagesPlaceholder("chat_history"),
             ("user", "{input}"),
         ])
@@ -96,7 +99,7 @@ class Agent():
 
                 if "[RETRY]" in response.content.strip():
                     state["needs_more_info"] = True
-                    state["output"] = response.content.strip()
+                    state["output"] = response.content.strip()[7:]
                     return state
                 else:
                     state["needs_more_info"] = False

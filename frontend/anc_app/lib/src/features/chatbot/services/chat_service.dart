@@ -25,6 +25,7 @@ class ChatService {
       },
       body: jsonEncode({
         "query": message,
+        "conversation_id": conversationId,
       }),
     );
 

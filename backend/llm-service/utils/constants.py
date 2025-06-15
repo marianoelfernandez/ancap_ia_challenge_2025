@@ -3,156 +3,171 @@ from langchain_core.prompts import ChatPromptTemplate
 schema_constant = """
 
 -- Tabla: DOCCRG (Documento de Carga - Cabezal)
--- Información general del documento de carga
+-- Información general del documento de carga/entrega de productos
 CREATE TABLE DOCCRG (
-    PlaId INTEGER,            -- FK a PLANTAS(PlaId)
-    DocId INTEGER,            -- Clave primaria compuesta con PlaId
-    DocDstId INTEGER,         -- FK a DISTRIBUIDORAS(DstId)
-    DocFch DATE,              -- Fecha del documento (YYYY-MM-DD)
-    CliId INTEGER,            -- FK a CLIENTES(CliId)
-    CliIdDir INTEGER,         -- FK a CLIDIR(CliIdDir)
-    DocNegId TEXT,            -- FK a NEGOCIOS(NegId)
-    PolId INTEGER             -- FK a POLITICAS(PolId)
+    PLAID INT64,              -- FK a PLANTAS(PLAID) - Identificador de la planta
+    DOCID INT64,              -- Clave primaria compuesta con PLAID - Número del documento
+    DOCDSTID INT64,           -- FK a DISTRIBUIDORAS(DSTID) - Distribuidora asignada
+    DOCFCH DATE,              -- Fecha del documento de carga (YYYY-MM-DD)
+    CLIID INT64,              -- FK a CLIENTES(CLIID) - Cliente destinatario
+    CLIIDDIR INT64,           -- FK a CLIDIR(CLIIDDIR) - Dirección específica del cliente
+    DOCNEGID STRING,          -- FK a NEGOCIOS(NEGID) - Tipo de negocio asociado
+    POLID INT64               -- FK a POLITICAS(POLID) - Política comercial aplicada
 );
 
--- Tabla: DCPRDLIN (Documento de Carga - Productos)
--- Detalle de productos en cada documento de carga
+-- Tabla: DCPRDLIN (Documento de Carga - Líneas de Productos)
+-- Detalle de productos incluidos en cada documento de carga
 CREATE TABLE DCPRDLIN (
-    PlaId INTEGER,            -- FK a DOCCRG(PlaId)
-    DocId INTEGER,            -- FK a DOCCRG(DocId)
-    PrdId INTEGER,            -- FK a PRODUCTOS(PrdId)
-    DCCntCorL NUMERIC,        -- Cantidad liquidada
-    DCCntCorUI TEXT           -- Unidad de cantidad liquidada
-);
-
--- Tabla: DISTRIBUIDORAS (Maestro de Distribuidoras)
-CREATE TABLE DISTRIBUIDORAS (
-    DstId INTEGER PRIMARY KEY,
-    DstNom TEXT
+    PLAID INT64,              -- FK a DOCCRG(PLAID) - Planta del documento
+    DOCID INT64,              -- FK a DOCCRG(DOCID) - Número del documento
+    PRDID INT64,              -- FK a PRODUCTOS(PRDID) - Producto entregado
+    DOCCNTCORL NUMERIC,       -- Cantidad liquidada/entregada del producto
+    DCCNTCORUI STRING         -- Unidad de medida de la cantidad (Kg, Lt, etc.)
 );
 
 -- Tabla: PLANTAS (Maestro de Plantas)
+-- Catálogo de plantas de producción o distribución
 CREATE TABLE PLANTAS (
-    PlaId INTEGER PRIMARY KEY,
-    PlaNom TEXT
+    PLAID INT64 PRIMARY KEY,  -- Identificador único de la planta
+    PLANOM STRING             -- Nombre descriptivo de la planta
 );
 
--- Tabla: POLITICAS (Maestro de Políticas)
+-- Tabla: DISTRIBUIDORAS (Maestro de Distribuidoras)
+-- Catálogo de empresas distribuidoras
+CREATE TABLE DISTRIBUIDORAS (
+    DSTID INT64 PRIMARY KEY,  -- Identificador único de la distribuidora
+    DSTNOM STRING             -- Nombre de la empresa distribuidora
+);
+
+-- Tabla: POLITICAS (Maestro de Políticas Comerciales)
+-- Catálogo de políticas de precios y condiciones comerciales
 CREATE TABLE POLITICAS (
-    PolId INTEGER PRIMARY KEY,
-    PolDsc TEXT,
-    MerId INTEGER             -- FK a MERCADOS(MerId)
+    POLID INT64 PRIMARY KEY,  -- Identificador único de la política
+    POLDSC STRING,            -- Descripción de la política comercial
+    MERID INT64               -- FK a MERCADOS(MERID) - Mercado al que aplica
 );
 
 -- Tabla: MERCADOS (Maestro de Mercados)
+-- Catálogo de mercados o segmentos comerciales
 CREATE TABLE MERCADOS (
-    MerId INTEGER PRIMARY KEY,
-    MerDsc TEXT
+    MERID INT64 PRIMARY KEY,  -- Identificador único del mercado
+    MERDSC STRING             -- Descripción del mercado o segmento
 );
 
 -- Tabla: CLIENTES (Maestro de Clientes)
+-- Catálogo principal de clientes
 CREATE TABLE CLIENTES (
-    CliId INTEGER PRIMARY KEY,
-    CliNom TEXT,
-    CliTpoId INTEGER          -- FK a CLITPO(CliTpoId)
+    CLIID INT64 PRIMARY KEY,  -- Identificador único del cliente
+    CLINOM STRING,            -- Nombre o razón social del cliente
+    CLITPOID INT64            -- FK a CLITPO(CLITPOID) - Tipo de cliente
 );
 
 -- Tabla: CLITPO (Maestro de Tipos de Cliente)
+-- Clasificación de clientes por tipo o categoría
 CREATE TABLE CLITPO (
-    CliTpoId INTEGER PRIMARY KEY,
-    CliTpoDsc TEXT
+    CLITPOID INT64 PRIMARY KEY, -- Identificador único del tipo de cliente
+    CLITPODSC STRING            -- Descripción del tipo (Mayorista, Minorista, etc.)
 );
 
 -- Tabla: CLIDIR (Maestro de Direcciones de Clientes)
+-- Direcciones de entrega de cada cliente
 CREATE TABLE CLIDIR (
-    CliId NUMERIC,            -- FK a CLIENTES(CliId)
-    CliIdDir NUMERIC,         -- Clave primaria compuesta con CliId
-    CliDir TEXT,
-    DptoId NUMERIC,           -- FK a DEPARTAMENTOS(DptoId)
-    LocaliId NUMERIC          -- FK a LOCALIDADES(LocaliId)
+    CLIID NUMERIC,            -- FK a CLIENTES(CLIID) - Cliente propietario
+    CLIIDDIR NUMERIC,         -- Clave primaria compuesta - ID único de dirección
+    CLIDIR STRING,            -- Dirección completa de entrega
+    DPTOID NUMERIC,           -- FK a DEPARTAMENTOS(DPTOID) - Departamento
+    LOCALIID NUMERIC          -- FK a LOCALIDADES(LOCALIID) - Localidad específica
 );
 
 -- Tabla: DEPARTAMENTOS (Maestro de Departamentos)
+-- División territorial principal (Estados/Provincias/Departamentos)
 CREATE TABLE DEPARTAMENTOS (
-    DptoId NUMERIC PRIMARY KEY,
-    DptoNom TEXT
+    DPTOID NUMERIC PRIMARY KEY, -- Identificador único del departamento
+    DPTONOM STRING              -- Nombre del departamento
 );
 
 -- Tabla: LOCALIDADES (Maestro de Localidades)
+-- Ciudades o localidades dentro de cada departamento
 CREATE TABLE LOCALIDADES (
-    DptoId NUMERIC,           -- FK a DEPARTAMENTOS(DptoId)
-    LocaliId NUMERIC,         -- Clave primaria compuesta con DptoId
-    LocaliNom TEXT
+    DPTOID NUMERIC,           -- FK a DEPARTAMENTOS(DPTOID) - Departamento padre
+    LOCALIID NUMERIC,         -- Clave primaria compuesta - ID de la localidad
+    LOCALINOM STRING          -- Nombre de la ciudad o localidad
 );
 
 -- Tabla: PRODUCTOS (Maestro de Productos)
+-- Catálogo principal de productos comercializados
 CREATE TABLE PRODUCTOS (
-    PrdId NUMERIC PRIMARY KEY,
-    PrdDsc TEXT,
-    PrdGrpId NUMERIC          -- FK a PRDGRP(PrdGrpId)
+    PRDID NUMERIC PRIMARY KEY, -- Identificador único del producto
+    PRDDSC STRING,             -- Descripción o nombre del producto
+    PRDGRPID NUMERIC           -- FK a PRDGRP(PRDGRPID) - Grupo al que pertenece
 );
 
 -- Tabla: PRDGRP (Maestro de Grupos de Productos)
+-- Agrupación de productos por familia o línea
 CREATE TABLE PRDGRP (
-    PrdGrpId NUMERIC PRIMARY KEY,
-    PrdGrpDsc TEXT,
-    PrdCatId TEXT             -- FK a PRDCAT(PrdCatId)
+    PRDGRPID NUMERIC PRIMARY KEY, -- Identificador único del grupo
+    PRDGRPDSC STRING,             -- Descripción del grupo de productos
+    PRDCATID STRING               -- FK a PRDCAT(PRDCATID) - Categoría superior
 );
 
 -- Tabla: PRDCAT (Maestro de Categorías de Productos)
+-- Categorización de alto nivel de productos
 CREATE TABLE PRDCAT (
-    PrdCatId TEXT PRIMARY KEY,
-    PrdCatNom TEXT
+    PRDCATID STRING PRIMARY KEY, -- Identificador de la categoría (código)
+    PRDCATNOM STRING             -- Nombre descriptivo de la categoría
 );
 
--- Tabla: NEGOCIOS (Maestro de Negocios)
+-- Tabla: NEGOCIOS (Maestro de Tipos de Negocio)
+-- Clasificación de transacciones por tipo de negocio
 CREATE TABLE NEGOCIOS (
-    NegId TEXT PRIMARY KEY,
-    NegDsc TEXT,
-    NegTpoId NUMERIC          -- FK a NEGTPO(NegTpoId)
+    NEGID STRING PRIMARY KEY,    -- Código identificador del negocio
+    NEGDSC STRING,               -- Descripción del tipo de negocio
+    NEGTPOID NUMERIC             -- FK a NEGTPO(NEGTPOID) - Tipo superior de negocio
 );
 
--- Tabla: NEGTPO (Maestro de Tipos de Negocios)
+-- Tabla: NEGTPO (Maestro de Tipos de Negocio Superior)
+-- Categorización superior de tipos de negocio
 CREATE TABLE NEGTPO (
-    NegTpoId NUMERIC PRIMARY KEY,
-    NegTpoDsc TEXT
+    NEGTPOID NUMERIC PRIMARY KEY, -- Identificador del tipo de negocio
+    NEGTPODSC STRING              -- Descripción del tipo superior
 );
 
 -- Tabla: FACCAB (Facturas - Cabezal)
--- Información general de cada factura emitida
+-- Información general de cada factura o documento fiscal emitido
 CREATE TABLE FACCAB (
-    FacPlaId NUMERIC,         -- FK a PLANTAS(PlaId)
-    FacTpoDoc TEXT,           -- Tipo de factura ('F' Factura, 'C' Nota de Crédito)
-    FacSerie TEXT,
-    FacNro NUMERIC,           -- Clave primaria compuesta con PlaId, TpoDoc, Serie, Nro
-    FacFch DATE,
-    CliId NUMERIC,            -- FK a CLIENTES(CliId)
-    CliIdDir NUMERIC,         -- FK a CLIDIR(CliIdDir)
-    FacNegId TEXT,            -- FK a NEGOCIOS(NegId)
-    PolId NUMERIC,            -- FK a POLITICAS(PolId)
-    DstId NUMERIC,            -- FK a DISTRIBUIDORAS(DstId)
-    FacMonId NUMERIC,         -- FK a MONEDAS(MonId)
-    FactTot NUMERIC
+    FACPLAID NUMERIC,         -- FK a PLANTAS(PLAID) - Planta que emite la factura
+    FACTPODOC STRING,         -- Tipo de documento ('F'=Factura, 'C'=Nota Crédito, etc.)
+    FACNRO NUMERIC,           -- Número correlativo de factura
+    FACSERIE STRING,          -- Serie del documento fiscal
+    FACFCH DATE,              -- Fecha de emisión de la factura
+    CLIID NUMERIC,            -- FK a CLIENTES(CLIID) - Cliente facturado
+    CLIIDDIR NUMERIC,         -- FK a CLIDIR(CLIIDDIR) - Dirección de facturación
+    FACNEGID STRING,          -- FK a NEGOCIOS(NEGID) - Tipo de negocio facturado
+    POLID NUMERIC,            -- FK a POLITICAS(POLID) - Política comercial aplicada
+    DSTID NUMERIC,            -- FK a DISTRIBUIDORAS(DSTID) - Distribuidora involucrada
+    FACMONID NUMERIC,         -- FK a MONEDAS(MONID) - Moneda de la facturación
+    FACTOT NUMERIC            -- Monto total de la factura
 );
 
 -- Tabla: MONEDAS (Maestro de Monedas)
+-- Catálogo de monedas para facturación multimoneda
 CREATE TABLE MONEDAS (
-    MonId NUMERIC PRIMARY KEY,
-    MonSig TEXT,
-    MonNom TEXT
+    MONID NUMERIC PRIMARY KEY,   -- Identificador único de la moneda
+    MONSIG STRING,               -- Símbolo de la moneda ($, €, etc.)
+    MONNOM STRING                -- Nombre completo de la moneda
 );
 
--- Tabla: FACLINPR (Facturas - Productos)
--- Detalle de productos facturados
+-- Tabla: FACLINPR (Facturas - Líneas de Productos)
+-- Detalle de productos incluidos en cada factura
 CREATE TABLE FACLINPR (
-    FacPlaId NUMERIC,         -- FK a FACCAB(FacPlaId)
-    FacTpoDoc TEXT,           -- FK a FACCAB(FacTpoDoc)
-    FacSerie TEXT,            -- FK a FACCAB(FacSerie)
-    FacNro NUMERIC,           -- FK a FACCAB(FacNro)
-    FacLinNro NUMERIC,
-    PrdId NUMERIC,            -- FK a PRODUCTOS(PrdId)
-    FacLinCnt NUMERIC,
-    FacUndFac TEXT
+    FACPLAID NUMERIC,         -- FK a FACCAB(FACPLAID) - Planta de la factura
+    FACTPODOC STRING,         -- FK a FACCAB(FACTPODOC) - Tipo de documento
+    FACNRO NUMERIC,           -- FK a FACCAB(FACNRO) - Número de factura
+    FACSERIE STRING,          -- FK a FACCAB(FACSERIE) - Serie del documento
+    FACLINNRO NUMERIC,        -- Número de línea dentro de la factura
+    PRDID NUMERIC,            -- FK a PRODUCTOS(PRDID) - Producto facturado
+    FACLINCNT NUMERIC,        -- Cantidad facturada del producto
+    FACUNDFAC STRING          -- Unidad de medida facturada
 );
 
 Recuerda que NO puedes calcular valores usando VARCHAR como número.
@@ -280,7 +295,7 @@ FacPlaId (INT), FacTpoDoc (CHAR), FacSerie (CHAR), FacNro (INT)
 
 FacFch (DATE), CliId, CliIdDir, FacNegId, PolId, DstId (INT)
 
-FacMonId (INT), FactTot (DECIMAL)
+FacMonId (INT), FacTot (DECIMAL)
 PK: (FacPlaId, FacTpoDoc, FacSerie, FacNro)
 
 Moneda
