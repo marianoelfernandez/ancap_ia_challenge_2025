@@ -49,13 +49,14 @@ class AuthPocketBaseService implements AuthService {
     required String password,
   }) async {
     try {
-      await pb.collection("users").authWithPassword(email, password);
+      final authData =
+          await pb.collection("users").authWithPassword(email, password);
       return Result.ok(
         User(
-          id: "",
-          email: email,
-          name: "",
-          role: "",
+          id: authData.record.getStringValue("id"),
+          email: authData.record.getStringValue("email"),
+          name: authData.record.getStringValue("name"),
+          role: authData.record.getStringValue("role"),
         ),
       );
     } catch (e, s) {
@@ -75,7 +76,7 @@ class AuthPocketBaseService implements AuthService {
   }
 
   @override
-  User? getCurrentUserId() {
+  User? getCurrentUser() {
     if (!isAuthenticated) return null;
 
     try {

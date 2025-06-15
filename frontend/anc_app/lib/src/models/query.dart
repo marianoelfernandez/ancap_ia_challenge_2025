@@ -31,7 +31,8 @@ class Query {
       naturalQuery: json["natural_query"],
       sqlQuery: json["sql_query"],
       output: json["output"],
-      cost: json["cost"] is int ? (json["cost"] as int).toDouble() : json["cost"],
+      cost:
+          json["cost"] is int ? (json["cost"] as int).toDouble() : json["cost"],
       conversationId: json["conversation_id"],
       created: DateTime.parse(json["created"]),
       updated: DateTime.parse(json["updated"]),
@@ -75,7 +76,8 @@ class QueriesResponse {
       perPage: json["perPage"],
       totalPages: json["totalPages"],
       totalItems: json["totalItems"],
-      items: (json["items"] as List).map((item) => Query.fromJson(item)).toList(),
+      items:
+          (json["items"] as List).map((item) => Query.fromJson(item)).toList(),
     );
   }
 }

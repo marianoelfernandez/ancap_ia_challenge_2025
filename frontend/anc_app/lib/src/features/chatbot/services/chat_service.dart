@@ -25,11 +25,13 @@ class ChatService {
       },
       body: jsonEncode({
         "query": message,
+        "conversation_id": conversationId,
       }),
     );
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body) as Map<String, dynamic>;
+      return jsonDecode(utf8.decode(response.bodyBytes))
+          as Map<String, dynamic>;
     } else {
       throw Exception("Failed to send message: ${response.body}");
     }

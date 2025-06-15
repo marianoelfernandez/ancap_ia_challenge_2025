@@ -93,7 +93,8 @@ class SidebarCubit extends Cubit<SidebarState> {
     emit(state.copyWith(isLoading: true, error: null));
 
     try {
-      final user = _authService.getCurrentUserId();
+      // Get the current user using the updated function
+      final user = _authService.getCurrentUser();
       debugPrint("SidebarCubit: Got user: $user");
 
       if (user == null) {

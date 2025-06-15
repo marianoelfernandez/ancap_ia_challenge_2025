@@ -1,9 +1,17 @@
+import "dart:math";
 import "dart:ui";
+
+import "package:anc_app/src/features/auth/cubits/auth_cubit.dart";
+import "package:anc_app/src/features/chatbot/cubit/chatbot_cubit.dart";
+import "package:anc_app/src/features/chatbot/services/chat_service.dart";
+import "package:anc_app/src/features/sidebar/widgets/sidebar.dart";
+import "package:anc_app/src/models/chat_message.dart";
+import "package:anc_app/src/router/router.dart";
 import "package:flutter/material.dart";
 import "package:flutter_bloc/flutter_bloc.dart";
+import "package:flutter_markdown/flutter_markdown.dart";
+import "package:get_it/get_it.dart";
 import "package:google_fonts/google_fonts.dart";
-import "package:anc_app/src/features/chatbot/cubit/chatbot_cubit.dart";
-import "package:anc_app/src/features/sidebar/widgets/sidebar.dart";
 
 const Color _ancapYellow = Color(0xFFFFC107);
 const Color _ancapDarkBlue = Color(0xFF002A53);
@@ -29,33 +37,92 @@ class ChatbotScreen extends StatefulWidget {
 }
 
 class _ChatbotScreenState extends State<ChatbotScreen> {
+  final TextEditingController _controller = TextEditingController();
+  final List<ChatMessage> _messages = [];
+  bool _isAiTyping = false;
+  late final ChatService _chatService;
   late final ChatbotCubit _chatbotCubit;
-  final TextEditingController _inputController = TextEditingController();
+  String? _currentConversationId;
 
   @override
   void initState() {
     super.initState();
+    // Check authentication status
+    final authState = context.read<AuthCubit>().state;
+    if (!authState.isAuthenticated) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.goToAppRoute(AppRoute.initial);
+      });
+    }
+
+    _chatService = GetIt.instance<ChatService>();
     _chatbotCubit = ChatbotCubit();
 
     if (widget.initialConversationId != null) {
       _chatbotCubit.selectConversation(widget.initialConversationId!);
+      _currentConversationId = widget.initialConversationId;
+    } else {
+      _addAiMessage(
+        "Hi there! I'm your AI assistant. How can I help you today?",
+      );
     }
   }
 
-  @override
-  void dispose() {
-    _chatbotCubit.close();
-    _inputController.dispose();
-    super.dispose();
+  void _sendMessage() async {
+    if (_controller.text.trim().isEmpty) return;
+
+    final userMessage = _controller.text.trim();
+    _controller.clear();
+
+    setState(() {
+      _messages.add(
+        ChatMessage(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          text: userMessage,
+          isAi: false,
+          timestamp: DateTime.now(),
+        ),
+      );
+      _isAiTyping = true;
+    });
+
+    try {
+      final response = await _chatService.sendMessage(
+        userMessage,
+        conversationId: _currentConversationId,
+      );
+
+      setState(() {
+        _isAiTyping = false;
+        _messages.add(
+          ChatMessage(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            text: response["response"] as String,
+            isAi: true,
+            timestamp: DateTime.now(),
+          ),
+        );
+        _currentConversationId = response["conversation_id"] as String;
+      });
+    } catch (error) {
+      setState(() {
+        _isAiTyping = false;
+        _addAiMessage("Sorry, I encountered an error: $error");
+      });
+    }
   }
 
-  void _handleSend() {
-    // TODO: This method would be updated to create a new query in the selected conversation
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Creating new queries is not implemented in this demo"),
-      ),
-    );
+  void _addAiMessage(String message) {
+    setState(() {
+      _messages.add(
+        ChatMessage(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          text: message,
+          isAi: true,
+          timestamp: DateTime.now(),
+        ),
+      );
+    });
   }
 
   Widget _buildGlassEffectContainer({
@@ -65,7 +132,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     double? borderRadius,
   }) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(borderRadius ?? 12.0),
+      borderRadius: BorderRadius.circular(borderRadius ?? 8.0),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
         child: Container(
@@ -73,7 +140,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
           padding: padding,
           decoration: BoxDecoration(
             color: _glassBackground,
-            borderRadius: BorderRadius.circular(borderRadius ?? 12.0),
+            borderRadius: BorderRadius.circular(borderRadius ?? 8.0),
             border: Border.all(color: _glassBorder, width: 1),
           ),
           child: child,
@@ -100,13 +167,16 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               Sidebar(
                 showChatFeatures: true,
                 onConversationSelected: (conversationId) {
+                  setState(() {
+                    _currentConversationId = conversationId;
+                  });
                   _chatbotCubit.selectConversation(conversationId);
                 },
               ),
               Expanded(
                 child: Column(
                   children: [
-                    _buildChatHeader(),
+                    _buildAppBar(),
                     _buildMessagesList(),
                     _buildInputArea(),
                   ],
@@ -119,7 +189,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     );
   }
 
-  Widget _buildChatHeader() {
+  Widget _buildAppBar() {
     return _buildGlassEffectContainer(
       margin: const EdgeInsets.all(0),
       padding: const EdgeInsets.all(24.0),
@@ -203,6 +273,104 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             );
           }
 
+          if (state.selectedConversationId == null) {
+            // Show chat interface with LLM
+            return ListView.builder(
+              padding: const EdgeInsets.all(24.0),
+              reverse: true,
+              itemCount: _messages.length + (_isAiTyping ? 1 : 0),
+              itemBuilder: (context, index) {
+                if (_isAiTyping && index == 0) {
+                  return _buildTypingIndicator();
+                }
+
+                final messageIndex = _isAiTyping ? index - 1 : index;
+                final message = _messages[_messages.length - 1 - messageIndex];
+                final isAi = message.isAi;
+                return Align(
+                  alignment:
+                      isAi ? Alignment.centerLeft : Alignment.centerRight,
+                  child: Container(
+                    constraints: BoxConstraints(
+                      maxWidth: MediaQuery.of(context).size.width * 0.75,
+                    ),
+                    margin: const EdgeInsets.symmetric(
+                      vertical: 8.0,
+                    ),
+                    padding: const EdgeInsets.all(16.0),
+                    decoration: BoxDecoration(
+                      color: isAi ? null : _ancapYellow,
+                      borderRadius: BorderRadius.circular(8.0),
+                      border: isAi
+                          ? Border.all(color: _glassBorder, width: 1)
+                          : null,
+                      boxShadow: isAi
+                          ? null
+                          : [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.1),
+                                blurRadius: 5,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                    ),
+                    child: isAi
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(
+                              8.0,
+                            ),
+                            child: BackdropFilter(
+                              filter:
+                                  ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: _glassBackground,
+                                  borderRadius: BorderRadius.circular(8.0),
+                                  backgroundBlendMode: BlendMode.color,
+                                ),
+                                padding: const EdgeInsets.all(
+                                  0.1,
+                                ),
+                                child: MarkdownBody(
+                                  data: message.text,
+                                  styleSheet: MarkdownStyleSheet.fromTheme(
+                                    Theme.of(context).copyWith(
+                                      textTheme:
+                                          Theme.of(context).textTheme.apply(
+                                                bodyColor: _foreground,
+                                                displayColor: _foreground,
+                                              ),
+                                    ),
+                                  ).copyWith(
+                                    p: GoogleFonts.inter(
+                                      color: _foreground,
+                                      fontSize: 14,
+                                    ),
+                                    code: GoogleFonts.firaCode(
+                                      backgroundColor: Colors.grey[850],
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          )
+                        : Text(
+                            message.text,
+                            style: GoogleFonts.inter(
+                              color: _ancapDarkBlue,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                  ),
+                );
+              },
+            );
+          }
+
+          // Show conversation queries
           if (state.queries.isEmpty) {
             return Center(
               child: Container(
@@ -213,7 +381,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                   border: Border.all(color: _glassBorder, width: 1),
                 ),
                 child: Text(
-                  "Select a conversation from the sidebar or start a new one.",
+                  "No queries found in this conversation.",
                   style: GoogleFonts.inter(color: _foreground),
                 ),
               ),
@@ -266,11 +434,11 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+                          filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
                           child: Container(
                             decoration: BoxDecoration(
                               color: _glassBackground,
-                              borderRadius: BorderRadius.circular(19.0),
+                              borderRadius: BorderRadius.circular(8.0),
                             ),
                             padding: const EdgeInsets.all(0.1),
                             child: Text(
@@ -294,6 +462,38 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     );
   }
 
+  Widget _buildTypingIndicator() {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.75,
+        ),
+        margin: const EdgeInsets.symmetric(vertical: 8.0),
+        padding: const EdgeInsets.all(16.0),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8.0),
+          border: Border.all(color: _glassBorder, width: 1),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8.0),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+            child: Container(
+              decoration: BoxDecoration(
+                color: _glassBackground,
+                borderRadius: BorderRadius.circular(8.0),
+                backgroundBlendMode: BlendMode.color,
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+              child: const _TypingIndicator(),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildInputArea() {
     return _buildGlassEffectContainer(
       margin: const EdgeInsets.all(24),
@@ -308,13 +508,13 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
           children: [
             Expanded(
               child: TextField(
-                controller: _inputController,
+                controller: _controller,
                 style: GoogleFonts.inter(color: _foreground, fontSize: 15),
                 decoration: InputDecoration(
                   hintText: "Habla con tu base de datos...",
                   hintStyle:
                       GoogleFonts.inter(color: _mutedForeground, fontSize: 15),
-                  filled: true,
+                  filled: false,
                   fillColor: Colors.transparent,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(.0),
@@ -326,20 +526,17 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(.0),
-                    borderSide: const BorderSide(
-                      color: _ancapYellow,
-                      width: 1.5,
-                    ),
+                    borderSide: BorderSide.none,
                   ),
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                 ),
-                onSubmitted: (_) => _handleSend(),
+                onSubmitted: (_) => _sendMessage(),
               ),
             ),
             const SizedBox(width: 16),
             ElevatedButton(
-              onPressed: _handleSend,
+              onPressed: _sendMessage,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.transparent,
                 padding: EdgeInsets.zero,
@@ -372,5 +569,73 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         ),
       ),
     );
+  }
+}
+
+class _TypingIndicator extends StatefulWidget {
+  const _TypingIndicator();
+
+  @override
+  __TypingIndicatorState createState() => __TypingIndicatorState();
+}
+
+class __TypingIndicatorState extends State<_TypingIndicator>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: List.generate(3, (index) {
+            final animation = Tween(begin: 0.0, end: 1.0).animate(
+              CurvedAnimation(
+                parent: _controller,
+                curve: Interval(
+                  0.15 * index,
+                  0.4 + 0.15 * index,
+                  curve: Curves.decelerate,
+                ),
+              ),
+            );
+            final double jumpHeight = -9.0 * sin(pi * animation.value);
+
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2.0),
+              child: Transform.translate(
+                offset: Offset(0, jumpHeight),
+                child: child,
+              ),
+            );
+          }),
+        );
+      },
+      child: Container(
+        width: 8,
+        height: 8,
+        decoration: const BoxDecoration(
+          color: _foreground,
+          shape: BoxShape.circle,
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 }
