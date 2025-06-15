@@ -6,6 +6,21 @@ import "package:anc_app/src/router/router.dart";
 import "package:anc_app/src/env.dart";
 import "package:google_fonts/google_fonts.dart";
 
+class _NoAnimationPageTransitionsBuilder extends PageTransitionsBuilder {
+  const _NoAnimationPageTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    return child;
+  }
+}
+
 class App extends StatefulWidget {
   const App({
     super.key,
@@ -30,9 +45,16 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    final pageTransitionsTheme = PageTransitionsTheme(
+      builders: {
+        for (var plartform in TargetPlatform.values)
+          plartform: const _NoAnimationPageTransitionsBuilder(),
+      },
+    );
     final theme = ThemeData(
       brightness: Brightness.light,
       textTheme: GoogleFonts.interTextTheme(Theme.of(context).textTheme),
+      pageTransitionsTheme: pageTransitionsTheme,
       inputDecorationTheme: InputDecorationTheme(
         isDense: true,
         hintStyle: TextStyle(fontSize: 15.0, color: Colors.grey[400]),
@@ -48,6 +70,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
     );
     final darkTheme = ThemeData.dark().copyWith(
       textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
+      pageTransitionsTheme: pageTransitionsTheme,
     );
 
     return MultiBlocProvider(
