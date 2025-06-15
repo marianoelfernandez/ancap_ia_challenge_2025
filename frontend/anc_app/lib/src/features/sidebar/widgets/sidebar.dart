@@ -308,7 +308,7 @@ Widget _buildChatHistoryList() {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    "Recent Conversations",
+                    "Conversaciones recientes",
                     style: GoogleFonts.inter(
                       color: _mutedForeground,
                       fontSize: 14,
@@ -333,7 +333,7 @@ Widget _buildChatHistoryList() {
                       ),
                       onPressed: () =>
                           context.read<SidebarCubit>().refreshConversations(),
-                      tooltip: "Retry loading conversations",
+                      tooltip: "Reintentar cargar conversaciones",
                     ),
                 ],
               ),
@@ -353,7 +353,7 @@ Widget _buildChatHistoryList() {
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            "Failed to load conversations",
+                            "Error al cargar conversaciones",
                             style: GoogleFonts.inter(
                               color: _foreground,
                               fontSize: 12,
@@ -369,10 +369,10 @@ Widget _buildChatHistoryList() {
                     ? Center(
                         child: Text(
                           state.searchQuery.isNotEmpty
-                              ? "No matching conversations found"
+                              ? "No se encontraron conversaciones"
                               : state.error == null
-                                  ? "No conversations yet"
-                                  : "No conversations to display",
+                                  ? "No hay conversaciones"
+                                  : "No hay conversaciones para mostrar",
                           style: GoogleFonts.inter(
                             color: _mutedForeground,
                             fontSize: 14,
