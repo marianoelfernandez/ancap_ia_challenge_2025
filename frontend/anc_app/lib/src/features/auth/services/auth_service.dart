@@ -14,11 +14,10 @@ abstract interface class AuthService {
   });
   Future<Result<void, AuthError>> signOut();
 
-  /// Returns the current user if authenticated, or null if not authenticated
   User? getCurrentUser();
 
-  String? get token;
+  Future<Result<User, AuthError>> getUserById(String userId);
 
-  /// Returns true if the user is currently authenticated
+  String? get token;
   bool get isAuthenticated;
 }

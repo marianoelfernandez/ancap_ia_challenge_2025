@@ -12,11 +12,9 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  // Colors
   static const Color _ancapYellow = Color(0xFFFFC107);
   static const Color _ancapDarkBlue = Color(0xFF002A53);
 
-  // Background colors to match audit screen
   static const Color _backgroundStart = Color(0xFF060912);
   static const Color _backgroundMid = Color(0xFF0B101A);
   static const Color _backgroundEnd = Color(0xFF050505);
@@ -25,7 +23,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final Color _mutedForeground = Colors.white.withValues(alpha: 0.7);
   final Color _border = Colors.white.withValues(alpha: 0.1);
 
-  // Sample data for most consulted SQL queries
   final List<QueryData> _topQueries = [
     QueryData("SELECT * FROM sales", 120),
     QueryData("SELECT * FROM inventory", 85),
@@ -34,7 +31,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     QueryData("SELECT * FROM products", 30),
   ];
 
-  // Sample data for query usage over time
   final List<TimeSeriesData> _queryTimeData = [
     TimeSeriesData(DateTime(2025, 6, 1), 45),
     TimeSeriesData(DateTime(2025, 6, 2), 60),
@@ -45,7 +41,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     TimeSeriesData(DateTime(2025, 6, 7), 90),
   ];
 
-  // Sample data for query distribution by role
   final Map<String, double> _queryByRole = {
     "Analyst": 45,
     "Manager": 25,
@@ -67,10 +62,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         child: Row(
           children: [
-            // Sidebar
-            const Sidebar(),
-
-            // Main content
+            Sidebar(showChatFeatures: false),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -147,7 +139,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Top queries chart
                 Expanded(
                   flex: 2,
                   child: _buildGlassEffectContainer(
@@ -172,7 +163,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
                 const SizedBox(width: 24),
-                // Role distribution chart
                 Expanded(
                   child: _buildGlassEffectContainer(
                     child: Column(
@@ -220,7 +210,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            // Stats cards
             Row(
               children: [
                 Expanded(
@@ -317,7 +306,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             sideTitles: SideTitles(
               showTitles: true,
               getTitlesWidget: (value, meta) {
-                // Truncate query text for display
                 String text = _topQueries[value.toInt()].query;
                 if (text.length > 15) {
                   text = "${text.substring(0, 12)}...";
@@ -576,7 +564,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Color _getColorForRole(String role) {
-    // Generate different colors for different roles
     switch (role) {
       case "Analyst":
         return _ancapYellow;
@@ -592,7 +579,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
-// Data models
 class QueryData {
   final String query;
   final int count;

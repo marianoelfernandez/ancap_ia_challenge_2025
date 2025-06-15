@@ -1,7 +1,5 @@
 import "dart:ui";
-
 import "package:anc_app/src/features/sidebar/cubits/sidebar_cubit.dart";
-// Removed unused import
 import "package:anc_app/src/models/conversation.dart";
 import "package:flutter/material.dart";
 import "package:flutter_bloc/flutter_bloc.dart";
@@ -100,7 +98,7 @@ class _SidebarState extends State<Sidebar> {
                 borderSide: const BorderSide(
                   color: _ancapYellow,
                   width: 1,
-                ), // Ring effect on focus
+                ),
               ),
             ),
             onChanged: (query) {
@@ -189,9 +187,9 @@ Widget _buildUserProfile() {
                   Icons.person_outline,
                   color: _ancapDarkBlue,
                   size: 24,
-                ), // User icon
+                ),
               ),
-              const SizedBox(width: 16), // gap-4
+              const SizedBox(width: 16),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -387,13 +385,10 @@ Widget _buildChatHistoryList() {
                         itemBuilder: (context, index) {
                           final conversation =
                               state.filteredConversations[index];
-                          // Format the date
-                          // The created field is already a DateTime object
                           final DateTime createdDate = conversation.created;
                           final String formattedDate =
                               _formatConversationDate(createdDate);
 
-                          // Extract a title from the conversation content
                           final String title =
                               _extractConversationTitle(conversation);
 
@@ -403,7 +398,6 @@ Widget _buildChatHistoryList() {
                               color: Colors.transparent,
                               child: InkWell(
                                 onTap: () {
-                                  // Handle conversation selection
                                   final sidebar = context
                                       .findAncestorWidgetOfExactType<Sidebar>();
                                   if (sidebar?.onConversationSelected != null) {
@@ -501,7 +495,6 @@ Widget _buildGlassEffectContainer({
   );
 }
 
-// Helper method to format conversation date
 String _formatConversationDate(DateTime date) {
   final now = DateTime.now();
   final difference = now.difference(date);
@@ -521,13 +514,9 @@ String _formatConversationDate(DateTime date) {
   }
 }
 
-// Helper method to extract a title from conversation content
 String _extractConversationTitle(Conversation conversation) {
   try {
-    // Try to extract a meaningful title from the conversation content
     if (conversation.conversation.isNotEmpty) {
-      // Assuming conversation.conversation might be a JSON string or contain the first message
-      // This is a simple implementation - adjust based on your actual data structure
       return conversation.conversation.split("\n").first.trim().substring(
             0,
             min(50, conversation.conversation.split("\n").first.trim().length),
@@ -535,12 +524,10 @@ String _extractConversationTitle(Conversation conversation) {
     }
     return "Conversation ${conversation.id.substring(0, min(8, conversation.id.length))}";
   } catch (e) {
-    // Fallback to using the ID if we can't extract a title
     return "Conversation ${conversation.id.substring(0, min(8, conversation.id.length))}";
   }
 }
 
-// Helper function for min value
 int min(int a, int b) {
   return a < b ? a : b;
 }

@@ -10,6 +10,8 @@ import "package:anc_app/src/features/chatbot/services/conversation_service.dart"
 import "package:anc_app/src/features/chatbot/services/query_service.dart";
 import "package:anc_app/src/adapters/query_pocketbase_service.dart";
 import "package:anc_app/src/features/chatbot/services/chat_service.dart";
+import "package:anc_app/src/features/audit/services/audit_service.dart";
+import "package:anc_app/src/adapters/audit_service_implementation.dart";
 
 Future<void> setupDI() async {
   final getIt = GetIt.instance;
@@ -41,4 +43,12 @@ Future<void> setupDI() async {
     QueryPocketbaseService(pb),
   );
   getIt.registerSingleton<ChatService>(ChatService());
+
+  getIt.registerSingleton<AuditService>(
+    AuditServiceImpl(
+      getIt<ConversationService>(),
+      getIt<QueryService>(),
+      getIt<AuthService>(),
+    ),
+  );
 }

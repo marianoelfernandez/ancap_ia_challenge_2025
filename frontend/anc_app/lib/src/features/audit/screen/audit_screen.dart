@@ -1,11 +1,11 @@
 import "dart:ui";
 import "package:flutter/material.dart";
+import "package:flutter_bloc/flutter_bloc.dart";
 import "package:google_fonts/google_fonts.dart";
 import "package:anc_app/src/features/sidebar/widgets/sidebar.dart";
-import "package:anc_app/src/models/audit_record.dart";
+import "package:anc_app/src/features/audit/cubit/audit_cubit.dart";
 import "package:intl/intl.dart";
 
-// Define colors to match chatbot screen
 const Color _ancapYellow = Color(0xFFFFC107);
 const Color _ancapDarkBlue = Color(0xFF002A53);
 
@@ -20,68 +20,35 @@ const Color _border = Color(0xFF1A1F29);
 final Color _glassBackground = Colors.white.withValues(alpha: 0.03);
 const Color _glassBorder = Color(0x1AFFFFFF);
 
-class AuditScreen extends StatefulWidget {
+class AuditScreen extends StatelessWidget {
   const AuditScreen({super.key});
 
   @override
-  State<AuditScreen> createState() => _AuditScreenState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => AuditCubit()..fetchAuditRecords(),
+      child: const _AuditScreenView(),
+    );
+  }
 }
 
-class _AuditScreenState extends State<AuditScreen> {
-  final List<AuditRecord> _auditRecords = [
-    AuditRecord(
-      username: "john.doe",
-      role: "Analyst",
-      date: DateTime.now().subtract(const Duration(hours: 2)),
-      consultedTables: ["sales", "inventory"],
-      cost: 0.45,
-    ),
-    AuditRecord(
-      username: "maria.garcia",
-      role: "Manager",
-      date: DateTime.now().subtract(const Duration(days: 1)),
-      consultedTables: ["employees", "payroll"],
-      cost: 0.78,
-    ),
-    AuditRecord(
-      username: "alex.smith",
-      role: "Admin",
-      date: DateTime.now().subtract(const Duration(days: 2)),
-      consultedTables: ["customers", "orders", "products"],
-      cost: 1.25,
-    ),
-    AuditRecord(
-      username: "sarah.johnson",
-      role: "Analyst",
-      date: DateTime.now().subtract(const Duration(days: 3)),
-      consultedTables: ["inventory", "suppliers"],
-      cost: 0.65,
-    ),
-    AuditRecord(
-      username: "david.wilson",
-      role: "Manager",
-      date: DateTime.now().subtract(const Duration(days: 4)),
-      consultedTables: ["sales", "marketing", "customers"],
-      cost: 0.92,
-    ),
-  ];
+class _AuditScreenView extends StatefulWidget {
+  const _AuditScreenView();
 
-  List<AuditRecord> _filteredRecords = [];
+  @override
+  State<_AuditScreenView> createState() => _AuditScreenViewState();
+}
 
+class _AuditScreenViewState extends State<_AuditScreenView> {
   final TextEditingController _usernameFilter = TextEditingController();
   final TextEditingController _roleFilter = TextEditingController();
   final TextEditingController _dateFilter = TextEditingController();
   final TextEditingController _tablesFilter = TextEditingController();
   final TextEditingController _costFilter = TextEditingController();
 
-  final Set<String> _selectedTableTags = <String>{};
-  final Set<String> _selectedRoleTags = <String>{};
-
   @override
   void initState() {
     super.initState();
-    _filteredRecords = List.from(_auditRecords);
-
     _usernameFilter.addListener(_applyFilters);
     _roleFilter.addListener(_applyFilters);
     _dateFilter.addListener(_applyFilters);
@@ -100,95 +67,45 @@ class _AuditScreenState extends State<AuditScreen> {
   }
 
   void _applyFilters() {
-    setState(() {
-      _filteredRecords = _auditRecords.where((record) {
-        final usernameMatch = _usernameFilter.text.isEmpty ||
-            record.username
-                .toLowerCase()
-                .contains(_usernameFilter.text.toLowerCase());
-
-        final textRoleMatch = _roleFilter.text.isEmpty ||
-            record.role.toLowerCase().contains(_roleFilter.text.toLowerCase());
-
-        final tagRoleMatch = _selectedRoleTags.isEmpty ||
-            _selectedRoleTags.contains(record.role);
-
-        final dateMatch = _dateFilter.text.isEmpty ||
-            DateFormat("yyyy-MM-dd")
-                .format(record.date)
-                .contains(_dateFilter.text);
-
-        final textTablesMatch = _tablesFilter.text.isEmpty ||
-            record.consultedTables.any(
-              (table) => table
-                  .toLowerCase()
-                  .contains(_tablesFilter.text.toLowerCase()),
-            );
-
-        final tagTablesMatch = _selectedTableTags.isEmpty ||
-            _selectedTableTags.every(
-              (tag) => record.consultedTables.contains(tag),
-            );
-
-        final costMatch = _costFilter.text.isEmpty ||
-            record.cost.toString().contains(_costFilter.text);
-
-        return usernameMatch &&
-            textRoleMatch &&
-            (_selectedRoleTags.isEmpty || tagRoleMatch) &&
-            dateMatch &&
-            textTablesMatch &&
-            (_selectedTableTags.isEmpty || tagTablesMatch) &&
-            costMatch;
-      }).toList();
-    });
+    final cubit = context.read<AuditCubit>();
+    cubit.applyFilters(
+      usernameFilter: _usernameFilter.text,
+      roleFilter: _roleFilter.text,
+      dateFilter: _dateFilter.text,
+      tablesFilter: _tablesFilter.text,
+      costFilter: _costFilter.text,
+    );
   }
 
   void _clearAllFilters() {
-    setState(() {
-      _usernameFilter.clear();
-      _roleFilter.clear();
-      _dateFilter.clear();
-      _tablesFilter.clear();
-      _costFilter.clear();
-      _selectedTableTags.clear();
-      _selectedRoleTags.clear();
-      _filteredRecords = List.from(_auditRecords);
-    });
+    _usernameFilter.clear();
+    _roleFilter.clear();
+    _dateFilter.clear();
+    _tablesFilter.clear();
+    _costFilter.clear();
+    context.read<AuditCubit>().clearAllFilters();
   }
 
   void _addTableTag(String tag) {
-    if (tag.isNotEmpty && !_selectedTableTags.contains(tag)) {
-      setState(() {
-        _selectedTableTags.add(tag);
-        _tablesFilter.clear();
-        _applyFilters();
-      });
+    if (tag.isNotEmpty) {
+      context.read<AuditCubit>().addTableTag(tag);
+      _tablesFilter.clear();
     }
   }
 
   void _removeTableTag(String tag) {
-    setState(() {
-      _selectedTableTags.remove(tag);
-      _applyFilters();
-    });
+    context.read<AuditCubit>().removeTableTag(tag);
   }
 
   void _addRoleTag(String tag) {
-    if (tag.isNotEmpty && !_selectedRoleTags.contains(tag)) {
-      setState(() {
-        _selectedRoleTags.add(tag);
-        _roleFilter.clear();
-        _applyFilters();
-      });
+    if (tag.isNotEmpty) {
+      context.read<AuditCubit>().addRoleTag(tag);
+      _roleFilter.clear();
     }
   }
 
   void _removeRoleTag(String tag) {
-    setState(() {
-      _selectedRoleTags.remove(tag);
-      _applyFilters();
-    });
+    context.read<AuditCubit>().removeRoleTag(tag);
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -216,10 +133,8 @@ class _AuditScreenState extends State<AuditScreen> {
     );
 
     if (picked != null) {
-      setState(() {
-        _dateFilter.text = DateFormat("yyyy-MM-dd").format(picked);
-        _applyFilters();
-      });
+      _dateFilter.text = DateFormat("yyyy-MM-dd").format(picked);
+      context.read<AuditCubit>().setDateFilter(_dateFilter.text);
     }
   }
 
@@ -260,17 +175,118 @@ class _AuditScreenState extends State<AuditScreen> {
         ),
         child: Row(
           children: [
-            const Sidebar(),
+            // Sidebar with dark background
+            const Sidebar(showChatFeatures: false),
+
+            // Main content area
             Expanded(
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Header that spans full width
                   _buildHeader(),
-                  _buildFilters(),
-                  _buildAuditTable(),
+
+                  // Content with padding
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(24.0, 0, 24.0, 24.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 24),
+                          _buildFilters(),
+                          const SizedBox(height: 24),
+                          BlocBuilder<AuditCubit, AuditState>(
+                            builder: (context, state) {
+                              if (state is AuditLoading) {
+                                return _buildLoadingIndicator();
+                              } else if (state is AuditError) {
+                                return _buildErrorMessage(state.message);
+                              } else if (state is AuditLoaded) {
+                                return _buildAuditTable(state);
+                              } else {
+                                return const SizedBox();
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingIndicator() {
+    return Expanded(
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(_ancapYellow),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              "Loading audit records...",
+              style: GoogleFonts.inter(
+                color: _foreground,
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorMessage(String errorMessage) {
+    return Expanded(
+      child: _buildGlassEffectContainer(
+        padding: const EdgeInsets.all(24),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.error_outline,
+                color: Colors.red,
+                size: 48,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                "Error loading audit records",
+                style: GoogleFonts.inter(
+                  color: _foreground,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                errorMessage,
+                style: GoogleFonts.inter(
+                  color: _mutedForeground,
+                  fontSize: 14,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () => context.read<AuditCubit>().fetchAuditRecords(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _ancapYellow,
+                  foregroundColor: _ancapDarkBlue,
+                ),
+                child: const Text("Retry"),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -282,6 +298,7 @@ class _AuditScreenState extends State<AuditScreen> {
       padding: const EdgeInsets.all(24.0),
       borderRadius: 0,
       child: Container(
+        width: double.infinity,
         decoration: BoxDecoration(
           border:
               Border(bottom: BorderSide(color: _border.withValues(alpha: 0.1))),
@@ -358,11 +375,8 @@ class _AuditScreenState extends State<AuditScreen> {
                 ),
               ),
               IconButton(
-                icon: const Icon(
-                  Icons.cleaning_services_outlined,
-                  color: _ancapYellow,
-                  size: 20,
-                ),
+                icon: const Icon(Icons.cleaning_services_outlined),
+                color: _ancapYellow,
                 tooltip: "Limpiar filtros",
                 onPressed: _clearAllFilters,
               ),
@@ -370,12 +384,42 @@ class _AuditScreenState extends State<AuditScreen> {
           ),
           const SizedBox(height: 16),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: _buildFilterField(
+                child: TextField(
                   controller: _usernameFilter,
-                  label: "Usuario",
-                  icon: Icons.person_outline,
+                  style: GoogleFonts.inter(
+                    color: _foreground,
+                    fontSize: 14,
+                  ),
+                  decoration: InputDecoration(
+                    labelText: "Usuario",
+                    labelStyle: GoogleFonts.inter(
+                      color: _mutedForeground,
+                      fontSize: 14,
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.person_outline,
+                      color: _mutedForeground,
+                      size: 18,
+                    ),
+                    filled: true,
+                    fillColor: Colors.transparent,
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                      borderSide: BorderSide(
+                        color: _border.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    focusedBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(color: _ancapYellow, width: 1.5),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 12,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -383,68 +427,68 @@ class _AuditScreenState extends State<AuditScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _roleFilter,
-                            style: GoogleFonts.inter(
-                              color: _foreground,
-                              fontSize: 14,
-                            ),
-                            decoration: InputDecoration(
-                              labelText: "Rol",
-                              labelStyle: GoogleFonts.inter(
-                                color: _mutedForeground,
-                                fontSize: 14,
-                              ),
-                              prefixIcon: const Icon(
-                                Icons.badge_outlined,
-                                color: _mutedForeground,
-                                size: 18,
-                              ),
-                              suffixIcon: IconButton(
-                                icon: const Icon(
-                                  Icons.add_circle_outline,
-                                  size: 18,
-                                ),
-                                color: _ancapYellow,
-                                onPressed: () =>
-                                    _addRoleTag(_roleFilter.text.trim()),
-                              ),
-                              filled: true,
-                              fillColor: Colors.transparent,
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                                borderSide: BorderSide(
-                                  color: _border.withValues(alpha: 0.3),
-                                ),
-                              ),
-                              focusedBorder: const OutlineInputBorder(
-                                borderSide:
-                                    BorderSide(color: _ancapYellow, width: 1.5),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 12,
-                              ),
-                            ),
-                            onSubmitted: (value) => _addRoleTag(value.trim()),
+                    TextField(
+                      controller: _roleFilter,
+                      style: GoogleFonts.inter(
+                        color: _foreground,
+                        fontSize: 14,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: "Rol",
+                        labelStyle: GoogleFonts.inter(
+                          color: _mutedForeground,
+                          fontSize: 14,
+                        ),
+                        prefixIcon: const Icon(
+                          Icons.badge_outlined,
+                          color: _mutedForeground,
+                          size: 18,
+                        ),
+                        suffixIcon: IconButton(
+                          icon: const Icon(
+                            Icons.add_circle_outline,
+                            size: 18,
+                          ),
+                          color: _ancapYellow,
+                          onPressed: () => _addRoleTag(_roleFilter.text.trim()),
+                        ),
+                        filled: true,
+                        fillColor: Colors.transparent,
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                          borderSide: BorderSide(
+                            color: _border.withValues(alpha: 0.3),
                           ),
                         ),
-                      ],
-                    ),
-                    if (_selectedRoleTags.isNotEmpty)
-                      Container(
-                        margin: const EdgeInsets.only(top: 8),
-                        height: 32,
-                        child: ListView(
-                          scrollDirection: Axis.horizontal,
-                          children: _selectedRoleTags
-                              .map((tag) => _buildRoleTag(tag))
-                              .toList(),
+                        focusedBorder: const OutlineInputBorder(
+                          borderSide:
+                              BorderSide(color: _ancapYellow, width: 1.5),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 12,
                         ),
                       ),
+                      onSubmitted: (value) => _addRoleTag(value.trim()),
+                    ),
+                    BlocBuilder<AuditCubit, AuditState>(
+                      builder: (context, state) {
+                        if (state is AuditLoaded) {
+                          return Container(
+                            margin: const EdgeInsets.only(top: 8),
+                            height: 32,
+                            child: ListView(
+                              scrollDirection: Axis.horizontal,
+                              children: state.selectedRoleTags
+                                  .map((tag) => _buildRoleTag(tag))
+                                  .toList(),
+                            ),
+                          );
+                        } else {
+                          return const SizedBox();
+                        }
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -499,68 +543,69 @@ class _AuditScreenState extends State<AuditScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _tablesFilter,
-                            style: GoogleFonts.inter(
-                              color: _foreground,
-                              fontSize: 14,
-                            ),
-                            decoration: InputDecoration(
-                              labelText: "Tablas consultadas",
-                              labelStyle: GoogleFonts.inter(
-                                color: _mutedForeground,
-                                fontSize: 14,
-                              ),
-                              prefixIcon: const Icon(
-                                Icons.table_chart_outlined,
-                                color: _mutedForeground,
-                                size: 18,
-                              ),
-                              suffixIcon: IconButton(
-                                icon: const Icon(
-                                  Icons.add_circle_outline,
-                                  size: 18,
-                                ),
-                                color: _ancapYellow,
-                                onPressed: () =>
-                                    _addTableTag(_tablesFilter.text.trim()),
-                              ),
-                              filled: true,
-                              fillColor: Colors.transparent,
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                                borderSide: BorderSide(
-                                  color: _border.withValues(alpha: 0.3),
-                                ),
-                              ),
-                              focusedBorder: const OutlineInputBorder(
-                                borderSide:
-                                    BorderSide(color: _ancapYellow, width: 1.5),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 12,
-                              ),
-                            ),
-                            onSubmitted: (value) => _addTableTag(value.trim()),
+                    TextField(
+                      controller: _tablesFilter,
+                      style: GoogleFonts.inter(
+                        color: _foreground,
+                        fontSize: 14,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: "Tablas consultadas",
+                        labelStyle: GoogleFonts.inter(
+                          color: _mutedForeground,
+                          fontSize: 14,
+                        ),
+                        prefixIcon: const Icon(
+                          Icons.table_chart_outlined,
+                          color: _mutedForeground,
+                          size: 18,
+                        ),
+                        suffixIcon: IconButton(
+                          icon: const Icon(
+                            Icons.add_circle_outline,
+                            size: 18,
+                          ),
+                          color: _ancapYellow,
+                          onPressed: () =>
+                              _addTableTag(_tablesFilter.text.trim()),
+                        ),
+                        filled: true,
+                        fillColor: Colors.transparent,
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                          borderSide: BorderSide(
+                            color: _border.withValues(alpha: 0.3),
                           ),
                         ),
-                      ],
-                    ),
-                    if (_selectedTableTags.isNotEmpty)
-                      Container(
-                        margin: const EdgeInsets.only(top: 8),
-                        height: 32,
-                        child: ListView(
-                          scrollDirection: Axis.horizontal,
-                          children: _selectedTableTags
-                              .map((tag) => _buildTableTag(tag))
-                              .toList(),
+                        focusedBorder: const OutlineInputBorder(
+                          borderSide:
+                              BorderSide(color: _ancapYellow, width: 1.5),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 12,
                         ),
                       ),
+                      onSubmitted: (value) => _addTableTag(value.trim()),
+                    ),
+                    BlocBuilder<AuditCubit, AuditState>(
+                      builder: (context, state) {
+                        if (state is AuditLoaded) {
+                          return Container(
+                            margin: const EdgeInsets.only(top: 8),
+                            height: 32,
+                            child: ListView(
+                              scrollDirection: Axis.horizontal,
+                              children: state.selectedTableTags
+                                  .map((tag) => _buildTableTag(tag))
+                                  .toList(),
+                            ),
+                          );
+                        } else {
+                          return const SizedBox();
+                        }
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -606,7 +651,6 @@ class _AuditScreenState extends State<AuditScreen> {
     );
   }
 
-  // Build a removable tag chip for table filtering
   Widget _buildTableTag(String tag) {
     return Container(
       margin: const EdgeInsets.only(right: 8),
@@ -644,7 +688,6 @@ class _AuditScreenState extends State<AuditScreen> {
     );
   }
 
-  // Build a removable tag chip for role filtering
   Widget _buildRoleTag(String tag) {
     return Container(
       margin: const EdgeInsets.only(right: 8),
@@ -682,7 +725,7 @@ class _AuditScreenState extends State<AuditScreen> {
     );
   }
 
-  Widget _buildAuditTable() {
+  Widget _buildAuditTable(AuditLoaded state) {
     return Expanded(
       child: _buildGlassEffectContainer(
         margin: const EdgeInsets.all(24),
@@ -702,7 +745,7 @@ class _AuditScreenState extends State<AuditScreen> {
                   ),
                 ),
                 Text(
-                  "${_filteredRecords.length} registros encontrados",
+                  "${state.filteredRecords.length} registros encontrados",
                   style: GoogleFonts.inter(
                     color: _mutedForeground,
                     fontSize: 14,
@@ -775,13 +818,13 @@ class _AuditScreenState extends State<AuditScreen> {
                             ),
                           ),
                         ],
-                        rows: _filteredRecords.map((record) {
+                        rows: state.filteredRecords.map((record) {
                           return DataRow(
                             cells: [
                               DataCell(
                                 SizedBox(
                                   width: usernameWidth,
-                                  child: Text(record.username),
+                                  child: Text(record.displayName),
                                 ),
                               ),
                               DataCell(

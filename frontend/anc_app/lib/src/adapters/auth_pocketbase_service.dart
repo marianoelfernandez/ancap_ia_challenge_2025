@@ -11,7 +11,6 @@ class AuthPocketBaseService implements AuthService {
 
   AuthPocketBaseService({required PocketBase pocketBase}) : pb = pocketBase;
 
-  /// Returns true if the user is currently authenticated
   @override
   bool get isAuthenticated => pb.authStore.isValid;
 
@@ -97,4 +96,23 @@ class AuthPocketBaseService implements AuthService {
 
   @override
   String? get token => pb.authStore.token;
+
+  @override
+  Future<Result<User, AuthError>> getUserById(String userId) async {
+    try {
+      final record = await pb.collection("users").getOne(userId);
+
+      return Result.ok(
+        User(
+          id: record.getStringValue("id"),
+          email: record.getStringValue("email"),
+          name: record.getStringValue("name"),
+          role: record.getStringValue("role"),
+        ),
+      );
+    } catch (e) {
+      debugPrint("Error getting user by ID: $e");
+      return Result.err(AuthErrorUnknown());
+    }
+  }
 }

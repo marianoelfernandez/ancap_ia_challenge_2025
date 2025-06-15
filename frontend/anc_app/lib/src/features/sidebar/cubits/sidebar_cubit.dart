@@ -76,10 +76,9 @@ class SidebarState extends Equatable {
       [recentConversations, isLoading, error, currentUser, searchQuery];
 }
 
-// Define the sidebar cubit
 class SidebarCubit extends Cubit<SidebarState> {
   final ConversationService _conversationService;
-  final AuthService _authService; // To access the current user ID
+  final AuthService _authService;
 
   SidebarCubit({
     ConversationService? conversationService,
@@ -87,13 +86,14 @@ class SidebarCubit extends Cubit<SidebarState> {
   })  : _conversationService =
             conversationService ?? GetIt.instance<ConversationService>(),
         _authService = authService ?? GetIt.instance<AuthService>(),
-        super(const SidebarState());
+        super(const SidebarState()) {
+    loadUser();
+  }
 
   Future<void> loadRecentConversations() async {
     emit(state.copyWith(isLoading: true, error: null));
 
     try {
-      // Get the current user using the updated function
       final user = _authService.getCurrentUser();
       debugPrint("SidebarCubit: Got user: $user");
 
@@ -160,5 +160,21 @@ class SidebarCubit extends Cubit<SidebarState> {
   void clearSearchQuery() {
     emit(state.copyWith(searchQuery: ""));
     debugPrint("SidebarCubit: Search query cleared");
+  }
+
+  Future<void> loadUser() async {
+    try {
+      final user = _authService.getCurrentUser();
+      debugPrint("SidebarCubit: Got user in loadUser(): $user");
+
+      if (user == null) {
+        debugPrint("SidebarCubit: User is null in loadUser()");
+        return;
+      }
+
+      emit(state.copyWith(currentUser: user));
+    } catch (e) {
+      debugPrint("SidebarCubit: Exception getting user: $e");
+    }
   }
 }

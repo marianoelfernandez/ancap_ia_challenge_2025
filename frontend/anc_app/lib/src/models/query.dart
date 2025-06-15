@@ -1,3 +1,5 @@
+import "dart:convert";
+
 class Query {
   final String id;
   final String collectionId;
@@ -9,6 +11,7 @@ class Query {
   final String conversationId;
   final DateTime created;
   final DateTime updated;
+  final List<String> queriedTables;
 
   Query({
     required this.id,
@@ -21,9 +24,28 @@ class Query {
     required this.conversationId,
     required this.created,
     required this.updated,
+    this.queriedTables = const [],
   });
 
   factory Query.fromJson(Map<String, dynamic> json) {
+    // Parse queried_tables if present
+    List<String> tables = [];
+    if (json["queried_tables"] != null) {
+      if (json["queried_tables"] is List) {
+        tables = (json["queried_tables"] as List).map((e) => e.toString()).toList();
+      } else if (json["queried_tables"] is String) {
+        try {
+          // Try to parse as JSON string
+          final parsed = jsonDecode(json["queried_tables"]);
+          if (parsed is List) {
+            tables = parsed.map((e) => e.toString()).toList();
+          }
+        } catch (_) {
+          // If parsing fails, leave as empty list
+        }
+      }
+    }
+    
     return Query(
       id: json["id"],
       collectionId: json["collectionId"],
@@ -36,6 +58,7 @@ class Query {
       conversationId: json["conversation_id"],
       created: DateTime.parse(json["created"]),
       updated: DateTime.parse(json["updated"]),
+      queriedTables: tables,
     );
   }
 
@@ -51,6 +74,7 @@ class Query {
       "conversation_id": conversationId,
       "created": created.toIso8601String(),
       "updated": updated.toIso8601String(),
+      "queried_tables": queriedTables,
     };
   }
 }
