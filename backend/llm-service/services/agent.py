@@ -11,6 +11,8 @@ from typing import TypedDict, Optional
 from utils.constants import schema_constant, intent_prompt, data_dictionary_prompt
 from db.dbconnection import check_or_generate_conversation_id, save_query, build_memory_of_conversation
 from utils.auth import permissions_check
+from services.schema_client import schema_client
+import json
 
 settings = Settings()
 
@@ -65,11 +67,11 @@ class Agent():
     def _build_graph(self, schema):
         builder = StateGraph(state_schema=schema)
 
-        def load_schema_node(state):
-            if "schema" in state:
-                return state 
-
-            schema_str = schema_constant
+        async def load_schema_node(state):
+            schema_list = await schema_client.get_schemas()
+            schema_str = json.dumps(schema_list)
+            print(f"Schema: {schema_str}")
+            
             state["schema"] = schema_str
             state["needs_more_info"] = False
 
@@ -78,13 +80,13 @@ class Agent():
             return state
 
 
-        def detect_type(state : AgentState) -> AgentState:
+        async def detect_type(state : AgentState) -> AgentState:
             query = state["input"]
-            response = self.llm.invoke(intent_prompt.format(query=query))
+            response = await self.llm.ainvoke(intent_prompt.format(query=query))
             is_sql = "SQL" in response.content.upper()
             return {**state, "is_sql": is_sql}
         
-        def query_translator(state: AgentState) -> AgentState:
+        async def query_translator(state: AgentState) -> AgentState:
             try:
                 query = state["input"]
                 conv_id = state["conversation_id"]
@@ -95,7 +97,7 @@ class Agent():
                 )
 
 
-                response = self.llm.invoke(prompt)
+                response = await self.llm.ainvoke(prompt)
 
                 if "[RETRY]" in response.content.strip():
                     state["needs_more_info"] = True
@@ -111,22 +113,22 @@ class Agent():
                     "output": f"[Error al traducir consulta] {e}"
                 }
         
-        def route_from_query_translator(state: AgentState) -> str:
+        async def route_from_query_translator(state: AgentState) -> str:
             if state.get("needs_more_info"):
                 return "respond_with_retry"
             return "prepare_sql"
         
-        def respond_with_retry(state: dict) -> dict:
+        async def respond_with_retry(state: dict) -> dict:
             return state
     
-        def prepare_sql(state: AgentState) -> AgentState:
+        async def prepare_sql(state: AgentState) -> AgentState:
             try:
                 query = state["input"]
                 schema = state["schema"]
                 curated_query = state["output"]
                 print(f"Curated Query: {curated_query}")
                 conversation_id = state.get("conversation_id", None)
-                response = self.sql_chain.invoke({"input": query, "schema": schema, "curated_query": curated_query})
+                response = await self.sql_chain.ainvoke({"input": query, "schema": schema, "curated_query": curated_query})
                 generated_sql = response.content.strip()
                 state["generated_sql"] = generated_sql
                 permissions_check(generated_sql, conversation_id)
@@ -135,12 +137,12 @@ class Agent():
                 state["output"] = f"[Error durante la consulta] {e}"
                 raise Exception(state["output"])
 
-        def execute_sql(state: AgentState) -> AgentState:
+        async def execute_sql(state: AgentState) -> AgentState:
             try:
                 generated_sql = state["generated_sql"]
                 if not generated_sql:
                     return {**state, "output": "No se generó SQL"}
-                result = call_server(generated_sql)
+                result = await call_server(generated_sql)
                 state["output"] = str(result['response']) if 'response' in result else str(result['error'])
                 state['cost'] = float(result.get('cost', 0.0))
                 return state
@@ -148,11 +150,11 @@ class Agent():
                 return {**state, "output": f"[Error al ejecutar SQL] {e}"}
 
 
-        def general_llm(state):
+        async def general_llm(state):
             conv_id = state["conversation_id"]
             memory = build_memory_of_conversation(conv_id)
 
-            response = self.general_chain.invoke({
+            response = await self.general_chain.ainvoke({
                 "input": state["input"],
                 "chat_history": memory.chat_memory.messages,
             })
@@ -180,17 +182,17 @@ class Agent():
 
         return builder
 
-    def ask_agent(self, query: str, conversation_id: str| None, user_id : str) -> str:
+    async def ask_agent(self, query: str, conversation_id: str| None, user_id : str) -> str:
             @traceable(name="Agent Graph Run")
-            def _run_with_trace(input_query, conv_id):
-                return self.runnable.invoke({"input": input_query, "conversation_id": conv_id})
+            async def _run_with_trace(input_query, conv_id):
+                return await self.runnable.ainvoke({"input": input_query, "conversation_id": conv_id})
 
             try:
 
 
                 conv_id = check_or_generate_conversation_id(user_id, conversation_id)
 
-                result = _run_with_trace(query, conv_id)
+                result = await _run_with_trace(query, conv_id)
                 print(f"\nResult: {result}\n")
                 save_query(result["input"],
                             result.get("generated_sql", ""),
