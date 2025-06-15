@@ -65,7 +65,7 @@ class _SidebarState extends State<Sidebar> {
           child: TextField(
             style: GoogleFonts.inter(color: _foreground),
             decoration: InputDecoration(
-              hintText: "Search conversations...",
+              hintText: "Buscar conversaciones",
               hintStyle:
                   GoogleFonts.inter(color: _mutedForeground, fontSize: 14),
               prefixIcon:
@@ -421,16 +421,19 @@ Widget _buildChatHistoryList() {
                                 child: InkWell(
                                   onTap: () {
                                     // Handle conversation selection
-                                  final sidebar = context
-                                      .findAncestorWidgetOfExactType<Sidebar>();
-                                  if (sidebar?.onConversationSelected != null) {
+                                    final sidebar =
+                                        context.findAncestorWidgetOfExactType<
+                                            Sidebar>();
+                                    if (sidebar?.onConversationSelected !=
+                                        null) {
                                       sidebar!.onConversationSelected!(
                                         conversation.id,
                                       );
                                     }
                                   },
                                   borderRadius: BorderRadius.circular(12.0),
-                                hoverColor: _foreground.withValues(alpha: 0.05),
+                                  hoverColor:
+                                      _foreground.withValues(alpha: 0.05),
                                   child: _buildGlassEffectContainer(
                                     padding: const EdgeInsets.all(12.0),
                                     child: Row(
