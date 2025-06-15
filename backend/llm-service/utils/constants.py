@@ -360,3 +360,16 @@ entregas_tables = [
     "DEPARTAMENTOS", # Maestro Departamentos
     "LOCALIDADES"    # Maestro Localidades
 ]
+
+schema_formatting_prompt = ChatPromptTemplate.from_template(
+    """Tu tarea es convertir una representación JSON de un esquema de base de datos en una cadena de texto formateada con sentencias CREATE TABLE de SQL.
+La cadena de texto debe ser clara, legible y estar bien comentada para que un asistente de IA pueda entenderla fácilmente y usarla para generar consultas SQL.
+Asegúrate de que el resultado final sea solo el script SQL, sin ninguna otra explicación o texto introductorio.
+
+Usa el siguiente formato como ejemplo:
+{schema_example}
+
+Ahora, convierte el siguiente esquema JSON:
+{schema_json}
+"""
+)

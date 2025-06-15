@@ -1,14 +1,11 @@
-from pydantic import ValidationError
 from langsmith import traceable
-from langchain_openai import ChatOpenAI
-from langchain.memory import ConversationBufferMemory
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langgraph.graph import StateGraph, END
 from langchain_google_genai import ChatGoogleGenerativeAI
 from utils.connection import call_server
 from utils.settings import Settings
 from typing import TypedDict, Optional
-from utils.constants import schema_constant, intent_prompt, data_dictionary_prompt
+from utils.constants import schema_constant, intent_prompt, data_dictionary_prompt, schema_formatting_prompt
 from db.dbconnection import check_or_generate_conversation_id, save_query, build_memory_of_conversation
 from utils.auth import permissions_check
 from services.schema_client import schema_client
@@ -60,6 +57,7 @@ class Agent():
         ])
 
         self.sql_chain = self.sql_generation_prompt | self.pro_agent
+        self.schema_formatting_chain = schema_formatting_prompt | self.llm
 
         self.graph = self._build_graph(AgentState)
         self.runnable = self.graph.compile()
@@ -69,8 +67,14 @@ class Agent():
 
         async def load_schema_node(state):
             schema_list = await schema_client.get_schemas()
-            schema_str = json.dumps(schema_list)
-            print(f"Schema: {schema_str}")
+            schema_json_str = json.dumps(schema_list, indent=2)
+
+            response = await self.schema_formatting_chain.ainvoke({
+                "schema_json": schema_json_str,
+                "schema_example": schema_constant
+            })
+            
+            schema_str = str(response.content)
             
             state["schema"] = schema_str
             state["needs_more_info"] = False
@@ -83,7 +87,7 @@ class Agent():
         async def detect_type(state : AgentState) -> AgentState:
             query = state["input"]
             response = await self.llm.ainvoke(intent_prompt.format(query=query))
-            is_sql = "SQL" in response.content.upper()
+            is_sql = "SQL" in str(response.content).upper()
             return {**state, "is_sql": is_sql}
         
         async def query_translator(state: AgentState) -> AgentState:
@@ -98,14 +102,15 @@ class Agent():
 
 
                 response = await self.llm.ainvoke(prompt)
+                content = str(response.content)
 
-                if "[RETRY]" in response.content.strip():
+                if "[RETRY]" in content.strip():
                     state["needs_more_info"] = True
-                    state["output"] = response.content.strip()[7:]
+                    state["output"] = content.strip()[7:]
                     return state
                 else:
                     state["needs_more_info"] = False
-                    state["output"] = response.content.strip()
+                    state["output"] = content.strip()
                     return state
             except Exception as e:
                 return {
@@ -129,7 +134,7 @@ class Agent():
                 print(f"Curated Query: {curated_query}")
                 conversation_id = state.get("conversation_id", None)
                 response = await self.sql_chain.ainvoke({"input": query, "schema": schema, "curated_query": curated_query})
-                generated_sql = response.content.strip()
+                generated_sql = str(response.content).strip()
                 state["generated_sql"] = generated_sql
                 permissions_check(generated_sql, conversation_id)
                 return state
@@ -182,7 +187,7 @@ class Agent():
 
         return builder
 
-    async def ask_agent(self, query: str, conversation_id: str| None, user_id : str) -> str:
+    async def ask_agent(self, query: str, conversation_id: str| None, user_id : str) -> tuple[str, str]:
             @traceable(name="Agent Graph Run")
             async def _run_with_trace(input_query, conv_id):
                 return await self.runnable.ainvoke({"input": input_query, "conversation_id": conv_id})
