@@ -47,7 +47,7 @@ def save_query(natural_query: str, query: str, response: dict, cost:int, convers
 def check_or_generate_conversation_id(
     user_id: str, 
     conversation_id: str | None, 
-    title: str = "Conversation"
+    title: str = "Conversation sin titulo"
     ) -> str:
     """
     Checks if conversation_id belongs to user_id; if None, creates a new conversation.

@@ -44,7 +44,17 @@ class Agent():
             MessagesPlaceholder("chat_history"),
             ("user", "{input}"),
         ])
+
+        self.summarize_query_prompt = ChatPromptTemplate.from_messages([
+            ("system", """Sos un agente especializado en resumir consultas de usuario a frases breves, 
+             estas van a ser usadas como resumen de toda una conversacion.
+             No agregues puntos al final de la frase."""),
+            ("user", "{input}"),
+        ])
+
         self.general_chain = self.general_prompt | self.llm
+
+        self.summarize_query_chain = self.summarize_query_prompt | self.llm
 
         self.sql_generation_prompt = ChatPromptTemplate.from_messages([
         ("system", """
@@ -187,8 +197,8 @@ class Agent():
 
             try:
 
-
-                conv_id = check_or_generate_conversation_id(user_id, conversation_id)
+                summarized_title = self.summarize_query_chain.invoke({"input": query})
+                conv_id = check_or_generate_conversation_id(user_id, conversation_id, summarized_title.content.strip())
 
                 result = _run_with_trace(query, conv_id)
                 print(f"\nResult: {result}\n")
