@@ -28,6 +28,7 @@ class AuditServiceImpl implements AuditService {
       final conversationsResult = await _conversationService.getConversations(
         page: page,
         perPage: perPage,
+        sortByCreationDateDesc: true,
       );
 
       return conversationsResult.match(
