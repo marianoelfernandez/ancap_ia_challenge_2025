@@ -1,10 +1,11 @@
+from typing import List
 from fastapi import APIRouter, Body, Depends
 from datetime import datetime
 import logging
 
 from services.bigquery_service import BigQueryService
 from services.data_service import DataService
-from models.query.model import SQLQueryRequest, SQLQueryResponse, QueryStatus, QueryMetadata, ValidateQueryResponse
+from models.query.model import SQLQueryRequest, SQLQueryResponse, QueryStatus, QueryMetadata, ValidateQueryResponse, DatasetSchema
 from models.data.model import FlChartType
 from utils.text_parser import extract_sql_from_text
 
@@ -109,3 +110,12 @@ async def validate_sql_query(
             status=QueryStatus.ERROR,
             error_message=str(e)
         )
+
+@router.get("/schemas", response_model=List[DatasetSchema])
+async def get_bigquery_schemas(
+    bigquery_service: BigQueryService = Depends(BigQueryService)
+) -> List[DatasetSchema]:
+    """
+    Get all BigQuery schemas
+    """
+    return await bigquery_service.get_schemas()

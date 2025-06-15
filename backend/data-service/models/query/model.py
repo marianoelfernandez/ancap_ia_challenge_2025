@@ -71,3 +71,17 @@ class BatchQueryResponse(BaseModel):
     total_execution_time: float
     successful_queries: int
     failed_queries: int
+
+class ColumnSchema(BaseModel):
+    name: str
+    type: str
+    mode: str
+    description: Optional[str] = None
+
+class TableSchema(BaseModel):
+    table_id: str
+    schema: List[ColumnSchema]
+
+class DatasetSchema(BaseModel):
+    dataset_id: str
+    tables: List[TableSchema]

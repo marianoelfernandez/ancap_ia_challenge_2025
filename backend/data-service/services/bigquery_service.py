@@ -1,10 +1,10 @@
 from google.cloud import bigquery
 from google.cloud.exceptions import BadRequest
-from typing import Dict, Any, Optional
+from typing import Dict, Any, List, Optional
 import logging
 from datetime import datetime
 from config.settings import get_settings
-from models.query.model import QueryStatus, ValidateQueryResponse
+from models.query.model import QueryStatus, ValidateQueryResponse, DatasetSchema
 
 settings = get_settings()
 
@@ -127,6 +127,54 @@ class BigQueryService:
                 status=QueryStatus.INVALID_SQL,
                 error_message=str(e),
             )
+
+    async def get_schemas(self) -> List[DatasetSchema]:
+        """
+        Retrieves all datasets, their tables, and schemas from BigQuery.
+        """
+        try:
+            self.logger.info(f"Fetching all BigQuery schemas for project_id: {self.project_id}")
+            
+            all_schemas = []
+            
+            datasets = self.client.list_datasets()
+            
+            for dataset in datasets:
+                dataset_id = dataset.dataset_id
+                dataset_info = {"dataset_id": f"{self.project_id}.{dataset_id}", "tables": []}
+                
+                self.logger.info(f"Fetching tables for dataset: {dataset_id}")
+                tables = self.client.list_tables(dataset_id)
+                
+                table_list = []
+                for table in tables:
+                    table_ref = self.client.get_table(table.reference)
+                    table_id = table_ref.table_id
+                    
+                    schema_info = []
+                    if table_ref.schema:
+                        for field in table_ref.schema:
+                            schema_info.append({
+                                "name": field.name,
+                                "type": field.field_type,
+                                "mode": field.mode,
+                                "description": field.description
+                            })
+                    
+                    table_list.append({
+                        "table_id": table_id,
+                        "schema": schema_info
+                    })
+                
+                dataset_info["tables"] = table_list
+                all_schemas.append(dataset_info)
+                
+            self.logger.info(f"Successfully fetched details for {len(all_schemas)} datasets.")
+            return all_schemas
+
+        except Exception as e:
+            self.logger.error(f"Error fetching schemas: {str(e)}")
+            raise
 
     def _estimate_cost(self, bytes_processed: int) -> float:
         """Estimate query cost based on bytes processed
