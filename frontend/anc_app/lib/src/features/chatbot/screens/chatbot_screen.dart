@@ -107,7 +107,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     } catch (error) {
       setState(() {
         _isAiTyping = false;
-        _addAiMessage("Sorry, I encountered an error: $error");
+        _addAiMessage("Lo siento, no te puedo ayudar en este momento.");
       });
     }
   }
@@ -299,7 +299,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                     ),
                     padding: const EdgeInsets.all(16.0),
                     decoration: BoxDecoration(
-                      color: isAi ? null : _ancapYellow,
+                      color: isAi ? _glassBackground : _ancapYellow,
                       borderRadius: BorderRadius.circular(8.0),
                       border: isAi
                           ? Border.all(color: _glassBorder, width: 1)
@@ -406,11 +406,11 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: _glassBackground,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: _glassBorder, width: 1),
                 ),
                 child: Text(
-                  "No queries found in this conversation.",
+                  "No hay mensajes en esta conversación.",
                   style: GoogleFonts.inter(color: _foreground),
                 ),
               ),
@@ -435,7 +435,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: _ancapYellow,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         query.naturalQuery,
@@ -457,7 +457,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: _glassBackground,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: _glassBorder, width: 1),
                       ),
                       child: ClipRRect(
@@ -468,6 +468,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                             decoration: BoxDecoration(
                               color: _glassBackground,
                               borderRadius: BorderRadius.circular(8.0),
+                              backgroundBlendMode: BlendMode.color,
                             ),
                             padding: const EdgeInsets.all(0.1),
                             child: Text(
