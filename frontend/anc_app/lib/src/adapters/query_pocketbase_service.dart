@@ -3,6 +3,7 @@ import "package:anc_app/src/models/errors/queries_error.dart";
 import "package:anc_app/src/models/query.dart";
 import "package:oxidized/oxidized.dart";
 import "package:pocketbase/pocketbase.dart";
+import "package:flutter/foundation.dart";
 
 class QueryPocketbaseService implements QueryService {
   final PocketBase _pb;
@@ -16,6 +17,9 @@ class QueryPocketbaseService implements QueryService {
     required int perPage,
     String? conversationId,
   }) async {
+    debugPrint(
+      "QueryService: Getting queries with page: $page, perPage: $perPage, conversationId: $conversationId",
+    );
     try {
       String filter = "";
       if (conversationId != null) {
@@ -28,6 +32,10 @@ class QueryPocketbaseService implements QueryService {
             filter: filter.isNotEmpty ? filter : null,
           );
 
+      debugPrint(
+        "QueryService: Got ${result.items} queries from PocketBase",
+      );
+
       final response = QueriesResponse(
         page: result.page,
         perPage: result.perPage,
@@ -39,6 +47,7 @@ class QueryPocketbaseService implements QueryService {
 
       return Result.ok(response);
     } catch (e) {
+      debugPrint(e.toString());
       return Result.err(QueriesErrorUnknown());
     }
   }

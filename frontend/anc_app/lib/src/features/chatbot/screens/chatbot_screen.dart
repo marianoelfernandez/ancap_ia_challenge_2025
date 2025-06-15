@@ -2,6 +2,7 @@ import "dart:math";
 import "dart:ui";
 
 import "package:anc_app/src/features/auth/cubits/auth_cubit.dart";
+import "package:anc_app/src/features/chatbot/cubit/chatbot_cubit.dart";
 import "package:anc_app/src/features/chatbot/services/chat_service.dart";
 import "package:anc_app/src/features/sidebar/widgets/sidebar.dart";
 import "package:anc_app/src/models/chat_message.dart";
@@ -27,26 +28,21 @@ final Color _glassBackground = Colors.white.withValues(alpha: 0.03);
 const Color _glassBorder = Color(0x1AFFFFFF);
 
 class ChatbotScreen extends StatefulWidget {
-  const ChatbotScreen({super.key});
+  final String? initialConversationId;
+
+  const ChatbotScreen({super.key, this.initialConversationId});
 
   @override
   State<ChatbotScreen> createState() => _ChatbotScreenState();
 }
 
 class _ChatbotScreenState extends State<ChatbotScreen> {
-  final List<ChatMessage> _messages = [
-    ChatMessage(
-      id: "1",
-      text:
-          "Hola! Soy tu asistente de ANCAP. ¿Cómo puedo ayudarte a analizar tus datos de negocio hoy?",
-      isAi: true,
-      timestamp: DateTime.now(),
-    ),
-  ];
-  final TextEditingController _inputController = TextEditingController();
-  String? _currentConversationId;
-  final ChatService _chatService = GetIt.instance<ChatService>();
+  final TextEditingController _controller = TextEditingController();
+  final List<ChatMessage> _messages = [];
   bool _isAiTyping = false;
+  late final ChatService _chatService;
+  late final ChatbotCubit _chatbotCubit;
+  String? _currentConversationId;
 
   @override
   void initState() {
@@ -58,28 +54,41 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         context.goToAppRoute(AppRoute.initial);
       });
     }
+
+    _chatService = GetIt.instance<ChatService>();
+    _chatbotCubit = ChatbotCubit();
+
+    if (widget.initialConversationId != null) {
+      _chatbotCubit.selectConversation(widget.initialConversationId!);
+      _currentConversationId = widget.initialConversationId;
+    } else {
+      _addAiMessage(
+        "Hola! Soy tu asistente de ANCAP. ¿En qué puedo ayudarte?",
+      );
+    }
   }
 
-  void _handleSend() async {
-    final text = _inputController.text.trim();
-    if (text.isEmpty) return;
+  void _sendMessage() async {
+    if (_controller.text.trim().isEmpty) return;
+
+    final userMessage = _controller.text.trim();
+    _controller.clear();
 
     setState(() {
       _messages.add(
         ChatMessage(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
-          text: text,
+          text: userMessage,
           isAi: false,
           timestamp: DateTime.now(),
         ),
       );
       _isAiTyping = true;
     });
-    _inputController.clear();
 
     try {
       final response = await _chatService.sendMessage(
-        text,
+        userMessage,
         conversationId: _currentConversationId,
       );
 
@@ -95,19 +104,25 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         );
         _currentConversationId = response["conversation_id"] as String;
       });
-    } catch (e) {
+    } catch (error) {
       setState(() {
         _isAiTyping = false;
-        _messages.add(
-          ChatMessage(
-            id: DateTime.now().millisecondsSinceEpoch.toString(),
-            text: "Lo siento en este momento no puedo ayudarte",
-            isAi: true,
-            timestamp: DateTime.now(),
-          ),
-        );
+        _addAiMessage("Sorry, I encountered an error: $error");
       });
     }
+  }
+
+  void _addAiMessage(String message) {
+    setState(() {
+      _messages.add(
+        ChatMessage(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          text: message,
+          isAi: true,
+          timestamp: DateTime.now(),
+        ),
+      );
+    });
   }
 
   Widget _buildGlassEffectContainer({
@@ -136,15 +151,8 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final bool isSmallScreen = screenWidth < 768;
-
-    return BlocListener<AuthCubit, AuthState>(
-      listener: (context, state) {
-        if (!state.isAuthenticated) {
-          context.goToAppRoute(AppRoute.initial);
-        }
-      },
+    return BlocProvider.value(
+      value: _chatbotCubit,
       child: Scaffold(
         body: Container(
           decoration: const BoxDecoration(
@@ -156,11 +164,19 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
           ),
           child: Row(
             children: [
-              const Sidebar(showChatFeatures: true),
+              Sidebar(
+                showChatFeatures: true,
+                onConversationSelected: (conversationId) {
+                  setState(() {
+                    _currentConversationId = conversationId;
+                  });
+                  _chatbotCubit.selectConversation(conversationId);
+                },
+              ),
               Expanded(
                 child: Column(
                   children: [
-                    _buildChatHeader(),
+                    _buildAppBar(),
                     _buildMessagesList(),
                     _buildInputArea(),
                   ],
@@ -173,7 +189,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     );
   }
 
-  Widget _buildChatHeader() {
+  Widget _buildAppBar() {
     return _buildGlassEffectContainer(
       margin: const EdgeInsets.all(0),
       padding: const EdgeInsets.all(24.0),
@@ -211,9 +227,9 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 Icons.smart_toy_outlined,
                 color: _ancapDarkBlue,
                 size: 20,
-              ), // Bot icon
+              ),
             ),
-            const SizedBox(width: 12), // gap-3
+            const SizedBox(width: 12),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -242,91 +258,233 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
   Widget _buildMessagesList() {
     return Expanded(
-      child: ListView.builder(
-        padding: const EdgeInsets.all(24.0),
-        reverse: true,
-        itemCount: _messages.length + (_isAiTyping ? 1 : 0),
-        itemBuilder: (context, index) {
-          if (_isAiTyping && index == 0) {
-            return _buildTypingIndicator();
+      child: BlocBuilder<ChatbotCubit, ChatbotState>(
+        builder: (context, state) {
+          if (state.isLoading) {
+            return const Center(child: CircularProgressIndicator());
           }
 
-          final messageIndex = _isAiTyping ? index - 1 : index;
-          final message = _messages[_messages.length - 1 - messageIndex];
-          final isAi = message.isAi;
-          return Align(
-            alignment: isAi ? Alignment.centerLeft : Alignment.centerRight,
-            child: Container(
-              constraints: BoxConstraints(
-                maxWidth: MediaQuery.of(context).size.width * 0.75,
+          if (state.error != null) {
+            return Center(
+              child: Text(
+                state.error!,
+                style: GoogleFonts.inter(color: Colors.red),
               ),
-              margin: const EdgeInsets.symmetric(
-                vertical: 8.0,
-              ),
-              padding: const EdgeInsets.all(16.0),
-              decoration: BoxDecoration(
-                color: isAi ? null : _ancapYellow,
-                borderRadius: BorderRadius.circular(8.0),
-                border: isAi ? Border.all(color: _glassBorder, width: 1) : null,
-                boxShadow: isAi
-                    ? null
-                    : [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 5,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-              ),
-              child: isAi
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(
-                        8.0,
-                      ),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: _glassBackground,
-                            borderRadius: BorderRadius.circular(8.0),
-                            backgroundBlendMode: BlendMode.color,
-                          ),
-                          padding: const EdgeInsets.all(
-                            0.1,
-                          ),
-                          child: MarkdownBody(
-                            data: message.text,
-                            styleSheet: MarkdownStyleSheet.fromTheme(
-                              Theme.of(context).copyWith(
-                                textTheme: Theme.of(context).textTheme.apply(
-                                      bodyColor: _foreground,
-                                      displayColor: _foreground,
-                                    ),
+            );
+          }
+
+          if (state.selectedConversationId == null) {
+            // Show chat interface with LLM
+            return ListView.builder(
+              padding: const EdgeInsets.all(24.0),
+              reverse: true,
+              itemCount: _messages.length + (_isAiTyping ? 1 : 0),
+              itemBuilder: (context, index) {
+                if (_isAiTyping && index == 0) {
+                  return _buildTypingIndicator();
+                }
+
+                final messageIndex = _isAiTyping ? index - 1 : index;
+                final message = _messages[_messages.length - 1 - messageIndex];
+                final isAi = message.isAi;
+                return Align(
+                  alignment:
+                      isAi ? Alignment.centerLeft : Alignment.centerRight,
+                  child: Container(
+                    constraints: BoxConstraints(
+                      maxWidth: MediaQuery.of(context).size.width * 0.75,
+                    ),
+                    margin: const EdgeInsets.symmetric(
+                      vertical: 8.0,
+                    ),
+                    padding: const EdgeInsets.all(16.0),
+                    decoration: BoxDecoration(
+                      color: isAi ? null : _ancapYellow,
+                      borderRadius: BorderRadius.circular(8.0),
+                      border: isAi
+                          ? Border.all(color: _glassBorder, width: 1)
+                          : null,
+                      boxShadow: isAi
+                          ? null
+                          : [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.1),
+                                blurRadius: 5,
+                                offset: const Offset(0, 2),
                               ),
-                            ).copyWith(
-                              p: GoogleFonts.inter(
+                            ],
+                    ),
+                    child: isAi
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(
+                              8.0,
+                            ),
+                            child: BackdropFilter(
+                              filter:
+                                  ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: _glassBackground,
+                                  borderRadius: BorderRadius.circular(8.0),
+                                  backgroundBlendMode: BlendMode.color,
+                                ),
+                                padding: const EdgeInsets.all(
+                                  0.1,
+                                ),
+                                child: MarkdownBody(
+                                  data: message.text,
+                                  styleSheet: MarkdownStyleSheet.fromTheme(
+                                    Theme.of(context).copyWith(
+                                      textTheme:
+                                          Theme.of(context).textTheme.apply(
+                                                bodyColor: _foreground,
+                                                displayColor: _foreground,
+                                              ),
+                                    ),
+                                  ).copyWith(
+                                    p: GoogleFonts.inter(
+                                      color: _foreground,
+                                      fontSize: 14,
+                                    ),
+                                    code: GoogleFonts.firaCode(
+                                      backgroundColor: Colors.grey[850],
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                    ),
+                                    codeblockPadding: const EdgeInsets.all(8),
+                                    codeblockDecoration: BoxDecoration(
+                                      color: Colors.grey[850],
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    blockquote: GoogleFonts.inter(
+                                      color: _foreground.withValues(alpha: 0.8),
+                                      fontSize: 14,
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                    h1: GoogleFonts.inter(
+                                      color: _foreground,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    h2: GoogleFonts.inter(
+                                      color: _foreground,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    h3: GoogleFonts.inter(
+                                      color: _foreground,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    listBullet: GoogleFonts.inter(
+                                      color: _foreground,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          )
+                        : Text(
+                            message.text,
+                            style: GoogleFonts.inter(
+                              color: _ancapDarkBlue,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                  ),
+                );
+              },
+            );
+          }
+
+          // Show conversation queries
+          if (state.queries.isEmpty) {
+            return Center(
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: _glassBackground,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: _glassBorder, width: 1),
+                ),
+                child: Text(
+                  "No queries found in this conversation.",
+                  style: GoogleFonts.inter(color: _foreground),
+                ),
+              ),
+            );
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            itemCount: state.queries.length,
+            itemBuilder: (context, index) {
+              final query = state.queries[index];
+
+              return Column(
+                children: [
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Container(
+                      constraints: BoxConstraints(
+                        maxWidth: MediaQuery.of(context).size.width * 0.7,
+                      ),
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: _ancapYellow,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        query.naturalQuery,
+                        style: GoogleFonts.inter(
+                          color: _ancapDarkBlue,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Container(
+                      constraints: BoxConstraints(
+                        maxWidth: MediaQuery.of(context).size.width * 0.7,
+                      ),
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: _glassBackground,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: _glassBorder, width: 1),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: _glassBackground,
+                              borderRadius: BorderRadius.circular(8.0),
+                            ),
+                            padding: const EdgeInsets.all(0.1),
+                            child: Text(
+                              query.output,
+                              style: GoogleFonts.inter(
                                 color: _foreground,
                                 fontSize: 14,
-                              ),
-                              code: GoogleFonts.firaCode(
-                                backgroundColor: Colors.grey[850],
-                                color: Colors.white,
-                                fontSize: 12,
                               ),
                             ),
                           ),
                         ),
                       ),
-                    )
-                  : Text(
-                      message.text,
-                      style: GoogleFonts.inter(
-                        color: _ancapDarkBlue,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
                     ),
-            ),
+                  ),
+                ],
+              );
+            },
           );
         },
       ),
@@ -379,7 +537,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
           children: [
             Expanded(
               child: TextField(
-                controller: _inputController,
+                controller: _controller,
                 style: GoogleFonts.inter(color: _foreground, fontSize: 15),
                 decoration: InputDecoration(
                   hintText: "Habla con tu base de datos...",
@@ -402,12 +560,12 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                 ),
-                onSubmitted: (_) => _handleSend(),
+                onSubmitted: (_) => _sendMessage(),
               ),
             ),
             const SizedBox(width: 16),
             ElevatedButton(
-              onPressed: _handleSend,
+              onPressed: _sendMessage,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.transparent,
                 padding: EdgeInsets.zero,

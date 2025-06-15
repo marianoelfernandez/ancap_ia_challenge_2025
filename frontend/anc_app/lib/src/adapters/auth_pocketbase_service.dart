@@ -35,6 +35,7 @@ class AuthPocketBaseService implements AuthService {
         id: record.getStringValue("id"),
         email: record.getStringValue("email"),
         name: record.getStringValue("name"),
+        role: record.getStringValue("role"),
       );
       return Result.ok(user);
     } catch (e) {
@@ -52,9 +53,10 @@ class AuthPocketBaseService implements AuthService {
           await pb.collection("users").authWithPassword(email, password);
       return Result.ok(
         User(
-          id: authData.record?.id ?? "",
-          email: authData.record?.getStringValue("email") ?? email,
-          name: authData.record?.getStringValue("name") ?? "",
+          id: authData.record.getStringValue("id"),
+          email: authData.record.getStringValue("email"),
+          name: authData.record.getStringValue("name"),
+          role: authData.record.getStringValue("role"),
         ),
       );
     } catch (e, s) {
@@ -67,19 +69,12 @@ class AuthPocketBaseService implements AuthService {
   Future<Result<void, AuthError>> signOut() async {
     try {
       pb.authStore.clear();
-      return Result.ok(
-        User(
-          id: "",
-          email: "",
-          name: "",
-        ),
-      );
+      return const Result.ok(null);
     } catch (e) {
       return Result.err(AuthErrorUnknown());
     }
   }
 
-  /// Returns the current user if authenticated, or null if not authenticated
   @override
   User? getCurrentUser() {
     if (!isAuthenticated) return null;
@@ -92,6 +87,7 @@ class AuthPocketBaseService implements AuthService {
         id: record.getStringValue("id"),
         email: record.getStringValue("email"),
         name: record.getStringValue("name"),
+        role: record.getStringValue("role"),
       );
     } catch (e) {
       debugPrint("Error getting current user: $e");

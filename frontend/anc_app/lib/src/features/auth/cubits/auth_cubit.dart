@@ -11,15 +11,18 @@ class AuthCubit extends Cubit<AuthState> {
   AuthService authService = GetIt.I.get<AuthService>();
 
   AuthCubit() : super(const AuthState()) {
-    checkSession();
+    _restoreAuthState();
   }
 
-  Future<void> checkSession() async {
+  void _restoreAuthState() {
     if (authService.isAuthenticated) {
       final user = authService.getCurrentUser();
       if (user != null) {
         emit(state.copyWith(currentUser: Some(user)));
+        debugPrint("Auth state restored: User ${user.email} authenticated");
       }
+    } else {
+      debugPrint("Auth state restored: No authenticated user");
     }
   }
 
