@@ -63,7 +63,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       _currentConversationId = widget.initialConversationId;
     } else {
       _addAiMessage(
-        "Hi there! I'm your AI assistant. How can I help you today?",
+        "Hola! Soy tu asistente de ANCAP. ¿En qué puedo ayudarte?",
       );
     }
   }
@@ -350,6 +350,35 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                                       backgroundColor: Colors.grey[850],
                                       color: Colors.white,
                                       fontSize: 12,
+                                    ),
+                                    codeblockPadding: const EdgeInsets.all(8),
+                                    codeblockDecoration: BoxDecoration(
+                                      color: Colors.grey[850],
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    blockquote: GoogleFonts.inter(
+                                      color: _foreground.withValues(alpha: 0.8),
+                                      fontSize: 14,
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                    h1: GoogleFonts.inter(
+                                      color: _foreground,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    h2: GoogleFonts.inter(
+                                      color: _foreground,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    h3: GoogleFonts.inter(
+                                      color: _foreground,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    listBullet: GoogleFonts.inter(
+                                      color: _foreground,
+                                      fontSize: 14,
                                     ),
                                   ),
                                 ),
