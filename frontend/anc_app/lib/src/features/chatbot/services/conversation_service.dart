@@ -7,6 +7,7 @@ abstract class ConversationService {
     required int page,
     required int perPage,
     String? userId,
+    required bool sortByCreationDateDesc,
   });
 
   Future<Result<Conversation, ConversationError>> getConversationById(

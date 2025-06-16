@@ -43,6 +43,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   late final ChatService _chatService;
   late final ChatbotCubit _chatbotCubit;
   String? _currentConversationId;
+  String? _currentConversationTitle;
 
   @override
   void initState() {
@@ -104,6 +105,8 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         );
         _currentConversationId = response["conversation_id"] as String;
       });
+
+      await _chatbotCubit.selectConversation(_currentConversationId!);
     } catch (error) {
       setState(() {
         _isAiTyping = false;
@@ -166,9 +169,13 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             children: [
               Sidebar(
                 showChatFeatures: true,
-                onConversationSelected: (conversationId) {
+                onConversationSelected: (conversationId, title) {
+                  if (_currentConversationId == conversationId) return;
+
                   setState(() {
                     _currentConversationId = conversationId;
+                    _currentConversationTitle = title;
+                    _messages.clear();
                   });
                   _chatbotCubit.selectConversation(conversationId);
                 },
@@ -223,8 +230,10 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                   ),
                 ],
               ),
-              child: const Icon(
-                Icons.smart_toy_outlined,
+              child: Icon(
+                _currentConversationTitle == null
+                    ? Icons.smart_toy_outlined
+                    : Icons.chat_bubble_outline_outlined,
                 color: _ancapDarkBlue,
                 size: 20,
               ),
@@ -234,7 +243,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "ANCAP AI Assistant",
+                  _currentConversationTitle ?? "ANCAP AI Assistant",
                   style: GoogleFonts.inter(
                     fontWeight: FontWeight.w600,
                     color: _foreground,
@@ -242,7 +251,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                   ),
                 ),
                 Text(
-                  "Always here to help",
+                  "Siempre aquí para ayudarte",
                   style: GoogleFonts.inter(
                     color: _mutedForeground,
                     fontSize: 14,
@@ -258,7 +267,36 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
   Widget _buildMessagesList() {
     return Expanded(
-      child: BlocBuilder<ChatbotCubit, ChatbotState>(
+      child: BlocConsumer<ChatbotCubit, ChatbotState>(
+        listenWhen: (previous, current) =>
+            previous.selectedConversationId != current.selectedConversationId ||
+            (current.selectedConversationId != null &&
+                previous.queries.length != current.queries.length),
+        listener: (context, state) {
+          if (state.selectedConversationId != null) {
+            _messages.clear();
+            for (final query in state.queries) {
+              _messages.add(
+                ChatMessage(
+                  id: "id_${query.naturalQuery}",
+                  text: query.naturalQuery,
+                  isAi: false,
+                  timestamp: DateTime.now(), // Placeholder timestamp
+                ),
+              );
+              _messages.add(
+                ChatMessage(
+                  id: "id_${query.output}",
+                  text: query.output,
+                  isAi: true,
+                  timestamp: DateTime.now(), // Placeholder timestamp
+                ),
+              );
+            }
+            // This rebuild is necessary to show the messages from the selected conversation
+            setState(() {});
+          }
+        },
         builder: (context, state) {
           if (state.isLoading) {
             return const Center(child: CircularProgressIndicator());
@@ -273,133 +311,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             );
           }
 
-          if (state.selectedConversationId == null) {
-            // Show chat interface with LLM
-            return ListView.builder(
-              padding: const EdgeInsets.all(24.0),
-              reverse: true,
-              itemCount: _messages.length + (_isAiTyping ? 1 : 0),
-              itemBuilder: (context, index) {
-                if (_isAiTyping && index == 0) {
-                  return _buildTypingIndicator();
-                }
-
-                final messageIndex = _isAiTyping ? index - 1 : index;
-                final message = _messages[_messages.length - 1 - messageIndex];
-                final isAi = message.isAi;
-                return Align(
-                  alignment:
-                      isAi ? Alignment.centerLeft : Alignment.centerRight,
-                  child: Container(
-                    constraints: BoxConstraints(
-                      maxWidth: MediaQuery.of(context).size.width * 0.75,
-                    ),
-                    margin: const EdgeInsets.symmetric(
-                      vertical: 8.0,
-                    ),
-                    padding: const EdgeInsets.all(16.0),
-                    decoration: BoxDecoration(
-                      color: isAi ? _glassBackground : _ancapYellow,
-                      borderRadius: BorderRadius.circular(8.0),
-                      border: isAi
-                          ? Border.all(color: _glassBorder, width: 1)
-                          : null,
-                      boxShadow: isAi
-                          ? null
-                          : [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.1),
-                                blurRadius: 5,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                    ),
-                    child: isAi
-                        ? ClipRRect(
-                            borderRadius: BorderRadius.circular(
-                              8.0,
-                            ),
-                            child: BackdropFilter(
-                              filter:
-                                  ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: _glassBackground,
-                                  borderRadius: BorderRadius.circular(8.0),
-                                  backgroundBlendMode: BlendMode.color,
-                                ),
-                                padding: const EdgeInsets.all(
-                                  0.1,
-                                ),
-                                child: MarkdownBody(
-                                  data: message.text,
-                                  styleSheet: MarkdownStyleSheet.fromTheme(
-                                    Theme.of(context).copyWith(
-                                      textTheme:
-                                          Theme.of(context).textTheme.apply(
-                                                bodyColor: _foreground,
-                                                displayColor: _foreground,
-                                              ),
-                                    ),
-                                  ).copyWith(
-                                    p: GoogleFonts.inter(
-                                      color: _foreground,
-                                      fontSize: 14,
-                                    ),
-                                    code: GoogleFonts.firaCode(
-                                      backgroundColor: Colors.grey[850],
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                    ),
-                                    codeblockPadding: const EdgeInsets.all(8),
-                                    codeblockDecoration: BoxDecoration(
-                                      color: Colors.grey[850],
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    blockquote: GoogleFonts.inter(
-                                      color: _foreground.withValues(alpha: 0.8),
-                                      fontSize: 14,
-                                      fontStyle: FontStyle.italic,
-                                    ),
-                                    h1: GoogleFonts.inter(
-                                      color: _foreground,
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                    h2: GoogleFonts.inter(
-                                      color: _foreground,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                    h3: GoogleFonts.inter(
-                                      color: _foreground,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                    listBullet: GoogleFonts.inter(
-                                      color: _foreground,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          )
-                        : Text(
-                            message.text,
-                            style: GoogleFonts.inter(
-                              color: _ancapDarkBlue,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                  ),
-                );
-              },
-            );
-          }
-
-          if (state.queries.isEmpty) {
+          if (_messages.isEmpty && state.selectedConversationId != null) {
             return Center(
               child: Container(
                 padding: const EdgeInsets.all(16),
@@ -417,72 +329,121 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
           }
 
           return ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            itemCount: state.queries.length,
+            padding: const EdgeInsets.all(24.0),
+            reverse: true,
+            itemCount: _messages.length + (_isAiTyping ? 1 : 0),
             itemBuilder: (context, index) {
-              final query = state.queries[index];
+              if (_isAiTyping && index == 0) {
+                return _buildTypingIndicator();
+              }
 
-              return Column(
-                children: [
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Container(
-                      constraints: BoxConstraints(
-                        maxWidth: MediaQuery.of(context).size.width * 0.7,
-                      ),
-                      margin: const EdgeInsets.only(bottom: 16),
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: _ancapYellow,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        query.naturalQuery,
-                        style: GoogleFonts.inter(
-                          color: _ancapDarkBlue,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
+              final messageIndex = _isAiTyping ? index - 1 : index;
+              final message = _messages.reversed.toList()[messageIndex];
+              final isAi = message.isAi;
+              return Align(
+                alignment: isAi ? Alignment.centerLeft : Alignment.centerRight,
+                child: Container(
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.of(context).size.width * 0.75,
                   ),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Container(
-                      constraints: BoxConstraints(
-                        maxWidth: MediaQuery.of(context).size.width * 0.7,
-                      ),
-                      margin: const EdgeInsets.only(bottom: 16),
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: _glassBackground,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: _glassBorder, width: 1),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: _glassBackground,
-                              borderRadius: BorderRadius.circular(8.0),
-                              backgroundBlendMode: BlendMode.color,
+                  margin: const EdgeInsets.symmetric(
+                    vertical: 8.0,
+                  ),
+                  padding: const EdgeInsets.all(16.0),
+                  decoration: BoxDecoration(
+                    color: isAi ? _glassBackground : _ancapYellow,
+                    borderRadius: BorderRadius.circular(8.0),
+                    border:
+                        isAi ? Border.all(color: _glassBorder, width: 1) : null,
+                    boxShadow: isAi
+                        ? null
+                        : [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 5,
+                              offset: const Offset(0, 2),
                             ),
-                            padding: const EdgeInsets.all(0.1),
-                            child: Text(
-                              query.output,
-                              style: GoogleFonts.inter(
-                                color: _foreground,
-                                fontSize: 14,
+                          ],
+                  ),
+                  child: isAi
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(
+                            8.0,
+                          ),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: _glassBackground,
+                                borderRadius: BorderRadius.circular(8.0),
+                                backgroundBlendMode: BlendMode.color,
+                              ),
+                              padding: const EdgeInsets.all(
+                                0.1,
+                              ),
+                              child: MarkdownBody(
+                                data: message.text,
+                                styleSheet: MarkdownStyleSheet.fromTheme(
+                                  Theme.of(context).copyWith(
+                                    textTheme:
+                                        Theme.of(context).textTheme.apply(
+                                              bodyColor: _foreground,
+                                              displayColor: _foreground,
+                                            ),
+                                  ),
+                                ).copyWith(
+                                  p: GoogleFonts.inter(
+                                    color: _foreground,
+                                    fontSize: 14,
+                                  ),
+                                  code: GoogleFonts.firaCode(
+                                    backgroundColor: Colors.grey[850],
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                  ),
+                                  codeblockPadding: const EdgeInsets.all(8),
+                                  codeblockDecoration: BoxDecoration(
+                                    color: Colors.grey[850],
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  blockquote: GoogleFonts.inter(
+                                    color: _foreground.withOpacity(0.8),
+                                    fontSize: 14,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                  h1: GoogleFonts.inter(
+                                    color: _foreground,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  h2: GoogleFonts.inter(
+                                    color: _foreground,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  h3: GoogleFonts.inter(
+                                    color: _foreground,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  listBullet: GoogleFonts.inter(
+                                    color: _foreground,
+                                    fontSize: 14,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
+                        )
+                      : Text(
+                          message.text,
+                          style: GoogleFonts.inter(
+                            color: _ancapDarkBlue,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               );
             },
           );

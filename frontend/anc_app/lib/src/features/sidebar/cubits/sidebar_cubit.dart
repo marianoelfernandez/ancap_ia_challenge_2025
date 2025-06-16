@@ -113,6 +113,7 @@ class SidebarCubit extends Cubit<SidebarState> {
         page: 1,
         perPage: 20,
         userId: userId,
+        sortByCreationDateDesc: true,
       );
 
       result.when(

@@ -17,6 +17,7 @@ class ConversationPocketbaseService implements ConversationService {
     required int page,
     required int perPage,
     String? userId,
+    required bool sortByCreationDateDesc,
   }) async {
     try {
       debugPrint(
@@ -33,6 +34,7 @@ class ConversationPocketbaseService implements ConversationService {
             page: page,
             perPage: perPage,
             filter: filterString,
+            sort: sortByCreationDateDesc ? "-created" : null,
           );
 
       debugPrint(

@@ -20,7 +20,7 @@ const Color _glassBorder = Color(0x1AFFFFFF);
 
 class Sidebar extends StatefulWidget {
   final bool showChatFeatures;
-  final Function(String conversationId)? onConversationSelected;
+  final Function(String conversationId, String title)? onConversationSelected;
 
   const Sidebar({
     super.key,
@@ -426,6 +426,7 @@ Widget _buildChatHistoryList() {
                                         null) {
                                       sidebar!.onConversationSelected!(
                                         conversation.id,
+                                        title,
                                       );
                                     }
                                   },
