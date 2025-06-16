@@ -43,6 +43,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   late final ChatService _chatService;
   late final ChatbotCubit _chatbotCubit;
   String? _currentConversationId;
+  String? _currentConversationTitle;
 
   @override
   void initState() {
@@ -168,11 +169,12 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             children: [
               Sidebar(
                 showChatFeatures: true,
-                onConversationSelected: (conversationId) {
+                onConversationSelected: (conversationId, title) {
                   if (_currentConversationId == conversationId) return;
 
                   setState(() {
                     _currentConversationId = conversationId;
+                    _currentConversationTitle = title;
                     _messages.clear();
                   });
                   _chatbotCubit.selectConversation(conversationId);
@@ -228,8 +230,10 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                   ),
                 ],
               ),
-              child: const Icon(
-                Icons.smart_toy_outlined,
+              child: Icon(
+                _currentConversationTitle == null
+                    ? Icons.smart_toy_outlined
+                    : Icons.chat_bubble_outline_outlined,
                 color: _ancapDarkBlue,
                 size: 20,
               ),
@@ -239,7 +243,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "ANCAP AI Assistant",
+                  _currentConversationTitle ?? "ANCAP AI Assistant",
                   style: GoogleFonts.inter(
                     fontWeight: FontWeight.w600,
                     color: _foreground,
@@ -247,7 +251,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                   ),
                 ),
                 Text(
-                  "Always here to help",
+                  "Siempre aquí para ayudarte",
                   style: GoogleFonts.inter(
                     color: _mutedForeground,
                     fontSize: 14,
