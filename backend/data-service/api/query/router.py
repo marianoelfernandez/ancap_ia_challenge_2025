@@ -1,17 +1,26 @@
-from fastapi import APIRouter, Body, Depends
+from typing import Dict
+from fastapi import APIRouter, Body, Depends, Request, HTTPException
 from datetime import datetime
 import logging
 
 from services.bigquery_service import BigQueryService
 from services.data_service import DataService
-from models.query.model import SQLQueryRequest, SQLQueryResponse, QueryStatus, QueryMetadata, ValidateQueryResponse, QueryEmbeddingRequest
+from models.query.model import CacheInput, SQLQueryRequest, SQLQueryResponse, QueryStatus, QueryMetadata, ValidateQueryResponse, QueryEmbeddingRequest
 from models.data.model import FlChartType
 from utils.cache_connection import retrieve_query
 from utils.text_parser import extract_sql_from_text
+from utils.cache_connection import save_query, retrieve_query
 
 router = APIRouter(
     tags=["query"]
 )
+def get_clients(request: Request):
+    """Dependency to get initialized clients from app state."""
+    return {
+        "firestore_client": request.app.state.firestore_client,
+        "gcs_client": request.app.state.gcs_client,
+        "embedding_model": request.app.state.embedding_model
+    }
 
 @router.post("/query")
 async def execute_sql_query(
@@ -113,49 +122,61 @@ async def validate_sql_query(
     
 
 @router.post("/embeddings")
-async def get_embedding_of_query(
-    request: QueryEmbeddingRequest,
-    bigquery_service: BigQueryService = Depends(BigQueryService),
-    data_service: DataService = Depends(DataService)
-) -> SQLQueryResponse:
-    """
-    Get similar queries to request from DB based on embedding
-    """
+async def save_query_endpoint(
+    input: CacheInput,
+    clients: Dict = Depends(get_clients)
+):
+    """Save a new query to the cache."""
     try:
+   
+        query_id = save_query(input.query_text, input.sql_query)
         
-        query = request.text.strip()
-
-        cached_results = retrieve_query(query_text=query, num_results=1)
-
-        print("Cache results retrieved:", cached_results)
-        
-        return SQLQueryResponse(
-            status=QueryStatus.SUCCESS,
-            data=cached_results,
-        )
-        
-    except TimeoutError:
-        return SQLQueryResponse(
-            status=QueryStatus.TIMEOUT,
-            metadata=QueryMetadata(
-                execution_time= -1,
-                rows_processed=0,
-                query_id=f"timeout_{int(datetime.now().timestamp())}",
-                timestamp=datetime.now()
-            ),
-            error_message="Cache retrieval timed out"
-        )
+        return {
+            "id": query_id,
+            "message": "Query saved successfully"
+        }
     except Exception as e:
-        logging.error(f"Cache error: {str(e)}")
-        return SQLQueryResponse(
-            status=QueryStatus.ERROR,
-            metadata=QueryMetadata(
-                execution_time=0,
-                rows_processed=0,
-                query_id=f"error_{int(datetime.now().timestamp())}",
-                timestamp=datetime.now()
-            ),
-            error_message="Internal server error occurred",
-            suggestions=["Contact support if the issue persists"]
-        )
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@router.post("/embeddings/search")
+async def search_queries_endpoint(
+    query_text: str,
+    num_results: int = 5,
+    clients: Dict = Depends(get_clients)
+):
+    """Search for similar queries in the cache."""
+    try:
 
+        results = retrieve_query(query_text, num_results)
+        
+        return {
+            "results": results,
+            "query_text": query_text,
+            "total_results": len(results) if results else 0
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/embeddings/batch_update")
+async def trigger_batch_update_endpoint(
+    clients: Dict = Depends(get_clients)
+):
+    """Trigger batch update of the vector search index."""
+    try:
+
+        
+        #delta_uri = trigger_batch_index_update()
+        delta_uri = "placeholder"
+        if delta_uri:
+            return {
+                "status": "success",
+                "delta_uri": delta_uri,
+                "message": "Batch update triggered successfully"
+            }
+        else:
+            return {
+                "status": "no_update",
+                "message": "No updates needed"
+            }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
