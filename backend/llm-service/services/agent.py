@@ -5,7 +5,7 @@ from langchain.memory import ConversationBufferMemory
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langgraph.graph import StateGraph, END
 from langchain_google_genai import ChatGoogleGenerativeAI
-from utils.connection import call_server, get_embeddings
+from utils.connection import call_server, get_cached_query, save_query_to_cache
 from utils.settings import Settings
 from typing import TypedDict, Optional
 from utils.constants import schema_constant, intent_prompt, data_dictionary_prompt
@@ -66,7 +66,7 @@ class Agent():
             query = state["input"]
 
 
-            cached_result = get_embeddings(query)
+            cached_result = get_cached_query(query)
             if cached_result and 'response' in cached_result:
                 state["generated_sql"] = cached_result['response']
                 state["needs_more_info"] = False
@@ -141,6 +141,7 @@ class Agent():
                 generated_sql = response.content.strip()
                 state["generated_sql"] = generated_sql
                 permissions_check(generated_sql, conversation_id)
+                save_query_to_cache(state["input"], generated_sql)
                 return state
             except Exception as e:
                 state["output"] = f"[Error durante la consulta] {e}"
