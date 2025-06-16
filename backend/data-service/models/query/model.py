@@ -74,3 +74,7 @@ class BatchQueryResponse(BaseModel):
 
 class QueryEmbeddingRequest(BaseModel):
     text: str = Field(..., description="Text to check for embeddings in DB")
+
+class CacheInput(BaseModel):
+    query_text: str
+    sql_query: str
