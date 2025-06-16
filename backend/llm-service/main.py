@@ -1,3 +1,4 @@
+import asyncio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import logging
@@ -19,3 +20,12 @@ app.add_middleware(
 
 app.include_router(conversation.router)
 app.include_router(admin.router)
+
+async def refresh_periodically():
+    while True:
+        #Here goes schema refresh logic
+        await asyncio.sleep(24 * 60 * 60)
+
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(refresh_periodically())
