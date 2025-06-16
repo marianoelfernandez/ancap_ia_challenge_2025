@@ -5,7 +5,7 @@ from langchain.memory import ConversationBufferMemory
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langgraph.graph import StateGraph, END
 from langchain_google_genai import ChatGoogleGenerativeAI
-from utils.connection import call_server
+from utils.connection import call_server, get_cached_query, save_query_to_cache
 from utils.settings import Settings
 from typing import TypedDict, Optional
 from utils.constants import schema_constant, intent_prompt, data_dictionary_prompt
@@ -75,6 +75,20 @@ class Agent():
     def _build_graph(self, schema):
         builder = StateGraph(state_schema=schema)
 
+        def check_cache(state: AgentState) -> AgentState:
+            query = state["input"]
+
+
+            cached_result = get_cached_query(query)
+            if cached_result and 'response' in cached_result:
+                state["generated_sql"] = cached_result['response']
+                state["needs_more_info"] = False
+                return state
+            else:
+                state["needs_more_info"] = True
+                return state
+
+            
         def load_schema_node(state):
             if "schema" in state:
                 return state 
@@ -140,6 +154,7 @@ class Agent():
                 generated_sql = response.content.strip()
                 state["generated_sql"] = generated_sql
                 permissions_check(generated_sql, conversation_id)
+                save_query_to_cache(state["input"], generated_sql)
                 return state
             except Exception as e:
                 state["output"] = f"[Error durante la consulta] {e}"
@@ -168,6 +183,7 @@ class Agent():
             })
             return {"output": response.content}
 
+        builder.add_node("check_cache", check_cache)
         builder.add_node("load_schema", load_schema_node)
         builder.add_node("detect_type", detect_type)
         builder.add_node("query_translator", query_translator)
@@ -176,7 +192,11 @@ class Agent():
         builder.add_node("execute_sql", execute_sql)
         builder.add_node("general_llm", general_llm)
 
-        builder.set_entry_point("load_schema")
+        builder.set_entry_point("check_cache")
+        builder.add_conditional_edges(
+            "check_cache",
+            lambda s: "load_schema" if s["needs_more_info"] else "execute_sql",
+        )
         builder.add_edge("load_schema", "detect_type")
         builder.add_conditional_edges(
             "detect_type",

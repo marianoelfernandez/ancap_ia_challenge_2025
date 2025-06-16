@@ -39,6 +39,7 @@ class Settings(BaseSettings):
         default="", 
         description="Path to GCP service account JSON file"
     )
+    GCS_BUCKET_NAME: str = Field(..., description="GCS bucket name for cache, query storage")
     
     # BigQuery Settings
     BIGQUERY_DATASET: str = Field(..., description="BigQuery dataset name")
@@ -49,7 +50,12 @@ class Settings(BaseSettings):
         default="http://localhost:8000",
         description="LLM service URL"
     )
-    
+    SIMILARITY_THRESHOLD: float = Field(..., description="Threshold for similarity in cache retrieval")
+    INDEX_DISPLAY_NAME: str = Field(...,description="Display name for the index in the cache")
+    ENDPOINT_DISPLAY_NAME: str = Field(..., description="Display name for the index endpoint")
+    DEPLOYED_INDEX_ID: str = Field(..., description="Deployed index ID for the cache")
+    FIRESTORE_DATABASE_NAME: str = Field(..., description="Firestore database name for vector metadata")
+    FIRESTORE_COLLECTION_NAME: str = Field(..., description="Firestore collection name for vector metadata")
 
 
 @lru_cache()
