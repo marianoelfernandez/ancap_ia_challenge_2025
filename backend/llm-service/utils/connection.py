@@ -2,7 +2,7 @@ import httpx
 from utils.settings import Settings
 
 
-settings = Settings()
+settings = Settings.get_settings()
 
 client = httpx.AsyncClient()
 
