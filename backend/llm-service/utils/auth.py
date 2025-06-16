@@ -33,16 +33,17 @@ def get_admin_user(authorization: str = Header(...)):
         raise HTTPException(status_code=403, detail="User is not authorized to perform this action")
     return user 
 
-def permissions_check(sql, conversation_id):
+def permissions_check(sql, conversation_id) -> list:
     """
     Arg:
         conversation_id (str): The ID of the conversation to check.
     Returns:
-        bool: True if the user has permissions for the query, False otherwise.
+        list: List of tables used in the query.
     """
     try:
         role = get_role(conversation_id)
         tables_used = extract_tables_from_sql(sql)
+        
         allowed_tables = TABLES_PER_ROLE.get(role, [])
         if allowed_tables:
             allowed_tables = allowed_tables[0]
@@ -50,7 +51,7 @@ def permissions_check(sql, conversation_id):
         if unauthorized:
             raise ValueError(f"El rol '{role}' no tiene acceso a las siguientes tablas: {unauthorized}")
         
-        return True
+        return tables_used
     except Exception as e:
         logger.error(f"Error in permissions_check: {e}")
         raise HTTPException(403, f"Permisos insuficientes: {str(e)}")

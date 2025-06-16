@@ -22,6 +22,7 @@ class AgentState(TypedDict):
     generated_sql: Optional[str]
     needs_more_info: Optional[bool]
     conversation_id: Optional[str]
+    tables_used: Optional[list[str]]
     cost: Optional[float]
 
 class Agent():
@@ -96,7 +97,7 @@ class Agent():
             schema_str = schema_constant
             state["schema"] = schema_str
             state["needs_more_info"] = False
-
+            state["tables_used"] = []
             if "conversation_id" not in state and "conversation_id" in state.get("input", {}):
                 state["conversation_id"] = state["input"]["conversation_id"]
             return state
@@ -153,7 +154,6 @@ class Agent():
                 response = self.sql_chain.invoke({"input": query, "schema": schema, "curated_query": curated_query})
                 generated_sql = response.content.strip()
                 state["generated_sql"] = generated_sql
-                permissions_check(generated_sql, conversation_id)
                 save_query_to_cache(state["input"], generated_sql)
                 return state
             except Exception as e:
@@ -163,6 +163,9 @@ class Agent():
         def execute_sql(state: AgentState) -> AgentState:
             try:
                 generated_sql = state["generated_sql"]
+                conv_id = state.get("conversation_id", None)
+                tables_used = permissions_check(generated_sql, conv_id)
+                state["tables_used"] = tables_used
                 if not generated_sql:
                     return {**state, "output": "No se generó SQL"}
                 result = call_server(generated_sql)
@@ -221,14 +224,14 @@ class Agent():
                 conv_id = check_or_generate_conversation_id(user_id, conversation_id, summarized_title.content.strip())
 
                 result = _run_with_trace(query, conv_id)
-                print(f"\nResult: {result}\n")
                 save_query(result["input"],
                             result.get("generated_sql", ""),
                               result.get("output", ""),
                               result.get("cost", 0),
                               conv_id)
                 
-                return result["output"], result["conversation_id"]
+
+                return result["output"], result["conversation_id"], result.get("tables_used", [])
             except Exception as e:
                 raise e
             
