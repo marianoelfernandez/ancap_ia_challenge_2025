@@ -99,7 +99,7 @@ class Agent():
                 return state
 
             
-        def load_schema(state):
+        def load_schema_node(state):
             if "schema" in state:
                 return state 
 
@@ -165,9 +165,10 @@ class Agent():
                 conversation_id = state.get("conversation_id", None)
                 response = self.sql_chain.invoke({"input": query, "schema": schema, "curated_query": curated_query})
                 sql, ai_message = extract_sql_and_message(response.content)
+                agent_response = ai_message.strip()
                 generated_sql = sql.strip()
-                state["agent_response"] = ai_message.strip()
-                state["generated_sql"] = generated_sql.strip()
+                state["agent_response"] = agent_response
+                state["generated_sql"] = generated_sql
                 save_query_to_cache(state["input"], generated_sql)
                 return state
             except Exception as e:
@@ -204,7 +205,7 @@ class Agent():
             })
             return {"output": response.content}
 
-        builder.add_node("load_schema", load_schema)
+        builder.add_node("load_schema", load_schema_node)
         builder.add_node("detect_type", detect_type)
         builder.add_node("check_cache", check_cache)
         builder.add_node("query_translator", query_translator)
@@ -213,7 +214,7 @@ class Agent():
         builder.add_node("execute_sql", execute_sql)
         builder.add_node("general_llm", general_llm)
 
-        builder.set_entry_point("load_schema")
+        builder.set_entry_point("check_cache")
         builder.add_edge("load_schema", "detect_type")
         builder.add_conditional_edges(
             "detect_type",
