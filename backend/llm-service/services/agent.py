@@ -11,7 +11,7 @@ from utils.auth import permissions_check
 from services.schema_client import schema_client
 import json
 
-settings = Settings()
+settings = Settings.get_settings()
 
 class AgentState(TypedDict):
     input: str
@@ -57,26 +57,16 @@ class Agent():
         ])
 
         self.sql_chain = self.sql_generation_prompt | self.pro_agent
-        self.schema_formatting_chain = schema_formatting_prompt | self.llm
 
         self.graph = self._build_graph(AgentState)
         self.runnable = self.graph.compile()
+
 
     def _build_graph(self, schema):
         builder = StateGraph(state_schema=schema)
 
         async def load_schema_node(state):
-            schema_list = await schema_client.get_schemas()
-            schema_json_str = json.dumps(schema_list, indent=2)
-
-            response = await self.schema_formatting_chain.ainvoke({
-                "schema_json": schema_json_str,
-                "schema_example": schema_constant
-            })
-            
-            schema_str = str(response.content)
-            
-            state["schema"] = schema_str
+            state["schema"] = settings.schema
             state["needs_more_info"] = False
 
             if "conversation_id" not in state and "conversation_id" in state.get("input", {}):
@@ -208,5 +198,29 @@ class Agent():
                 return result["output"], result["conversation_id"]
             except Exception as e:
                 raise e
+
+
+
+class UtilitiesAgent():
+
+    def __init__(self):
+        self.llm = ChatGoogleGenerativeAI(
+            model="gemini-2.5-pro-preview-06-05",
+            temperature=0,
+            google_api_key=settings.api_key
+            )
+        self.schema_formatting_chain = schema_formatting_prompt | self.llm
+
+    async def parse_schema(self):
+        try:
+            schema_json: str = json.dumps(await schema_client.get_schemas(), indent=2)
+            response = await self.schema_formatting_chain.ainvoke({
+                "schema_json": schema_json,
+                "schema_example": schema_constant
+            })
+            settings.schema = str(response.content)
+            return settings.schema
+        except Exception as e:
+            raise Exception(f"[Error al formatear el esquema] {e}")
             
 
