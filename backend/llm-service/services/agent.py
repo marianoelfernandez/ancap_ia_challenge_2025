@@ -24,6 +24,7 @@ class AgentState(TypedDict):
     conversation_id: Optional[str]
     tables_used: Optional[list[str]]
     cost: Optional[float]
+    memory: Optional[ConversationBufferMemory]
 
 class Agent():
     def __init__(self):
@@ -41,10 +42,13 @@ class Agent():
             ("system", """Sos una asistente de un sistema de ANCAP Uruguay, 
              tu objetivo es ayudar al usuario a consultar la base de datos de ANCAP, esta esta relacionada con el sistema de facturacion y entregas. 
              Deberas interpretar sus consultas en lenguaje natural. 
-             NO CONTESTES OTRA COSA QUE NO SE RELACIONE CON EL SISTEMA DE ANCAP"""),
+             NO CONTESTES OTRA COSA QUE NO SE RELACIONE CON EL SISTEMA DE ANCAP \n
+             Si un usuario te consulta para que interpretes los datos de una consulta anterior,
+             debes responderle "Por razones de seguridad, no tengo acceso a los datos de ANCAP, pero sí puedo ayudarte si tienes preguntas acerca de la consulta SQL generada"""),
             MessagesPlaceholder("chat_history"),
             ("user", "{input}"),
         ])
+
 
         self.summarize_query_prompt = ChatPromptTemplate.from_messages([
             ("system", """Sos un agente especializado en resumir consultas de usuario a frases breves, 
@@ -101,20 +105,23 @@ class Agent():
             state["tables_used"] = []
             if "conversation_id" not in state and "conversation_id" in state.get("input", {}):
                 state["conversation_id"] = state["input"]["conversation_id"]
+            conv_id = state["conversation_id"]
+            state["memory"] = build_memory_of_conversation(conv_id)
             return state
 
 
         def detect_type(state : AgentState) -> AgentState:
             query = state["input"]
-            response = self.llm.invoke(intent_prompt.format(query=query))
+            conv_id = state["conversation_id"]
+            memory = state.get("memory", ConversationBufferMemory())
+            response = self.llm.invoke(intent_prompt.format(query=query, chat_history=memory.chat_memory.messages))
             is_sql = "SQL" in response.content.upper()
             return {**state, "is_sql": is_sql}
         
         def query_translator(state: AgentState) -> AgentState:
             try:
                 query = state["input"]
-                conv_id = state["conversation_id"]
-                memory = build_memory_of_conversation(conv_id)
+                memory = state.get("memory", ConversationBufferMemory())
                 prompt = data_dictionary_prompt.format(
                     query=query,
                     chat_history = memory.chat_memory.messages,
@@ -179,8 +186,8 @@ class Agent():
 
         def general_llm(state):
             conv_id = state["conversation_id"]
-            memory = build_memory_of_conversation(conv_id)
-
+            memory = state.get("memory", ConversationBufferMemory())
+            print("La memoria del agente es: ", memory.chat_memory.messages)
             response = self.general_chain.invoke({
                 "input": state["input"],
                 "chat_history": memory.chat_memory.messages,
@@ -226,6 +233,7 @@ class Agent():
                 conv_id = check_or_generate_conversation_id(user_id, conversation_id, summarized_title.content.strip())
 
                 result = _run_with_trace(query, conv_id)
+                
                 save_query(result["input"],
                             result.get("generated_sql", ""),
                               result.get("output", ""),

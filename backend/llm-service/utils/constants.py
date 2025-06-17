@@ -1,5 +1,4 @@
-from langchain_core.prompts import ChatPromptTemplate
-
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 schema_constant = """
 
 -- Tabla: DOCCRG (Documento de Carga - Cabezal)
@@ -178,12 +177,13 @@ Ejemplo: no uses "FACCAB" y usa "datosancap.entregas_facturacion.FACCAB" para re
 """
 
 #TODO: Ver de pasar o al agente o a dataservice el projectId y tableId (ancap-equipo2.testing)
-intent_prompt = ChatPromptTemplate.from_template(
-    """Dada una pregunta de un usuario, debes identificar si requiere una consulta SQL o solo es una conversación.
-      responde SOLO 'SQL' si la intención del usuario es una consulta a base de datos o 'GENERAL'.\n"""
-    "Input: {query}\n"
-    "Tipo:"
-)
+intent_prompt = ChatPromptTemplate.from_messages([
+    ("system", 
+     "Dada una pregunta de un usuario, debes identificar si requiere una consulta SQL o solo es una conversación. "
+     "Responde SOLO 'SQL' si la intención del usuario es una consulta a base de datos o 'GENERAL'."),
+    MessagesPlaceholder("chat_history"),
+    ("user", "Input: {query}\nTipo:")
+])
 
 data_dictionary = """
 Diccionario de Datos
@@ -311,16 +311,15 @@ PrdId (INT), FacLinCnt (DECIMAL), FacUndFac (VARCHAR)
 PK: (FacPlaId, FacTpoDoc, FacSerie, FacNro, FacLinNro)
 
 """
-data_dictionary_incomplete_prompt = ChatPromptTemplate.from_template(
+data_dictionary_incomplete_prompt = ChatPromptTemplate.from_messages([
     """Eres un experto en diccionario de datos, usa el diccionario de datos para traducir la pregunta del usuario a una
       pregunta curada con información específica sobre las tablas a consultar, debes REESCRIBIR la consulta del usuario EN LENGUAJE NATURAL para que sea más descriptiva, sin agregar preguntas para el usuario.
       Responde SOLO con la consulta transformada o una solicitud de más 
-      información comenzando con [RETRY] si no tienes suficiente información en casos en donde la pregunta no haga referencia a ninguna tabla.\n\n"""
-    "{data_dictionary}\n\n"
+      información comenzando con [RETRY] si no tienes suficiente información en casos en donde la pregunta no haga referencia a ninguna tabla.\n\n""",
+    MessagesPlaceholder("chat_history"),
     "{chat_history}\n\n"
     "Input: {query}\n"
-    "Type:"
-)
+    "Type:"])
 
 
 data_dictionary_prompt = data_dictionary_incomplete_prompt.partial(data_dictionary=data_dictionary)
