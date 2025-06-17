@@ -24,6 +24,7 @@ class AgentState(TypedDict):
     conversation_id: Optional[str]
     tables_used: Optional[list[str]]
     cost: Optional[float]
+    SQL_retries = Optional[int]
     memory: Optional[ConversationBufferMemory]
 
 class Agent():
@@ -103,6 +104,7 @@ class Agent():
             state["schema"] = schema_str
             state["needs_more_info"] = False
             state["tables_used"] = []
+            state["SQL_retries"] = 3
             if "conversation_id" not in state and "conversation_id" in state.get("input", {}):
                 state["conversation_id"] = state["input"]["conversation_id"]
             conv_id = state["conversation_id"]
@@ -181,13 +183,14 @@ class Agent():
                 state['cost'] = float(result.get('cost', 0.0))
                 return state
             except Exception as e:
+                state["input"] = state.get("input", "") + "Hubo un error en la anterior consulta, regenera una consulta SQL:"
+                state["SQL_retries"] -= 1
                 return {**state, "output": f"[Error al ejecutar SQL] {e}"}
 
 
         def general_llm(state):
             conv_id = state["conversation_id"]
             memory = state.get("memory", ConversationBufferMemory())
-            print("La memoria del agente es: ", memory.chat_memory.messages)
             response = self.general_chain.invoke({
                 "input": state["input"],
                 "chat_history": memory.chat_memory.messages,
@@ -217,6 +220,11 @@ class Agent():
         builder.add_conditional_edges("query_translator", route_from_query_translator)
         builder.set_finish_point("respond_with_retry")
         builder.add_edge("prepare_sql", "execute_sql")
+        builder.add_conditional_edges(
+            "execute_sql",
+            lambda s: "prepare_sql" if (s["SQL_retries"]<3 and s["SQL_retries"]>0)  else END,
+        )
+
         builder.add_edge("execute_sql", END)
         builder.add_edge("general_llm", END)
 
