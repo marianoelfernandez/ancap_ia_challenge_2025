@@ -165,7 +165,7 @@ class Agent():
                 generated_sql = state["generated_sql"]
                 conv_id = state.get("conversation_id", None)
                 tables_used = permissions_check(generated_sql, conv_id)
-                state["tables_used"] = tables_used
+                state["tables_used"] = list(dict.fromkeys(tables_used))
                 if not generated_sql:
                     return {**state, "output": "No se generó SQL"}
                 result = call_server(generated_sql)
@@ -231,7 +231,7 @@ class Agent():
                               conv_id)
                 
 
-                return result["output"], result["conversation_id"], result.get("tables_used", [])
+                return result["output"], result["conversation_id"], result.get("tables_used", []), result.get("generated_sql", None)
             except Exception as e:
                 raise e
             
