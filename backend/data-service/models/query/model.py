@@ -75,8 +75,6 @@ class BatchQueryResponse(BaseModel):
 class ColumnSchema(BaseModel):
     name: str
     type: str
-    mode: str
-    description: Optional[str] = None
 
 class TableSchema(BaseModel):
     table_id: str

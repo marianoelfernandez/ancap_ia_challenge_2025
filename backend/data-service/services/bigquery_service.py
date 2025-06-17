@@ -3,18 +3,19 @@ from google.cloud.exceptions import BadRequest
 from typing import Dict, Any, List, Optional
 import logging
 from datetime import datetime
+from itertools import groupby
 from config.settings import get_settings
 from models.query.model import QueryStatus, ValidateQueryResponse, DatasetSchema
 
 settings = get_settings()
 
 class BigQueryService:
-    def __init__(self, project_id: str = settings.GCP_DATA_PROJECT_ID):
+    def __init__(self, project_id: str = settings.GCP_DATA_PROJECT_ID, dataset_id: str = settings.GCP_DATA_DATASET_ID):
         """Initialize BigQuery service with project configuration"""
         self.client = bigquery.Client(project=project_id)
         self.project_id = project_id or self.client.project
         self.logger = logging.getLogger(__name__)
-
+        self.dataset_id = dataset_id
         self.logger.info(f"BigQueryService initialized with project_id: {project_id}")
         
     async def execute_query(
@@ -130,47 +131,46 @@ class BigQueryService:
 
     async def get_schemas(self) -> List[DatasetSchema]:
         """
-        Retrieves all datasets, their tables, and schemas from BigQuery.
+        Retrieves all tables and their schemas from a specific BigQuery dataset.
         """
         try:
-            self.logger.info(f"Fetching all BigQuery schemas for project_id: {self.project_id}")
+            self.logger.info(f"Fetching schemas for dataset: {self.dataset_id} in project: {self.project_id}")
             
-            all_schemas = []
+            sql = f"""
+                SELECT table_name, column_name, data_type
+                FROM `{self.project_id}.{self.dataset_id}.INFORMATION_SCHEMA.COLUMNS`
+                ORDER BY table_name, ordinal_position
+            """
+
+            self.logger.info(f"Executing query: {sql}")
             
-            datasets = self.client.list_datasets()
+            query_job = self.client.query(sql)
+            results = query_job.result()
+
             
-            for dataset in datasets:
-                dataset_id = dataset.dataset_id
-                dataset_info = {"dataset_id": f"{self.project_id}.{dataset_id}", "tables": []}
+            tables = []
+            for table_name, columns in groupby(results, key=lambda r: r.table_name):
                 
-                self.logger.info(f"Fetching tables for dataset: {dataset_id}")
-                tables = self.client.list_tables(dataset_id)
-                
-                table_list = []
-                for table in tables:
-                    table_ref = self.client.get_table(table.reference)
-                    table_id = table_ref.table_id
-                    
-                    schema_info = []
-                    if table_ref.schema:
-                        for field in table_ref.schema:
-                            schema_info.append({
-                                "name": field.name,
-                                "type": field.field_type,
-                                "mode": field.mode,
-                                "description": field.description
-                            })
-                    
-                    table_list.append({
-                        "table_id": table_id,
-                        "schema": schema_info
-                    })
-                
-                dataset_info["tables"] = table_list
-                all_schemas.append(dataset_info)
-                
-            self.logger.info(f"Successfully fetched details for {len(all_schemas)} datasets.")
-            return all_schemas
+                schema_info = [
+                    {
+                        "name": col.column_name,
+                        "type": col.data_type,
+                    }
+                    for col in columns
+                ]
+
+                tables.append({
+                    "table_id": table_name,
+                    "schema": schema_info
+                })
+            
+            dataset_schema = DatasetSchema(
+                dataset_id=f"{self.project_id}.{self.dataset_id}",
+                tables=tables
+            )
+            
+            self.logger.info(f"Successfully fetched schema for dataset: {self.dataset_id}")
+            return [dataset_schema]
 
         except Exception as e:
             self.logger.error(f"Error fetching schemas: {str(e)}")

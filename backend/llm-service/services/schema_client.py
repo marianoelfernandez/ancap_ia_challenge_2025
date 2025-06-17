@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 class SchemaClient:
     def __init__(self):
-        self._client = httpx.AsyncClient(base_url=os.getenv("MCP_SERVER_URI") or "http://data-service:8001", timeout=httpx.Timeout(15.0))
+        self._client = httpx.AsyncClient(base_url=os.getenv("MCP_SERVER_URI") or "http://data-service:8001", timeout=httpx.Timeout(None))
         self._cache: Optional[List[Dict[str, Any]]] = None
         self._last_fetched_time: float = 0
         self._lock = asyncio.Lock()
