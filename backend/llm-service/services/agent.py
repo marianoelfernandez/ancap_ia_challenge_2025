@@ -33,7 +33,7 @@ class Agent():
             google_api_key=settings.api_key
             )
         self.pro_agent =ChatGoogleGenerativeAI(
-            model="gemini-2.5-pro-preview-06-05",
+            model="gemini-2.5-flash-preview-05-20",
             temperature=0,
             google_api_key=settings.api_key
             )
@@ -90,7 +90,7 @@ class Agent():
                 return state
 
             
-        def load_schema_node(state):
+        def load_schema(state):
             if "schema" in state:
                 return state 
 
@@ -186,25 +186,26 @@ class Agent():
             })
             return {"output": response.content}
 
-        builder.add_node("check_cache", check_cache)
-        builder.add_node("load_schema", load_schema_node)
+        builder.add_node("load_schema", load_schema)
         builder.add_node("detect_type", detect_type)
+        builder.add_node("check_cache", check_cache)
         builder.add_node("query_translator", query_translator)
         builder.add_node("respond_with_retry", respond_with_retry)
         builder.add_node("prepare_sql", prepare_sql)
         builder.add_node("execute_sql", execute_sql)
         builder.add_node("general_llm", general_llm)
 
-        builder.set_entry_point("check_cache")
-        builder.add_conditional_edges(
-            "check_cache",
-            lambda s: "load_schema" if s["needs_more_info"] else "execute_sql",
-        )
+        builder.set_entry_point("load_schema")
         builder.add_edge("load_schema", "detect_type")
         builder.add_conditional_edges(
             "detect_type",
-            lambda s: "query_translator" if s["is_sql"] else "general_llm",
+            lambda s: "check_cache" if s["is_sql"] else "general_llm",
         )
+        builder.add_conditional_edges(
+            "check_cache",
+            lambda s: "query_translator" if s["needs_more_info"] else "execute_sql",
+        )
+
         builder.add_conditional_edges("query_translator", route_from_query_translator)
         builder.set_finish_point("respond_with_retry")
         builder.add_edge("prepare_sql", "execute_sql")
