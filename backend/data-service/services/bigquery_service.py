@@ -30,7 +30,14 @@ class BigQueryService:
         try:
 
             self.logger.info(f"\nReceived query: {query}\n")
+
+            # before executing the query, check if the query is valid
+            validate_query_response = await self.validate_query(query)
+            if validate_query_response.status != QueryStatus.SUCCESS:
+                raise ValueError(validate_query_response.error_message)
            
+            self.logger.info(f"Query is valid: {validate_query_response}")
+            
             # Configure query job
             job_config = bigquery.QueryJobConfig()
             

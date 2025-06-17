@@ -1,18 +1,17 @@
-import httpx
+import requests
 from utils.settings import Settings
 
 
 settings = Settings.get_settings()
 
-client = httpx.AsyncClient()
 
-async def call_server(query: str) -> dict:
+def call_server(query: str) -> dict:
     payload = {
         "query": query
     }
     uri = f"{settings.mcp_server_uri}/query"
-    response = await client.post(uri, json=payload)
-    response.raise_for_status()
+    response = requests.post(uri, json=payload)
+
 
     response_data = response.json()
     try:
