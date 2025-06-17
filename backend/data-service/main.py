@@ -40,36 +40,30 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         logger.info("Initializing embedding model...")
         embedding_model = get_embedding_model()
         
-        # Test connections to ensure they're working
+
         logger.info("Testing client connections...")
         
-        # Test Firestore connection
+
         try:
-            # Simple test - list collections (you might want to adjust this based on your setup)
+            
             collections = list(firestore_client.collections())
             logger.info("Firestore connection successful")
         except Exception as e:
             logger.warning(f"Firestore connection test failed: {e}")
         
-        # Test GCS connection
+
         try:
-            # Simple test - list buckets (you might want to adjust this based on your setup)
+           
             buckets = list(gcs_client.list_buckets())
             logger.info("GCS connection successful")
         except Exception as e:
             logger.warning(f"GCS connection test failed: {e}")
         
-        # Test embedding model
-        try:
-            # Simple test - generate a test embedding
-            test_embedding = embedding_model.encode(["test connection"])
-            logger.info(f"Embedding model connection successful (test embedding shape: {test_embedding.shape})")
-        except Exception as e:
-            logger.warning(f"Embedding model test failed: {e}")
+
         
         logger.info("All clients initialized successfully!")
         
-        # Store clients in app state for easy access
+
         app.state.firestore_client = firestore_client
         app.state.gcs_client = gcs_client
         app.state.embedding_model = embedding_model
