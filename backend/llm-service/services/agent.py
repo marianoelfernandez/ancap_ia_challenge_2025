@@ -24,7 +24,7 @@ class AgentState(TypedDict):
     conversation_id: Optional[str]
     tables_used: Optional[list[str]]
     cost: Optional[float]
-    SQL_retries = Optional[int]
+    SQL_retries : Optional[int] = 3
     memory: Optional[ConversationBufferMemory]
 
 class Agent():
@@ -129,7 +129,6 @@ class Agent():
                     chat_history = memory.chat_memory.messages,
                 )
 
-
                 response = self.llm.invoke(prompt)
 
                 if "[RETRY]" in response.content.strip():
@@ -181,6 +180,7 @@ class Agent():
                 result = call_server(generated_sql)
                 state["output"] = str(result['response']) if 'response' in result else str(result['error'])
                 state['cost'] = float(result.get('cost', 0.0))
+
                 return state
             except Exception as e:
                 state["input"] = state.get("input", "") + "Hubo un error en la anterior consulta, regenera una consulta SQL:"
@@ -220,6 +220,7 @@ class Agent():
         builder.add_conditional_edges("query_translator", route_from_query_translator)
         builder.set_finish_point("respond_with_retry")
         builder.add_edge("prepare_sql", "execute_sql")
+        
         builder.add_conditional_edges(
             "execute_sql",
             lambda s: "prepare_sql" if (s["SQL_retries"]<3 and s["SQL_retries"]>0)  else END,
