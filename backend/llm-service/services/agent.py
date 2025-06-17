@@ -65,7 +65,8 @@ class Agent():
          El usuario te proporcionará una consulta en lenguaje natural.\n"""),
         ("user", "{input}"),
         ("system", """
-         También tienes la consulta enriquecida con nombres de tablas para ayudarte a generar el código SQL: {curated_query}.\n""")
+         También tienes la consulta enriquecida con nombres de tablas para ayudarte a generar el código SQL: {curated_query}.\n
+         Debes generar una consulta SQL que responda a la consulta del usuario, NO debes preguntarle al usuario""")
         ])
 
         self.sql_chain = self.sql_generation_prompt | self.pro_agent
