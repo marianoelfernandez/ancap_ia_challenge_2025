@@ -247,7 +247,8 @@ class Agent():
                             result.get("generated_sql", ""),
                               result.get("output", ""),
                               result.get("cost", 0),
-                              conv_id)
+                              conv_id,
+                              result.get("tables_used", []))
                 
 
                 return result["output"], result["conversation_id"], result.get("tables_used", []), result.get("generated_sql", None)
