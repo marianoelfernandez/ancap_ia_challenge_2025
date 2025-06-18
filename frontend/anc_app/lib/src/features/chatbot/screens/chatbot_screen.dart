@@ -4,6 +4,7 @@ import "dart:ui";
 import "package:anc_app/src/features/auth/cubits/auth_cubit.dart";
 import "package:anc_app/src/features/chatbot/cubit/chatbot_cubit.dart";
 import "package:anc_app/src/features/chatbot/services/chat_service.dart";
+import "package:anc_app/src/features/chatbot/widgets/ai_chart_widget.dart";
 import "package:anc_app/src/features/sidebar/widgets/sidebar.dart";
 import "package:anc_app/src/models/chat_message.dart";
 import "package:anc_app/src/router/router.dart";
@@ -381,57 +382,64 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                               padding: const EdgeInsets.all(
                                 0.1,
                               ),
-                              child: MarkdownBody(
-                                data: message.text,
-                                styleSheet: MarkdownStyleSheet.fromTheme(
-                                  Theme.of(context).copyWith(
-                                    textTheme:
-                                        Theme.of(context).textTheme.apply(
-                                              bodyColor: _foreground,
-                                              displayColor: _foreground,
-                                            ),
-                                  ),
-                                ).copyWith(
-                                  p: GoogleFonts.inter(
-                                    color: _foreground,
-                                    fontSize: 14,
-                                  ),
-                                  code: GoogleFonts.firaCode(
-                                    backgroundColor: Colors.grey[850],
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                  ),
-                                  codeblockPadding: const EdgeInsets.all(8),
-                                  codeblockDecoration: BoxDecoration(
-                                    color: Colors.grey[850],
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  blockquote: GoogleFonts.inter(
-                                    color: _foreground.withOpacity(0.8),
-                                    fontSize: 14,
-                                    fontStyle: FontStyle.italic,
-                                  ),
-                                  h1: GoogleFonts.inter(
-                                    color: _foreground,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  h2: GoogleFonts.inter(
-                                    color: _foreground,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  h3: GoogleFonts.inter(
-                                    color: _foreground,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  listBullet: GoogleFonts.inter(
-                                    color: _foreground,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ),
+                              child: _isChartData(message.text)
+                                  ? AiDataResponseChart(
+                                      jsonString:
+                                          _extractChartData(message.text),
+                                    )
+                                  : MarkdownBody(
+                                      data: message.text,
+                                      styleSheet: MarkdownStyleSheet.fromTheme(
+                                        Theme.of(context).copyWith(
+                                          textTheme:
+                                              Theme.of(context).textTheme.apply(
+                                                    bodyColor: _foreground,
+                                                    displayColor: _foreground,
+                                                  ),
+                                        ),
+                                      ).copyWith(
+                                        p: GoogleFonts.inter(
+                                          color: _foreground,
+                                          fontSize: 14,
+                                        ),
+                                        code: GoogleFonts.firaCode(
+                                          backgroundColor: Colors.grey[850],
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                        ),
+                                        codeblockPadding:
+                                            const EdgeInsets.all(8),
+                                        codeblockDecoration: BoxDecoration(
+                                          color: Colors.grey[850],
+                                          borderRadius:
+                                              BorderRadius.circular(4),
+                                        ),
+                                        blockquote: GoogleFonts.inter(
+                                          color: _foreground.withOpacity(0.8),
+                                          fontSize: 14,
+                                          fontStyle: FontStyle.italic,
+                                        ),
+                                        h1: GoogleFonts.inter(
+                                          color: _foreground,
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        h2: GoogleFonts.inter(
+                                          color: _foreground,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        h3: GoogleFonts.inter(
+                                          color: _foreground,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        listBullet: GoogleFonts.inter(
+                                          color: _foreground,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ),
                             ),
                           ),
                         )
@@ -559,6 +567,16 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         ),
       ),
     );
+  }
+
+  bool _isChartData(String text) {
+    // Simple check to determine if the text contains chart data
+    return text.startsWith("{") && text.endsWith("}");
+  }
+
+  String _extractChartData(String text) {
+    // Extract the JSON string for the chart from the text
+    return text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1);
   }
 }
 
