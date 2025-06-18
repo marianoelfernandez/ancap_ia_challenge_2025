@@ -21,10 +21,11 @@ class AiDataResponseChart extends StatefulWidget {
 }
 
 class _AiDataResponseChartState extends State<AiDataResponseChart> {
-  /// Holds the processed data, mapping each category to its frequency.
-  Map<String, int> _dataCounts = {};
+  /// Holds the processed data, mapping each category to its aggregated value.
+  /// Changed to double to hold quantity values.
+  Map<String, double> _dataValues = {};
 
-  /// The title for the chart, derived from the column name in the JSON.
+  /// The title for the chart, derived from the column names in the JSON.
   String _chartTitle = "Data";
 
   /// A key to manage state changes and force re-renders when data updates.
@@ -77,23 +78,74 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
       final List<dynamic> records = dataPayload["data"];
       final List<dynamic> columns = dataPayload["columns"];
 
-      if (columns.isEmpty || columns[0]["name"] == null) {
-        throw const FormatException("Column name is missing.");
+      // --- MODIFICATION START ---
+
+      // Identify the category column (e.g., 'PLANOM' or 'DPTONOM')
+      String? categoryKey;
+      // Identify the value column (e.g., 'CantidadTotalVendida' or 'TotalEntregas')
+      String? valueKey;
+
+      for (var col in columns) {
+        if (col["name"] != null) {
+          // Heuristics to guess the category and value columns
+          // Assuming the first string column is the category, and the first numeric is the value
+          if (col["type"] == "STRING" && categoryKey == null) {
+            categoryKey = col["name"];
+          } else if ((col["type"] == "NUMERIC" || col["type"] == "INTEGER") &&
+              valueKey == null) {
+            valueKey = col["name"];
+          }
+        }
       }
 
-      final String dataKey = columns[0]["name"];
-      final String chartTitle = "Distribution of ${dataKey.toLowerCase()}";
+      if (categoryKey == null) {
+        throw const FormatException(
+            "No suitable category column found in JSON.",);
+      }
+      // If there's no specific value column, default to counting occurrences (original behavior)
+      final bool isCountingOccurrences = (valueKey == null);
 
-      final Map<String, int> counts = {};
+      final Map<String, double> aggregatedValues = {};
+      String chartTitle = "Distribution of ${categoryKey.toLowerCase()}";
+
       for (var record in records) {
-        final String value = record[dataKey]?.toString().trim() ?? "Unknown";
-        counts[value] = (counts[value] ?? 0) + 1;
+        final String categoryValue =
+            record[categoryKey]?.toString().trim() ?? "Unknown";
+
+        if (isCountingOccurrences) {
+          // Original logic: count occurrences if no numeric value column is found
+          aggregatedValues[categoryValue] =
+              (aggregatedValues[categoryValue] ?? 0.0) + 1.0;
+        } else {
+          // New logic: sum the numeric value
+          final dynamic rawValue = record[valueKey!];
+          double numericValue = 0.0;
+          if (rawValue != null) {
+            try {
+              numericValue = double.parse(rawValue.toString());
+            } catch (e) {
+              debugPrint(
+                  "Warning: Could not parse '$rawValue' as double for key '$valueKey'. Defaulting to 0. Error: $e",);
+            }
+          }
+          aggregatedValues[categoryValue] =
+              (aggregatedValues[categoryValue] ?? 0.0) + numericValue;
+        }
       }
+
+      // If we are summing values, update the chart title
+      if (!isCountingOccurrences && valueKey != null) {
+        chartTitle =
+            "Total ${valueKey.toLowerCase().replaceAll('total', '')} by ${categoryKey.toLowerCase()}";
+      }
+
+      // --- MODIFICATION END ---
 
       // Update the state with the new processed data
       if (mounted) {
         setState(() {
-          _dataCounts = counts;
+          _dataValues =
+              aggregatedValues; // Use _dataValues instead of _dataCounts
           _chartTitle = chartTitle;
         });
       }
@@ -102,7 +154,7 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
       // A production app might show a user-friendly error message here.
       if (mounted) {
         setState(() {
-          _dataCounts = {};
+          _dataValues = {};
           _chartTitle = "Error loading data";
         });
       }
@@ -124,7 +176,9 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
           color: const Color(0xff2c4260),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
-            child: _dataCounts.isEmpty ? _buildPlaceholder() : _buildChart(),
+            child: _dataValues.isEmpty
+                ? _buildPlaceholder()
+                : _buildChart(), // Use _dataValues
           ),
         ),
       ),
@@ -163,11 +217,11 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
   /// Builds the main BarChart widget.
   Widget _buildChart() {
     // Create a list of labels for the x-axis titles
-    final List<String> labels = _dataCounts.keys.toList();
+    final List<String> labels = _dataValues.keys.toList(); // Use _dataValues
 
     // Find the maximum frequency for the y-axis range
-    final double maxFreq = _dataCounts.values
-        .fold(0, (prev, element) => element > prev ? element.toDouble() : prev);
+    final double maxVal = _dataValues.values // Use _dataValues
+        .fold(0.0, (prev, element) => element > prev ? element : prev);
 
     return AspectRatio(
       aspectRatio: 1.5,
@@ -188,7 +242,7 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
             child: BarChart(
               BarChartData(
                 alignment: BarChartAlignment.spaceAround,
-                maxY: maxFreq * 1.2, // Add some padding to the top
+                maxY: maxVal * 1.2, // Add some padding to the top
                 barTouchData: BarTouchData(
                   touchTooltipData: BarTouchTooltipData(
                     tooltipBgColor: Colors.blueGrey,
@@ -203,7 +257,8 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
                         ),
                         children: <TextSpan>[
                           TextSpan(
-                            text: (rod.toY - 0).toStringAsFixed(0),
+                            text: (rod.toY - 0)
+                                .toStringAsFixed(0), // Format as integer
                             style: const TextStyle(
                               color: Colors.yellow,
                               fontSize: 14,
@@ -256,12 +311,20 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
                       showTitles: true,
                       reservedSize: 40,
                       getTitlesWidget: (value, meta) {
-                        // Show integer values on the y-axis
-                        if (value == 0 || value % 1 != 0) {
-                          return Container();
+                        // Show integer values on the y-axis, but also handle large numbers by abbreviating
+                        if (value <= 0)
+                          return Container(); // Don't show 0 or negative
+                        String text = value.toInt().toString();
+                        if (value >= 1000000000) {
+                          text = "${(value / 1000000000).toStringAsFixed(1)}B";
+                        } else if (value >= 1000000) {
+                          text = "${(value / 1000000).toStringAsFixed(1)}M";
+                        } else if (value >= 1000) {
+                          text = "${(value / 1000).toStringAsFixed(1)}K";
                         }
+
                         return Text(
-                          value.toInt().toString(),
+                          text,
                           style: const TextStyle(
                             color: Colors.white70,
                             fontWeight: FontWeight.bold,
@@ -279,7 +342,8 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
                 gridData: FlGridData(
                   show: true,
                   drawVerticalLine: false,
-                  horizontalInterval: 1,
+                  horizontalInterval:
+                      maxVal / 5, // Dynamic intervals based on max value
                   getDrawingHorizontalLine: (value) {
                     return const FlLine(
                       color: Color(0xff37434d),
@@ -287,12 +351,12 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
                     );
                   },
                 ),
-                barGroups: List.generate(_dataCounts.length, (index) {
+                barGroups: List.generate(_dataValues.length, (index) {
                   return BarChartGroupData(
                     x: index,
                     barRods: [
                       BarChartRodData(
-                        toY: _dataCounts[labels[index]]!.toDouble(),
+                        toY: _dataValues[labels[index]]!, // Use _dataValues
                         color: Colors.tealAccent,
                         width: 16,
                         borderRadius: BorderRadius.circular(4),
@@ -308,58 +372,3 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
     );
   }
 }
-
-/// An example screen to demonstrate the AiDataResponseChart widget.
-class ChartExampleScreen extends StatelessWidget {
-  const ChartExampleScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    // Example JSON strings provided in the problem description
-    const String singleDataJson =
-        '{"status": "success", "data": {"data": [{"DPTONOM": "MONTEVIDEO "}], "columns": [{"name": "DPTONOM", "type": "STRING"}]}}';
-
-    const String multiDataJson =
-        '{"status": "success", "data": {"data": [{"CLINOM": "CLAVE CATALIZADOR X"}, {"CLINOM": "ESFUERZO NEXO PACÍFICO"}, {"CLINOM": "TRIUNFO GENERACIÓN CONSULTORES"}, {"CLINOM": "COMPLETA EXPLORADOR CONSULTORES"}, {"CLINOM": "CLAVE DESTACADO CONSULTORES"}, {"CLINOM": "ENTUSIASMO ESCALÓN INTERNACIONAL"}, {"CLINOM": "VANGUARDIA DISEÑO EMPRESAS"}, {"CLINOM": "OPTIMIZA SUPERIOR SOLUCIONES"}, {"CLINOM": "ESTÉRIL PRINCIPAL SELECTA"}, {"CLINOM": "CRISTALINA AVANZADO S.A."}, {"CLINOM": "UNIFICADA SUPERIOR CO."}, {"CLINOM": "BÚSQUEDA ESTUDIO S.A."}, {"CLINOM": "MAESTRA TECNO REGIONAL"}, {"CLINOM": "PILAR ALIANZA INC."}, {"CLINOM": "PURA FUNDICIÓN CORPORACIÓN"}, {"CLINOM": "REAL PORTAL LTDA."}, {"CLINOM": "RUMBO CRECIMIENTO CO."}, {"CLINOM": "NOBLEZA FRONTERIZO OBRAS"}, {"CLINOM": "ESENCIAL IMPULSO PACÍFICO"}, {"CLINOM": "ODISEA PRINCIPAL CORPORACIÓN"}], "columns": [{"name": "CLINOM", "type": "STRING"}]}}';
-
-    // Example with duplicate data to show frequency counting
-    const String duplicateDataJson =
-        '{"status": "success", "data": {"data": [{"PRODUCT": "Laptop"}, {"PRODUCT": "Mouse"}, {"PRODUCT": "Laptop"}, {"PRODUCT": "Keyboard"}, {"PRODUCT": "Monitor"}, {"PRODUCT": "Laptop"}], "columns": [{"name": "PRODUCT", "type": "STRING"}]}}';
-
-    return Scaffold(
-      backgroundColor: const Color(0xff1f2e42),
-      appBar: AppBar(
-        title: const Text("AI Data Visualization"),
-        backgroundColor: const Color(0xff2c4260),
-      ),
-      body: ListView(
-        children: const [
-          AiDataResponseChart(jsonString: multiDataJson),
-          SizedBox(height: 20),
-          AiDataResponseChart(jsonString: duplicateDataJson),
-          SizedBox(height: 20),
-          AiDataResponseChart(jsonString: singleDataJson),
-        ],
-      ),
-    );
-  }
-}
-
-// To run this example, ensure you have a main function and MaterialApp setup:
-/*
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      title: 'Flutter Chart Demo',
-      home: ChartExampleScreen(),
-    );
-  }
-}
-*/
