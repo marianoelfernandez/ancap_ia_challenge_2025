@@ -12,10 +12,13 @@ import "package:fl_chart/fl_chart.dart";
 class AiDataResponseChart extends StatefulWidget {
   /// The raw JSON string received from the AI service.
   final String jsonString;
+  final bool
+      isFullScreen; // New property to indicate if it's in full screen mode
 
   const AiDataResponseChart({
     super.key,
     required this.jsonString,
+    this.isFullScreen = false, // Default to false
   });
 
   @override
@@ -152,18 +155,41 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
 
   @override
   Widget build(BuildContext context) {
-    return KeyedSubtree(
-      key: _widgetKey,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Card(
-          elevation: 4,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          color: const Color(0xff2c4260),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
-            child: _dataValues.isEmpty ? _buildPlaceholder() : _buildChart(),
+    // Determine the height based on whether it's full screen or not
+    double chartHeight = widget.isFullScreen
+        ? double.infinity
+        : 450; // Smaller height when not full screen
+
+    return GestureDetector(
+      onTap: widget.isFullScreen
+          ? null // Disable tap if already full screen
+          : () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      _FullScreenChartPage(jsonString: widget.jsonString),
+                ),
+              );
+            },
+      child: KeyedSubtree(
+        key: _widgetKey,
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: SizedBox(
+            // Use SizedBox to control initial height
+            height: chartHeight,
+            child: Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),),
+              color: const Color(0xff2c4260),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 16, 12, 12),
+                child:
+                    _dataValues.isEmpty ? _buildPlaceholder() : _buildChart(),
+              ),
+            ),
           ),
         ),
       ),
@@ -171,29 +197,26 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
   }
 
   Widget _buildPlaceholder() {
-    return SizedBox(
-      height: 300,
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, color: Colors.white54, size: 48),
-            const SizedBox(height: 16),
-            Text(
-              _chartTitle,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+    return const Center(
+      // Removed SizedBox height as parent SizedBox controls it
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error_outline, color: Colors.white54, size: 48),
+          SizedBox(height: 16),
+          Text(
+            "No data to display.", // Placeholder title simplified
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
             ),
-            if (_chartTitle != "Error loading data")
-              const Text(
-                "No data to display.",
-                style: TextStyle(color: Colors.white70),
-              ),
-          ],
-        ),
+          ),
+          Text(
+            "Check the query or data source.",
+            style: TextStyle(color: Colors.white70),
+          ),
+        ],
       ),
     );
   }
@@ -209,14 +232,12 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
     // If all values are 0 or less, we can't use log scale meaningfully.
     // Revert to linear or show placeholder.
     if (maxOriginalVal <= 1) {
-      // Changed to 1, as log(1) = 0. We need values > 0 for log.
       return _buildLinearChart(); // Fallback to a linear chart or placeholder
     }
 
     // Transform values to log scale
     final Map<String, double> loggedDataValues = _dataValues.map((key, value) {
       // Use max(1.0, value) to prevent log(0) or log(negative) errors
-      // log(1) = 0, so values 0-1 will be mapped to a small range near 0
       return MapEntry(key, log(max(1.0, value)));
     });
 
@@ -227,197 +248,194 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
     // Determine the "nice" unlogged values for Y-axis labels
     List<double> yAxisLabelValues = [];
     double currentPowerOfTen = 1.0;
-    // Iterate until the label value exceeds the maximum original value
     while (currentPowerOfTen < maxOriginalVal * 1.5) {
-      // Go a bit beyond max
       yAxisLabelValues.add(currentPowerOfTen);
       currentPowerOfTen *= 10;
-      if (currentPowerOfTen == 0)
-        break; // Avoid infinite loop if somehow currentPowerOfTen becomes 0
+      if (currentPowerOfTen == 0) break;
     }
+
     // Add intermediate values for better density if needed
     List<double> denseLabels = [];
     for (int i = 0; i < yAxisLabelValues.length - 1; i++) {
       denseLabels.add(yAxisLabelValues[i]);
       double nextVal = yAxisLabelValues[i + 1];
-      // Add 2 and 5 times the current power of ten
-      if (currentPowerOfTen / 10 * 2 < nextVal &&
-          currentPowerOfTen / 10 * 2 < maxOriginalVal * 1.2) {
+      if (yAxisLabelValues[i] * 2 < nextVal &&
+          yAxisLabelValues[i] * 2 < maxOriginalVal * 1.2) {
         denseLabels.add(yAxisLabelValues[i] * 2);
       }
-      if (currentPowerOfTen / 10 * 5 < nextVal &&
-          currentPowerOfTen / 10 * 5 < maxOriginalVal * 1.2) {
+      if (yAxisLabelValues[i] * 5 < nextVal &&
+          yAxisLabelValues[i] * 5 < maxOriginalVal * 1.2) {
         denseLabels.add(yAxisLabelValues[i] * 5);
       }
     }
     if (yAxisLabelValues.isNotEmpty) denseLabels.add(yAxisLabelValues.last);
     yAxisLabelValues = denseLabels.toSet().toList()..sort();
 
-    return AspectRatio(
-      aspectRatio: 1.5,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            _chartTitle,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-            textAlign: TextAlign.center,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          _chartTitle,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize:
+                widget.isFullScreen ? 20 : 16, // Larger title in full screen
+            fontWeight: FontWeight.bold,
           ),
-          const SizedBox(height: 24),
-          Expanded(
-            child: BarChart(
-              BarChartData(
-                alignment: BarChartAlignment.spaceAround,
-                maxY: maxLoggedVal *
-                    1.1, // Add some padding to the top on the logged scale
-                barTouchData: BarTouchData(
-                  touchTooltipData: BarTouchTooltipData(
-                    tooltipBgColor: Colors.blueGrey,
-                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                      final category = labels[group.x.toInt()];
-                      // Display the original value in the tooltip
-                      final originalValue = _dataValues[category] ?? 0.0;
-                      return BarTooltipItem(
-                        "$category\n",
-                        const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
+          textAlign: TextAlign.center,
+        ),
+        SizedBox(
+            height: widget.isFullScreen ? 24 : 16,), // More space in full screen
+        Expanded(
+          child: BarChart(
+            BarChartData(
+              alignment: BarChartAlignment.spaceAround,
+              maxY: maxLoggedVal * 1.1,
+              barTouchData: BarTouchData(
+                touchTooltipData: BarTouchTooltipData(
+                  tooltipBgColor: Colors.blueGrey,
+                  getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                    final category = labels[group.x.toInt()];
+                    final originalValue = _dataValues[category] ?? 0.0;
+                    return BarTooltipItem(
+                      "$category\n",
+                      const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                      children: <TextSpan>[
+                        TextSpan(
+                          text: formatValue(originalValue),
+                          style: const TextStyle(
+                            color: Colors.yellow,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                        children: <TextSpan>[
-                          TextSpan(
-                            text: formatValue(
-                              originalValue,
-                            ), // Use formatValue for tooltip
-                            style: const TextStyle(
-                              color: Colors.yellow,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
+                      ],
+                    );
+                  },
+                ),
+              ),
+              titlesData: FlTitlesData(
+                show: true,
+                topTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
+                rightTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: widget.isFullScreen
+                        ? 60
+                        : 50, // More space for labels in full screen
+                    getTitlesWidget: (double value, TitleMeta meta) {
+                      final index = value.toInt();
+                      if (index >= labels.length) return Container();
+                      final text = labels[index];
+                      return SideTitleWidget(
+                        axisSide: meta.axisSide,
+                        space: 4.0,
+                        child: Transform.rotate(
+                          angle: -0.7,
+                          child: Text(
+                            text.length > 15
+                                ? "${text.substring(0, 12)}..."
+                                : text,
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontWeight: FontWeight.bold,
+                              fontSize: widget.isFullScreen
+                                  ? 12
+                                  : 10, // Larger font in full screen
                             ),
                           ),
-                        ],
+                        ),
                       );
                     },
                   ),
                 ),
-                titlesData: FlTitlesData(
-                  show: true,
-                  topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 60,
-                      getTitlesWidget: (double value, TitleMeta meta) {
-                        final index = value.toInt();
-                        if (index >= labels.length) return Container();
-                        final text = labels[index];
-                        return SideTitleWidget(
-                          axisSide: meta.axisSide,
-                          space: 4.0,
-                          child: Transform.rotate(
-                            angle: -0.7,
-                            child: Text(
-                              text.length > 15
-                                  ? "${text.substring(0, 12)}..."
-                                  : text,
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 40,
-                      getTitlesWidget: (value, meta) {
-                        // Display original values on the Y-axis, but map to their logged positions
-                        final unloggedValue = exp(
-                          value,
-                        ); // Convert back from logged value for display
-                        // Check if this unlogged value is one of our "nice" labels or very close
-                        bool isLabelPosition = yAxisLabelValues.any(
-                          (labelVal) =>
-                              (labelVal - unloggedValue).abs() <
-                              (unloggedValue * 0.05),
-                        ); // Tolerance
-                        if (!isLabelPosition) return Container();
-
-                        return Text(
-                          formatValue(
-                            unloggedValue,
-                          ), // Format the original value
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                          textAlign: TextAlign.left,
-                        );
-                      },
-                    ),
-                  ),
-                ),
-                borderData: FlBorderData(
-                  show: false,
-                ),
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  // Horizontal interval based on the logged values of yAxisLabelValues
-                  horizontalInterval:
-                      0.1, // Small interval as we draw specific lines
-                  getDrawingHorizontalLine: (value) {
-                    // Check if the current logged 'value' corresponds to one of our 'nice' unlogged labels
-                    final double unloggedValue = exp(value);
-                    bool shouldDraw = yAxisLabelValues.any(
-                      (labelVal) =>
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: widget.isFullScreen
+                        ? 40
+                        : 36, // More space for labels in full screen
+                    getTitlesWidget: (value, meta) {
+                      final unloggedValue = exp(value);
+                      bool isLabelPosition = yAxisLabelValues.any((labelVal) =>
                           (labelVal - unloggedValue).abs() <
-                          (unloggedValue * 0.05),
-                    );
+                              (unloggedValue * 0.05) ||
+                          (labelVal == 1.0 &&
+                              unloggedValue < 2.0 &&
+                              unloggedValue > 0.5),);
 
-                    return FlLine(
-                      color: shouldDraw
-                          ? const Color(0xff37434d)
-                          : Colors.transparent, // Draw only for "nice" labels
-                      strokeWidth: 1,
-                    );
-                  },
+                      if (!isLabelPosition) return Container();
+
+                      return Text(
+                        formatValue(unloggedValue),
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontWeight: FontWeight.bold,
+                          fontSize: widget.isFullScreen
+                              ? 12
+                              : 10, // Larger font in full screen
+                        ),
+                        textAlign: TextAlign.left,
+                      );
+                    },
+                  ),
                 ),
-                barGroups: List.generate(_dataValues.length, (index) {
-                  final originalVal = _dataValues[labels[index]]!;
-                  return BarChartGroupData(
-                    x: index,
-                    barRods: [
-                      BarChartRodData(
-                        toY:
-                            log(max(1.0, originalVal)), // Pass the logged value
-                        color: Colors.tealAccent,
-                        width: 16,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ],
-                  );
-                }),
               ),
+              borderData: FlBorderData(
+                show: false,
+              ),
+              gridData: FlGridData(
+                show: true,
+                drawVerticalLine: false,
+                horizontalInterval: 0.1,
+                getDrawingHorizontalLine: (value) {
+                  final double unloggedValue = exp(value);
+                  bool shouldDraw = yAxisLabelValues.any((labelVal) =>
+                      (labelVal - unloggedValue).abs() <
+                          (unloggedValue * 0.05) ||
+                      (labelVal == 1.0 &&
+                          unloggedValue < 2.0 &&
+                          unloggedValue > 0.5),);
+
+                  return FlLine(
+                    color: shouldDraw
+                        ? const Color(0xff37434d)
+                        : Colors.transparent,
+                    strokeWidth: 1,
+                  );
+                },
+              ),
+              barGroups: List.generate(_dataValues.length, (index) {
+                final originalVal = _dataValues[labels[index]]!;
+                return BarChartGroupData(
+                  x: index,
+                  barRods: [
+                    BarChartRodData(
+                      toY: log(max(1.0, originalVal)),
+                      color: Colors.tealAccent,
+                      width: widget.isFullScreen
+                          ? 20
+                          : 12, // Wider bars in full screen
+                      borderRadius: BorderRadius.circular(widget.isFullScreen
+                          ? 5
+                          : 3,), // Larger radius in full screen
+                    ),
+                  ],
+                );
+              }),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -430,10 +448,9 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
     } else if (value >= 1000) {
       return "${(value / 1000).toStringAsFixed(1)}K";
     } else if (value % 1 == 0) {
-      // If it's a whole number, display without decimal
       return value.toInt().toString();
     }
-    return value.toStringAsFixed(1); // Default to one decimal place for others
+    return value.toStringAsFixed(1);
   }
 
   // Fallback linear chart for cases where log scale isn't suitable (e.g., all values <= 1)
@@ -442,138 +459,180 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
     final double maxVal = _dataValues.values
         .fold(0.0, (prev, element) => element > prev ? element : prev);
 
-    return AspectRatio(
-      aspectRatio: 1.5,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            _chartTitle,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-            textAlign: TextAlign.center,
+    return Column(
+      // Changed from AspectRatio to Column for consistent structure
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          _chartTitle,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize:
+                widget.isFullScreen ? 20 : 16, // Larger title in full screen
+            fontWeight: FontWeight.bold,
           ),
-          const SizedBox(height: 24),
-          Expanded(
-            child: BarChart(
-              BarChartData(
-                alignment: BarChartAlignment.spaceAround,
-                maxY: maxVal * 1.2,
-                barTouchData: BarTouchData(
-                  touchTooltipData: BarTouchTooltipData(
-                    tooltipBgColor: Colors.blueGrey,
-                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                      final category = labels[group.x.toInt()];
-                      return BarTooltipItem(
-                        "$category\n",
-                        const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
+          textAlign: TextAlign.center,
+        ),
+        SizedBox(
+            height: widget.isFullScreen ? 24 : 16,), // More space in full screen
+        Expanded(
+          child: BarChart(
+            BarChartData(
+              alignment: BarChartAlignment.spaceAround,
+              maxY: maxVal * 1.2,
+              barTouchData: BarTouchData(
+                touchTooltipData: BarTouchTooltipData(
+                  tooltipBgColor: Colors.blueGrey,
+                  getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                    final category = labels[group.x.toInt()];
+                    return BarTooltipItem(
+                      "$category\n",
+                      const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                      children: <TextSpan>[
+                        TextSpan(
+                          text: formatValue(rod.toY - 0),
+                          style: const TextStyle(
+                            color: Colors.yellow,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                        children: <TextSpan>[
-                          TextSpan(
-                            text: formatValue(rod.toY - 0),
-                            style: const TextStyle(
-                              color: Colors.yellow,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
+                      ],
+                    );
+                  },
+                ),
+              ),
+              titlesData: FlTitlesData(
+                show: true,
+                topTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
+                rightTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: widget.isFullScreen
+                        ? 60
+                        : 50, // More space for labels in full screen
+                    getTitlesWidget: (double value, TitleMeta meta) {
+                      final index = value.toInt();
+                      if (index >= labels.length) return Container();
+                      final text = labels[index];
+                      return SideTitleWidget(
+                        axisSide: meta.axisSide,
+                        space: 4.0,
+                        child: Transform.rotate(
+                          angle: -0.7,
+                          child: Text(
+                            text.length > 15
+                                ? "${text.substring(0, 12)}..."
+                                : text,
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontWeight: FontWeight.bold,
+                              fontSize: widget.isFullScreen
+                                  ? 12
+                                  : 10, // Larger font in full screen
                             ),
                           ),
-                        ],
+                        ),
                       );
                     },
                   ),
                 ),
-                titlesData: FlTitlesData(
-                  show: true,
-                  topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 60,
-                      getTitlesWidget: (double value, TitleMeta meta) {
-                        final index = value.toInt();
-                        if (index >= labels.length) return Container();
-                        final text = labels[index];
-                        return SideTitleWidget(
-                          axisSide: meta.axisSide,
-                          space: 4.0,
-                          child: Transform.rotate(
-                            angle: -0.7,
-                            child: Text(
-                              text.length > 15
-                                  ? "${text.substring(0, 12)}..."
-                                  : text,
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 40,
-                      getTitlesWidget: (value, meta) {
-                        if (value <= 0) return Container();
-                        return Text(
-                          formatValue(value),
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                          textAlign: TextAlign.left,
-                        );
-                      },
-                    ),
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: widget.isFullScreen
+                        ? 40
+                        : 36, // More space for labels in full screen
+                    getTitlesWidget: (value, meta) {
+                      if (value <= 0) return Container();
+                      return Text(
+                        formatValue(value),
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontWeight: FontWeight.bold,
+                          fontSize: widget.isFullScreen
+                              ? 12
+                              : 10, // Larger font in full screen
+                        ),
+                        textAlign: TextAlign.left,
+                      );
+                    },
                   ),
                 ),
-                borderData: FlBorderData(
-                  show: false,
-                ),
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  horizontalInterval: maxVal / 5,
-                  getDrawingHorizontalLine: (value) {
-                    return const FlLine(
-                      color: Color(0xff37434d),
-                      strokeWidth: 1,
-                    );
-                  },
-                ),
-                barGroups: List.generate(_dataValues.length, (index) {
-                  return BarChartGroupData(
-                    x: index,
-                    barRods: [
-                      BarChartRodData(
-                        toY: _dataValues[labels[index]]!,
-                        color: Colors.tealAccent,
-                        width: 16,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ],
-                  );
-                }),
               ),
+              borderData: FlBorderData(
+                show: false,
+              ),
+              gridData: FlGridData(
+                show: true,
+                drawVerticalLine: false,
+                horizontalInterval: maxVal / 5,
+                getDrawingHorizontalLine: (value) {
+                  return const FlLine(
+                    color: Color(0xff37434d),
+                    strokeWidth: 1,
+                  );
+                },
+              ),
+              barGroups: List.generate(_dataValues.length, (index) {
+                return BarChartGroupData(
+                  x: index,
+                  barRods: [
+                    BarChartRodData(
+                      toY: _dataValues[labels[index]]!,
+                      color: Colors.tealAccent,
+                      width: widget.isFullScreen
+                          ? 20
+                          : 12, // Wider bars in full screen
+                      borderRadius: BorderRadius.circular(widget.isFullScreen
+                          ? 5
+                          : 3,), // Larger radius in full screen
+                    ),
+                  ],
+                );
+              }),
             ),
           ),
-        ],
+        ),
+      ],
+    );
+  }
+}
+
+/// A dedicated page to display the chart in full screen.
+class _FullScreenChartPage extends StatelessWidget {
+  final String jsonString;
+
+  const _FullScreenChartPage({
+    required this.jsonString,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Full Screen Chart"),
+        backgroundColor: const Color(0xff2c4260),
+        elevation: 0,
+      ),
+      body: Container(
+        color: const Color(0xff2c4260), // Match chart background
+        child: Padding(
+          padding: const EdgeInsets.all(16.0), // More padding in full screen
+          child: AiDataResponseChart(
+            jsonString: jsonString,
+            isFullScreen: true, // Indicate that it's in full screen
+          ),
+        ),
       ),
     );
   }
