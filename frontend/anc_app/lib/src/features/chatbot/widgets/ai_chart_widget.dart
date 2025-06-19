@@ -182,7 +182,8 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
             child: Card(
               elevation: 4,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),),
+                borderRadius: BorderRadius.circular(12),
+              ),
               color: const Color(0xff2c4260),
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(12, 16, 12, 12),
@@ -237,7 +238,6 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
 
     // Transform values to log scale
     final Map<String, double> loggedDataValues = _dataValues.map((key, value) {
-      // Use max(1.0, value) to prevent log(0) or log(negative) errors
       return MapEntry(key, log(max(1.0, value)));
     });
 
@@ -254,7 +254,6 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
       if (currentPowerOfTen == 0) break;
     }
 
-    // Add intermediate values for better density if needed
     List<double> denseLabels = [];
     for (int i = 0; i < yAxisLabelValues.length - 1; i++) {
       denseLabels.add(yAxisLabelValues[i]);
@@ -271,6 +270,10 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
     if (yAxisLabelValues.isNotEmpty) denseLabels.add(yAxisLabelValues.last);
     yAxisLabelValues = denseLabels.toSet().toList()..sort();
 
+    // NEW: Generate logged values for the labels
+    final List<double> yAxisLabelLoggedValues =
+        yAxisLabelValues.map((val) => log(max(1.0, val))).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -278,14 +281,12 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
           _chartTitle,
           style: TextStyle(
             color: Colors.white,
-            fontSize:
-                widget.isFullScreen ? 20 : 16, // Larger title in full screen
+            fontSize: widget.isFullScreen ? 20 : 16,
             fontWeight: FontWeight.bold,
           ),
           textAlign: TextAlign.center,
         ),
-        SizedBox(
-            height: widget.isFullScreen ? 24 : 16,), // More space in full screen
+        SizedBox(height: widget.isFullScreen ? 24 : 16),
         Expanded(
           child: BarChart(
             BarChartData(
@@ -329,9 +330,7 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
                 bottomTitles: AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: true,
-                    reservedSize: widget.isFullScreen
-                        ? 60
-                        : 50, // More space for labels in full screen
+                    reservedSize: widget.isFullScreen ? 60 : 50,
                     getTitlesWidget: (double value, TitleMeta meta) {
                       final index = value.toInt();
                       if (index >= labels.length) return Container();
@@ -348,9 +347,7 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
                             style: TextStyle(
                               color: Colors.white70,
                               fontWeight: FontWeight.bold,
-                              fontSize: widget.isFullScreen
-                                  ? 12
-                                  : 10, // Larger font in full screen
+                              fontSize: widget.isFullScreen ? 12 : 10,
                             ),
                           ),
                         ),
@@ -361,28 +358,34 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
                 leftTitles: AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: true,
-                    reservedSize: widget.isFullScreen
-                        ? 40
-                        : 36, // More space for labels in full screen
+                    reservedSize: widget.isFullScreen ? 40 : 36,
                     getTitlesWidget: (value, meta) {
-                      final unloggedValue = exp(value);
-                      bool isLabelPosition = yAxisLabelValues.any((labelVal) =>
-                          (labelVal - unloggedValue).abs() <
-                              (unloggedValue * 0.05) ||
-                          (labelVal == 1.0 &&
-                              unloggedValue < 2.0 &&
-                              unloggedValue > 0.5),);
+                      // Check if the current logged 'value' is close to one of our target logged label values
+                      bool isLabelPosition = yAxisLabelLoggedValues.any(
+                        (labelLoggedVal) =>
+                            (labelLoggedVal - value).abs() < 0.01,
+                      ); // Use a small absolute tolerance for logged values
 
                       if (!isLabelPosition) return Container();
 
+                      // Find the original unlogged value corresponding to this logged value
+                      // We need to iterate through yAxisLabelValues to find the correct label
+                      double originalLabel = 0.0;
+                      for (int i = 0; i < yAxisLabelValues.length; i++) {
+                        if ((yAxisLabelLoggedValues[i] - value).abs() < 0.01) {
+                          originalLabel = yAxisLabelValues[i];
+                          break;
+                        }
+                      }
+                      if (originalLabel == 0.0)
+                        return Container(); // Should not happen if logic is correct
+
                       return Text(
-                        formatValue(unloggedValue),
+                        formatValue(originalLabel), // Format the original value
                         style: TextStyle(
                           color: Colors.white70,
                           fontWeight: FontWeight.bold,
-                          fontSize: widget.isFullScreen
-                              ? 12
-                              : 10, // Larger font in full screen
+                          fontSize: widget.isFullScreen ? 12 : 10,
                         ),
                         textAlign: TextAlign.left,
                       );
@@ -396,15 +399,13 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
               gridData: FlGridData(
                 show: true,
                 drawVerticalLine: false,
-                horizontalInterval: 0.1,
+                // The horizontalInterval should be very small to ensure getDrawingHorizontalLine is called frequently
+                horizontalInterval: 0.01, // Very small interval
                 getDrawingHorizontalLine: (value) {
-                  final double unloggedValue = exp(value);
-                  bool shouldDraw = yAxisLabelValues.any((labelVal) =>
-                      (labelVal - unloggedValue).abs() <
-                          (unloggedValue * 0.05) ||
-                      (labelVal == 1.0 &&
-                          unloggedValue < 2.0 &&
-                          unloggedValue > 0.5),);
+                  // Draw a line only if the current logged 'value' is very close to one of our target logged label values
+                  bool shouldDraw = yAxisLabelLoggedValues.any(
+                    (labelLoggedVal) => (labelLoggedVal - value).abs() < 0.01,
+                  ); // Use a small absolute tolerance
 
                   return FlLine(
                     color: shouldDraw
@@ -422,12 +423,9 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
                     BarChartRodData(
                       toY: log(max(1.0, originalVal)),
                       color: Colors.tealAccent,
-                      width: widget.isFullScreen
-                          ? 20
-                          : 12, // Wider bars in full screen
-                      borderRadius: BorderRadius.circular(widget.isFullScreen
-                          ? 5
-                          : 3,), // Larger radius in full screen
+                      width: widget.isFullScreen ? 20 : 12,
+                      borderRadius:
+                          BorderRadius.circular(widget.isFullScreen ? 5 : 3),
                     ),
                   ],
                 );
@@ -460,21 +458,18 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
         .fold(0.0, (prev, element) => element > prev ? element : prev);
 
     return Column(
-      // Changed from AspectRatio to Column for consistent structure
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
           _chartTitle,
           style: TextStyle(
             color: Colors.white,
-            fontSize:
-                widget.isFullScreen ? 20 : 16, // Larger title in full screen
+            fontSize: widget.isFullScreen ? 20 : 16,
             fontWeight: FontWeight.bold,
           ),
           textAlign: TextAlign.center,
         ),
-        SizedBox(
-            height: widget.isFullScreen ? 24 : 16,), // More space in full screen
+        SizedBox(height: widget.isFullScreen ? 24 : 16),
         Expanded(
           child: BarChart(
             BarChartData(
@@ -517,9 +512,7 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
                 bottomTitles: AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: true,
-                    reservedSize: widget.isFullScreen
-                        ? 60
-                        : 50, // More space for labels in full screen
+                    reservedSize: widget.isFullScreen ? 60 : 50,
                     getTitlesWidget: (double value, TitleMeta meta) {
                       final index = value.toInt();
                       if (index >= labels.length) return Container();
@@ -536,9 +529,7 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
                             style: TextStyle(
                               color: Colors.white70,
                               fontWeight: FontWeight.bold,
-                              fontSize: widget.isFullScreen
-                                  ? 12
-                                  : 10, // Larger font in full screen
+                              fontSize: widget.isFullScreen ? 12 : 10,
                             ),
                           ),
                         ),
@@ -549,9 +540,7 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
                 leftTitles: AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: true,
-                    reservedSize: widget.isFullScreen
-                        ? 40
-                        : 36, // More space for labels in full screen
+                    reservedSize: widget.isFullScreen ? 40 : 36,
                     getTitlesWidget: (value, meta) {
                       if (value <= 0) return Container();
                       return Text(
@@ -559,9 +548,7 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
                         style: TextStyle(
                           color: Colors.white70,
                           fontWeight: FontWeight.bold,
-                          fontSize: widget.isFullScreen
-                              ? 12
-                              : 10, // Larger font in full screen
+                          fontSize: widget.isFullScreen ? 12 : 10,
                         ),
                         textAlign: TextAlign.left,
                       );
@@ -590,12 +577,9 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
                     BarChartRodData(
                       toY: _dataValues[labels[index]]!,
                       color: Colors.tealAccent,
-                      width: widget.isFullScreen
-                          ? 20
-                          : 12, // Wider bars in full screen
-                      borderRadius: BorderRadius.circular(widget.isFullScreen
-                          ? 5
-                          : 3,), // Larger radius in full screen
+                      width: widget.isFullScreen ? 20 : 12,
+                      borderRadius:
+                          BorderRadius.circular(widget.isFullScreen ? 5 : 3),
                     ),
                   ],
                 );
