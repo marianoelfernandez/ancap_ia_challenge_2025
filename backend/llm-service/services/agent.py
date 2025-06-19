@@ -175,6 +175,8 @@ class Agent():
                 state["tables_used"] = list(dict.fromkeys(tables_used))
                 if not generated_sql:
                     return {**state, "output": "No se generó SQL"}
+                
+                print(f"Generated SQL: {generated_sql}")
                 result = call_server(generated_sql)
                 state["output"] = str(result['response']) if 'response' in result else str(result['error'])
                 state['cost'] = float(result.get('cost', 0.0))
@@ -246,7 +248,8 @@ class Agent():
                               result.get("output", ""),
                               result.get("cost", 0),
                               conv_id,
-                              result.get("tables_used", []))
+                              result.get("tables_used", []),
+                              result.get("agent_response", ""))
                 
 
                 return result["output"], result["conversation_id"], result.get("tables_used", []), result.get("generated_sql", None)
