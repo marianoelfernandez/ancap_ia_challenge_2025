@@ -330,7 +330,7 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
                   barRods: [
                     BarChartRodData(
                       toY: log10(max(1.0, originalVal)),
-                      color: const Color.fromARGB(255, 26, 184, 23),
+                      color: _ancapYellow,
                       width: widget.isFullScreen ? 20 : 12,
                       borderRadius:
                           BorderRadius.circular(widget.isFullScreen ? 5 : 3),
@@ -407,7 +407,7 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
                   barRods: [
                     BarChartRodData(
                       toY: _dataValues[labels[index]]!,
-                      color: const Color.fromARGB(255, 199, 7, 135),
+                      color: _ancapYellow,
                       width: widget.isFullScreen ? 20 : 12,
                       borderRadius:
                           BorderRadius.circular(widget.isFullScreen ? 5 : 3),
