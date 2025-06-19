@@ -37,7 +37,7 @@ enum AppRoute<ParamsType extends ScreenParams<ParamsType>> {
     path: "/dashboard",
     isAuthEnforcementRequired: true,
   ),
-  chatbot<NoParams>(
+  chatbot<ChatbotParams>(
     path: "/chatbot",
     isAuthEnforcementRequired: true,
   ),
@@ -103,7 +103,11 @@ GoRouter buildRouter({
             GoRoute(
               name: AppRoute.chatbot.name,
               path: AppRoute.chatbot.path,
-              builder: (context, state) => const ChatbotScreen(),
+              builder: (context, state) {
+                final conversationId =
+                    state.uri.queryParameters["conversation"];
+                return ChatbotScreen(initialConversationId: conversationId);
+              },
             ),
             GoRoute(
               name: AppRoute.splash.name,

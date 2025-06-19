@@ -13,6 +13,7 @@ class SidebarState extends Equatable {
   final String? error;
   final User? currentUser;
   final String searchQuery;
+  final String? selectedConversationId; // Add this field
 
   List<Conversation> get filteredConversations {
     if (searchQuery.isEmpty) {
@@ -53,6 +54,7 @@ class SidebarState extends Equatable {
     this.error,
     this.currentUser,
     this.searchQuery = "",
+    this.selectedConversationId, // Add this parameter
   });
 
   SidebarState copyWith({
@@ -61,6 +63,7 @@ class SidebarState extends Equatable {
     String? error,
     User? currentUser,
     String? searchQuery,
+    String? selectedConversationId, // Add this parameter
   }) {
     return SidebarState(
       recentConversations: recentConversations ?? this.recentConversations,
@@ -68,12 +71,13 @@ class SidebarState extends Equatable {
       error: error,
       currentUser: currentUser ?? this.currentUser,
       searchQuery: searchQuery ?? this.searchQuery,
+      selectedConversationId: selectedConversationId ?? this.selectedConversationId, // Add this line
     );
   }
 
   @override
   List<Object?> get props =>
-      [recentConversations, isLoading, error, currentUser, searchQuery];
+      [recentConversations, isLoading, error, currentUser, searchQuery, selectedConversationId]; // Add selectedConversationId to props
 }
 
 class SidebarCubit extends Cubit<SidebarState> {
@@ -161,6 +165,16 @@ class SidebarCubit extends Cubit<SidebarState> {
   void clearSearchQuery() {
     emit(state.copyWith(searchQuery: ""));
     debugPrint("SidebarCubit: Search query cleared");
+  }
+
+  void setSelectedConversation(String? conversationId) {
+    emit(state.copyWith(selectedConversationId: conversationId));
+    debugPrint("SidebarCubit: Selected conversation set to: $conversationId");
+  }
+
+  void clearSelectedConversation() {
+    emit(state.copyWith(selectedConversationId: null));
+    debugPrint("SidebarCubit: Selected conversation cleared");
   }
 
   Future<void> loadUser() async {

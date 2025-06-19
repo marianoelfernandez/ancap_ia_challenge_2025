@@ -64,10 +64,43 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       _chatbotCubit.selectConversation(widget.initialConversationId!);
       _currentConversationId = widget.initialConversationId;
     } else {
-      _addAiMessage(
-        "Hola! Soy tu asistente de ANCAP. ¿En qué puedo ayudarte?",
-      );
+      // Start fresh chat - clear everything
+      _startFreshChat();
     }
+  }
+
+  @override
+  void didUpdateWidget(ChatbotScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // Check if we switched from a conversation to fresh chat or vice versa
+    if (oldWidget.initialConversationId != widget.initialConversationId) {
+      if (widget.initialConversationId != null) {
+        // Loading a specific conversation
+        _chatbotCubit.selectConversation(widget.initialConversationId!);
+        _currentConversationId = widget.initialConversationId;
+      } else {
+        // Starting fresh chat - clear everything
+        _startFreshChat();
+      }
+    }
+  }
+
+  void _startFreshChat() {
+    setState(() {
+      _messages.clear();
+      _currentConversationId = null;
+      _currentConversationTitle = null;
+      _isAiTyping = false;
+    });
+
+    // Clear the chatbot cubit state
+    _chatbotCubit.clearSelectedConversation();
+
+    // Add the initial AI message
+    _addAiMessage(
+      "Hola! Soy tu asistente de ANCAP. ¿En qué puedo ayudarte?",
+    );
   }
 
   void _sendMessage() async {
@@ -108,6 +141,14 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       });
 
       await _chatbotCubit.selectConversation(_currentConversationId!);
+
+      // If this is a new conversation (first message), clear the selected conversation in sidebar
+      // This ensures the "Chatbot" button will go to a fresh chat instead of the current one
+      if (_messages.length == 2) {
+        // First user message + first AI response
+        // We need to access the sidebar cubit to clear the selection
+        // This will be handled by the parent widget that contains both sidebar and chatbot
+      }
     } catch (error) {
       setState(() {
         _isAiTyping = false;
