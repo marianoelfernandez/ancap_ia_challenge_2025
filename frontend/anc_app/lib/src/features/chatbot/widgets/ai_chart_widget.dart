@@ -1,10 +1,10 @@
 import "dart:convert";
-import "dart:math"; // Import dart:math for log
+import "dart:math"; // Import dart:math for log and pow
 
 import "package:flutter/material.dart";
 import "package:fl_chart/fl_chart.dart";
 
-final Color _glassBackground = Colors.white.withValues(alpha: 0.03);
+final Color _glassBackground = Colors.white.withAlpha(0x03);
 
 /// A widget that parses a specific JSON structure from an AI response
 /// and displays the categorical data as a bar chart.
@@ -213,57 +213,68 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
     );
   }
 
-  /// Builds the main BarChart widget.
+  /// Builds the main BarChart widget with improved grid sizing.
   Widget _buildChart() {
     final List<String> labels = _dataValues.keys.toList();
 
-    // Get the maximum original value for the chart's reference
     final double maxOriginalVal = _dataValues.values
         .fold(0.0, (prev, element) => element > prev ? element : prev);
+    final double minOriginalVal = _dataValues.values.isEmpty
+        ? 0.0
+        : _dataValues.values.fold(
+            double.infinity,
+            (prev, element) => element < prev ? element : prev,
+          );
 
-    // If all values are 0 or less, we can't use log scale meaningfully.
-    // Revert to linear or show placeholder.
-    if (maxOriginalVal <= 1) {
-      return _buildLinearChart(); // Fallback to a linear chart or placeholder
+    // Improved logarithmic scale detection
+    bool useLogScale = _shouldUseLogScale(minOriginalVal, maxOriginalVal);
+
+    if (useLogScale) {
+      return _buildLogarithmicChart(labels, minOriginalVal, maxOriginalVal);
+    } else {
+      return _buildLinearChart(labels, minOriginalVal, maxOriginalVal);
     }
+  }
 
-    // Transform values to log scale
+  /// Determines if logarithmic scale should be used based on data characteristics
+  bool _shouldUseLogScale(double minVal, double maxVal) {
+    // Don't use log scale if we have non-positive values
+    if (minVal <= 0) return false;
+
+    // Don't use log scale if all values are the same
+    if (maxVal == minVal) return false;
+
+    // Use log scale if the ratio is large (indicating wide range)
+    double ratio = maxVal / minVal;
+
+    // Enhanced criteria for log scale:
+    // 1. Large ratio (>100) suggests log scale benefits
+    // 2. Max value is very large (>1M) and min is small (<1K)
+    // 3. Data spans multiple orders of magnitude
+    return ratio > 100 ||
+        (maxVal > 1000000 && minVal < 1000) ||
+        (log10(maxVal) - log10(minVal) > 3);
+  }
+
+  /// Builds a logarithmic scale chart
+  Widget _buildLogarithmicChart(
+      List<String> labels, double minVal, double maxVal,) {
+    // Generate logarithmic grid values
+    final gridValues = _generateLogGridValues(minVal, maxVal);
+
+    // Map original data values to their logged counterparts for bar heights
     final Map<String, double> loggedDataValues = _dataValues.map((key, value) {
-      return MapEntry(key, log(max(1.0, value)));
+      return MapEntry(key, log10(max(1.0, value)));
     });
 
-    // Calculate maxY based on logged values
-    final double maxLoggedVal = loggedDataValues.values
-        .fold(0.0, (prev, element) => element > prev ? element : prev);
+    // Calculate chart bounds
+    double minY = log10(max(1.0, minVal));
+    double maxY = log10(max(1.0, maxVal * 1.2)); // Add 20% padding
 
-    // Determine the "nice" unlogged values for Y-axis labels
-    List<double> yAxisLabelValues = [];
-    double currentPowerOfTen = 1.0;
-    while (currentPowerOfTen < maxOriginalVal * 1.5) {
-      yAxisLabelValues.add(currentPowerOfTen);
-      currentPowerOfTen *= 10;
-      if (currentPowerOfTen == 0) break;
+    // Ensure we have at least some range
+    if (maxY - minY < 1) {
+      maxY = minY + 2;
     }
-
-    List<double> denseLabels = [];
-    for (int i = 0; i < yAxisLabelValues.length - 1; i++) {
-      denseLabels.add(yAxisLabelValues[i]);
-      double nextVal = yAxisLabelValues[i + 1];
-      if (yAxisLabelValues[i] * 2 < nextVal &&
-          yAxisLabelValues[i] * 2 < maxOriginalVal * 1.2) {
-        denseLabels.add(yAxisLabelValues[i] * 2);
-      }
-      if (yAxisLabelValues[i] * 5 < nextVal &&
-          yAxisLabelValues[i] * 5 < maxOriginalVal * 1.2) {
-        denseLabels.add(yAxisLabelValues[i] * 5);
-      }
-    }
-    if (yAxisLabelValues.isNotEmpty) denseLabels.add(yAxisLabelValues.last);
-    yAxisLabelValues = denseLabels.toSet().toList()..sort();
-
-    // NEW: Generate logged values for the labels
-    final List<double> yAxisLabelLoggedValues =
-        yAxisLabelValues.map((val) => log(max(1.0, val))).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -273,7 +284,7 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
           style: TextStyle(
             color: Colors.white,
             fontSize: widget.isFullScreen ? 20 : 16,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w800,
           ),
           textAlign: TextAlign.center,
         ),
@@ -282,7 +293,8 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
           child: BarChart(
             BarChartData(
               alignment: BarChartAlignment.spaceAround,
-              maxY: maxLoggedVal * 1.1,
+              minY: minY,
+              maxY: maxY,
               barTouchData: BarTouchData(
                 touchTooltipData: BarTouchTooltipData(
                   tooltipBgColor: Colors.blueGrey,
@@ -298,7 +310,7 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
                       ),
                       children: <TextSpan>[
                         TextSpan(
-                          text: formatValue(originalValue),
+                          text: _formatValue(originalValue),
                           style: const TextStyle(
                             color: Colors.yellow,
                             fontSize: 14,
@@ -310,110 +322,17 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
                   },
                 ),
               ),
-              titlesData: FlTitlesData(
-                show: true,
-                topTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
-                rightTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
-                bottomTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    reservedSize: widget.isFullScreen ? 60 : 50,
-                    getTitlesWidget: (double value, TitleMeta meta) {
-                      final index = value.toInt();
-                      if (index >= labels.length) return Container();
-                      final text = labels[index];
-                      return SideTitleWidget(
-                        axisSide: meta.axisSide,
-                        space: 4.0,
-                        child: Transform.rotate(
-                          angle: -0.7,
-                          child: Text(
-                            text.length > 15
-                                ? "${text.substring(0, 12)}..."
-                                : text,
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontWeight: FontWeight.bold,
-                              fontSize: widget.isFullScreen ? 12 : 10,
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                leftTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    reservedSize: widget.isFullScreen ? 40 : 36,
-                    getTitlesWidget: (value, meta) {
-                      // Check if the current logged 'value' is close to one of our target logged label values
-                      bool isLabelPosition = yAxisLabelLoggedValues.any(
-                        (labelLoggedVal) =>
-                            (labelLoggedVal - value).abs() < 0.01,
-                      ); // Use a small absolute tolerance for logged values
-
-                      if (!isLabelPosition) return Container();
-
-                      // Find the original unlogged value corresponding to this logged value
-                      // We need to iterate through yAxisLabelValues to find the correct label
-                      double originalLabel = 0.0;
-                      for (int i = 0; i < yAxisLabelValues.length; i++) {
-                        if ((yAxisLabelLoggedValues[i] - value).abs() < 0.01) {
-                          originalLabel = yAxisLabelValues[i];
-                          break;
-                        }
-                      }
-                      if (originalLabel == 0.0)
-                        return Container(); // Should not happen if logic is correct
-
-                      return Text(
-                        formatValue(originalLabel), // Format the original value
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontWeight: FontWeight.bold,
-                          fontSize: widget.isFullScreen ? 12 : 10,
-                        ),
-                        textAlign: TextAlign.left,
-                      );
-                    },
-                  ),
-                ),
-              ),
-              borderData: FlBorderData(
-                show: false,
-              ),
-              gridData: FlGridData(
-                show: true,
-                drawVerticalLine: false,
-                // The horizontalInterval should be very small to ensure getDrawingHorizontalLine is called frequently
-                horizontalInterval: 0.01, // Very small interval
-                getDrawingHorizontalLine: (value) {
-                  // Draw a line only if the current logged 'value' is very close to one of our target logged label values
-                  bool shouldDraw = yAxisLabelLoggedValues.any(
-                    (labelLoggedVal) => (labelLoggedVal - value).abs() < 0.01,
-                  ); // Use a small absolute tolerance
-
-                  return FlLine(
-                    color: shouldDraw
-                        ? const Color(0xff37434d)
-                        : Colors.transparent,
-                    strokeWidth: 1,
-                  );
-                },
-              ),
+              titlesData: _buildLogTitlesData(labels, gridValues),
+              borderData: FlBorderData(show: false),
+              gridData: _buildLogGridData(gridValues),
               barGroups: List.generate(_dataValues.length, (index) {
                 final originalVal = _dataValues[labels[index]]!;
                 return BarChartGroupData(
                   x: index,
                   barRods: [
                     BarChartRodData(
-                      toY: log(max(1.0, originalVal)),
-                      color: Colors.tealAccent,
+                      toY: log10(max(1.0, originalVal)),
+                      color: const Color.fromARGB(255, 199, 7, 135),
                       width: widget.isFullScreen ? 20 : 12,
                       borderRadius:
                           BorderRadius.circular(widget.isFullScreen ? 5 : 3),
@@ -428,25 +347,13 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
     );
   }
 
-  // Helper function to format large numbers with K, M, B suffixes
-  String formatValue(double value) {
-    if (value >= 1000000000) {
-      return "${(value / 1000000000).toStringAsFixed(1)}B";
-    } else if (value >= 1000000) {
-      return "${(value / 1000000).toStringAsFixed(1)}M";
-    } else if (value >= 1000) {
-      return "${(value / 1000).toStringAsFixed(1)}K";
-    } else if (value % 1 == 0) {
-      return value.toInt().toString();
-    }
-    return value.toStringAsFixed(1);
-  }
+  /// Builds a linear scale chart
+  Widget _buildLinearChart(List<String> labels, double minVal, double maxVal) {
+    // Generate linear grid values
+    final gridValues = _generateLinearGridValues(minVal, maxVal);
 
-  // Fallback linear chart for cases where log scale isn't suitable (e.g., all values <= 1)
-  Widget _buildLinearChart() {
-    final List<String> labels = _dataValues.keys.toList();
-    final double maxVal = _dataValues.values
-        .fold(0.0, (prev, element) => element > prev ? element : prev);
+    double chartMaxY = gridValues.isNotEmpty ? gridValues.last : maxVal * 1.2;
+    double interval = _calculateLinearInterval(maxVal);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -465,7 +372,8 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
           child: BarChart(
             BarChartData(
               alignment: BarChartAlignment.spaceAround,
-              maxY: maxVal * 1.2,
+              minY: 0,
+              maxY: chartMaxY,
               barTouchData: BarTouchData(
                 touchTooltipData: BarTouchTooltipData(
                   tooltipBgColor: Colors.blueGrey,
@@ -480,7 +388,7 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
                       ),
                       children: <TextSpan>[
                         TextSpan(
-                          text: formatValue(rod.toY - 0),
+                          text: _formatValue(rod.toY),
                           style: const TextStyle(
                             color: Colors.yellow,
                             fontSize: 14,
@@ -492,82 +400,16 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
                   },
                 ),
               ),
-              titlesData: FlTitlesData(
-                show: true,
-                topTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
-                rightTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
-                bottomTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    reservedSize: widget.isFullScreen ? 60 : 50,
-                    getTitlesWidget: (double value, TitleMeta meta) {
-                      final index = value.toInt();
-                      if (index >= labels.length) return Container();
-                      final text = labels[index];
-                      return SideTitleWidget(
-                        axisSide: meta.axisSide,
-                        space: 4.0,
-                        child: Transform.rotate(
-                          angle: -0.7,
-                          child: Text(
-                            text.length > 15
-                                ? "${text.substring(0, 12)}..."
-                                : text,
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontWeight: FontWeight.bold,
-                              fontSize: widget.isFullScreen ? 12 : 10,
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                leftTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    reservedSize: widget.isFullScreen ? 40 : 36,
-                    getTitlesWidget: (value, meta) {
-                      if (value <= 0) return Container();
-                      return Text(
-                        formatValue(value),
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontWeight: FontWeight.bold,
-                          fontSize: widget.isFullScreen ? 12 : 10,
-                        ),
-                        textAlign: TextAlign.left,
-                      );
-                    },
-                  ),
-                ),
-              ),
-              borderData: FlBorderData(
-                show: false,
-              ),
-              gridData: FlGridData(
-                show: true,
-                drawVerticalLine: false,
-                horizontalInterval: maxVal / 5,
-                getDrawingHorizontalLine: (value) {
-                  return const FlLine(
-                    color: Color(0xff37434d),
-                    strokeWidth: 1,
-                  );
-                },
-              ),
+              titlesData: _buildLinearTitlesData(labels, gridValues),
+              borderData: FlBorderData(show: false),
+              gridData: _buildLinearGridData(gridValues, interval),
               barGroups: List.generate(_dataValues.length, (index) {
                 return BarChartGroupData(
                   x: index,
                   barRods: [
                     BarChartRodData(
                       toY: _dataValues[labels[index]]!,
-                      color: Colors.tealAccent,
+                      color: const Color.fromARGB(255, 199, 7, 135),
                       width: widget.isFullScreen ? 20 : 12,
                       borderRadius:
                           BorderRadius.circular(widget.isFullScreen ? 5 : 3),
@@ -581,6 +423,275 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
       ],
     );
   }
+
+  /// Generates appropriate grid values for logarithmic scale
+  List<double> _generateLogGridValues(double minVal, double maxVal) {
+    List<double> values = [];
+
+    // Start from the first power of 10 at or below minVal
+    double startPower = (log10(max(1.0, minVal))).floorToDouble();
+    double endPower = (log10(max(1.0, maxVal))).ceilToDouble() + 1;
+
+    for (double power = startPower; power <= endPower; power++) {
+      double baseValue = pow(10, power).toDouble();
+
+      // Add major grid lines (powers of 10)
+      if (baseValue >= minVal * 0.1 && baseValue <= maxVal * 2) {
+        values.add(baseValue);
+      }
+
+      // Add intermediate values for better granularity
+      if (power < endPower) {
+        for (int multiplier in [2, 5]) {
+          double intermediate = baseValue * multiplier;
+          if (intermediate >= minVal * 0.1 && intermediate <= maxVal * 2) {
+            values.add(intermediate);
+          }
+        }
+      }
+    }
+
+    // Ensure minimum sensible values
+    if (values.isEmpty || values.first > 1) {
+      values.insert(0, 1.0);
+    }
+
+    return values.toSet().toList()..sort();
+  }
+
+  /// Generates appropriate grid values for linear scale
+  List<double> _generateLinearGridValues(double minVal, double maxVal) {
+    if (maxVal <= 0) return [0, 1, 2, 5, 10];
+
+    double interval = _calculateLinearInterval(maxVal);
+    List<double> values = [];
+
+    double current = 0;
+    while (current <= maxVal * 1.2) {
+      values.add(current);
+      current += interval;
+    }
+
+    return values;
+  }
+
+  /// Calculates an appropriate interval for linear scale
+  double _calculateLinearInterval(double maxVal) {
+    if (maxVal <= 0) return 1.0;
+
+    // Target 5-8 grid lines
+    double roughInterval = maxVal / 6;
+
+    // Find the appropriate power of 10
+    double power = pow(10, (log10(roughInterval)).floorToDouble()).toDouble();
+
+    // Choose nice interval (1, 2, 5, or 10 times the power)
+    if (roughInterval <= power) {
+      return power;
+    } else if (roughInterval <= power * 2) {
+      return power * 2;
+    } else if (roughInterval <= power * 5) {
+      return power * 5;
+    } else {
+      return power * 10;
+    }
+  }
+
+  /// Builds titles data for logarithmic chart
+  FlTitlesData _buildLogTitlesData(
+      List<String> labels, List<double> gridValues,) {
+    return FlTitlesData(
+      show: true,
+      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+      bottomTitles: AxisTitles(
+        sideTitles: SideTitles(
+          showTitles: true,
+          reservedSize: widget.isFullScreen ? 60 : 50,
+          getTitlesWidget: (double value, TitleMeta meta) {
+            final index = value.toInt();
+            if (index >= labels.length) return Container();
+            final text = labels[index];
+            return SideTitleWidget(
+              axisSide: meta.axisSide,
+              space: 4.0,
+              child: Transform.rotate(
+                angle: -0.7,
+                child: Text(
+                  text.length > 15 ? "${text.substring(0, 12)}..." : text,
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w700,
+                    fontSize: widget.isFullScreen ? 12 : 10,
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+      leftTitles: AxisTitles(
+        sideTitles: SideTitles(
+          showTitles: true,
+          reservedSize: widget.isFullScreen ? 50 : 40,
+          getTitlesWidget: (value, meta) {
+            // Find corresponding original value for this log position
+            double originalValue = pow(10, value).toDouble();
+
+            // Only show labels for our predefined grid values
+            bool shouldShow = gridValues
+                .any((gridVal) => (log10(gridVal) - value).abs() < 0.01);
+
+            if (!shouldShow) return Container();
+
+            return Text(
+              _formatValue(originalValue),
+              style: TextStyle(
+                color: Colors.white70,
+                fontWeight: FontWeight.w700,
+                fontSize: widget.isFullScreen ? 11 : 9,
+              ),
+              textAlign: TextAlign.right,
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  /// Builds titles data for linear chart
+  FlTitlesData _buildLinearTitlesData(
+      List<String> labels, List<double> gridValues,) {
+    return FlTitlesData(
+      show: true,
+      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+      bottomTitles: AxisTitles(
+        sideTitles: SideTitles(
+          showTitles: true,
+          reservedSize: widget.isFullScreen ? 60 : 50,
+          getTitlesWidget: (double value, TitleMeta meta) {
+            final index = value.toInt();
+            if (index >= labels.length) return Container();
+            final text = labels[index];
+            return SideTitleWidget(
+              axisSide: meta.axisSide,
+              space: 4.0,
+              child: Transform.rotate(
+                angle: -0.7,
+                child: Text(
+                  text.length > 15 ? "${text.substring(0, 12)}..." : text,
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w700,
+                    fontSize: widget.isFullScreen ? 12 : 10,
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+      leftTitles: AxisTitles(
+        sideTitles: SideTitles(
+          showTitles: true,
+          reservedSize: widget.isFullScreen ? 50 : 40,
+          getTitlesWidget: (value, meta) {
+            // Only show labels for our predefined grid values
+            bool shouldShow =
+                gridValues.any((gridVal) => (gridVal - value).abs() < 0.01);
+            if (!shouldShow) return Container();
+
+            return Text(
+              _formatValue(value),
+              style: TextStyle(
+                color: Colors.white70,
+                fontWeight: FontWeight.w700,
+                fontSize: widget.isFullScreen ? 11 : 9,
+              ),
+              textAlign: TextAlign.right,
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  /// Builds grid data for logarithmic chart
+  FlGridData _buildLogGridData(List<double> gridValues) {
+    return FlGridData(
+      show: true,
+      drawVerticalLine: false,
+      horizontalInterval: 0.01, // Very small interval for precise control
+      getDrawingHorizontalLine: (value) {
+        // Only draw lines for our predefined log grid values
+        bool shouldDraw =
+            gridValues.any((gridVal) => (log10(gridVal) - value).abs() < 0.01);
+
+        return FlLine(
+          color: shouldDraw ? const Color(0xff37434d) : Colors.transparent,
+          strokeWidth: 1,
+        );
+      },
+    );
+  }
+
+  /// Builds grid data for linear chart
+  FlGridData _buildLinearGridData(List<double> gridValues, double interval) {
+    return FlGridData(
+      show: true,
+      drawVerticalLine: false,
+      horizontalInterval: interval,
+      getDrawingHorizontalLine: (value) {
+        // Only draw lines for our predefined grid values
+        bool shouldDraw =
+            gridValues.any((gridVal) => (gridVal - value).abs() < 0.01);
+
+        return FlLine(
+          color: shouldDraw ? const Color(0xff37434d) : Colors.transparent,
+          strokeWidth: 1,
+        );
+      },
+    );
+  }
+
+  /// Enhanced value formatting for wide range of values
+  String _formatValue(double value) {
+    if (value == 0) return "0";
+
+    // Handle very small decimal values
+    if (value.abs() < 1) {
+      if (value.abs() >= 0.01) {
+        return value.toStringAsFixed(2);
+      } else if (value.abs() >= 0.001) {
+        return value.toStringAsFixed(3);
+      } else {
+        // Use scientific notation for very small values
+        return value.toStringAsExponential(1);
+      }
+    }
+
+    // Handle large values with suffixes
+    if (value.abs() >= 1000000000000) {
+      return "${(value / 1000000000000).toStringAsFixed(1)}T";
+    } else if (value.abs() >= 1000000000) {
+      return "${(value / 1000000000).toStringAsFixed(1)}B";
+    } else if (value.abs() >= 1000000) {
+      return "${(value / 1000000).toStringAsFixed(1)}M";
+    } else if (value.abs() >= 1000) {
+      return "${(value / 1000).toStringAsFixed(1)}K";
+    }
+
+    // Handle medium values
+    if (value % 1 == 0) {
+      return value.toInt().toString();
+    } else {
+      return value.toStringAsFixed(1);
+    }
+  }
+
+  /// Helper function for log base 10
+  double log10(double value) => log(value) / ln10;
 }
 
 /// A dedicated page to display the chart in full screen.
