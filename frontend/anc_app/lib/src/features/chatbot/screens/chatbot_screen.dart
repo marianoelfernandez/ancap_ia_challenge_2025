@@ -240,9 +240,9 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
   Widget _buildAppBar() {
     return _buildGlassEffectContainer(
-      margin: const EdgeInsets.all(0),
+      margin: const EdgeInsets.only(left: 24, right: 24 , top: 24),
       padding: const EdgeInsets.all(24.0),
-      borderRadius: 0,
+      borderRadius: 8,
       child: Container(
         decoration: BoxDecoration(
           border:
@@ -535,7 +535,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
   Widget _buildInputArea() {
     return _buildGlassEffectContainer(
-      margin: const EdgeInsets.all(24),
+      margin: const EdgeInsets.only(left: 24, right: 24, bottom: 24),
       padding: const EdgeInsets.all(12.0),
       borderRadius: 8,
       child: Container(
