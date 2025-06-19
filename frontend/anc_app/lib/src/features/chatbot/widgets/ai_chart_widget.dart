@@ -4,6 +4,8 @@ import "dart:math"; // Import dart:math for log
 import "package:flutter/material.dart";
 import "package:fl_chart/fl_chart.dart";
 
+final Color _glassBackground = Colors.white.withValues(alpha: 0.03);
+
 /// A widget that parses a specific JSON structure from an AI response
 /// and displays the categorical data as a bar chart.
 ///
@@ -179,18 +181,7 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
           child: SizedBox(
             // Use SizedBox to control initial height
             height: chartHeight,
-            child: Card(
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              color: const Color(0xff2c4260),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 16, 12, 12),
-                child:
-                    _dataValues.isEmpty ? _buildPlaceholder() : _buildChart(),
-              ),
-            ),
+            child: _dataValues.isEmpty ? _buildPlaceholder() : _buildChart(),
           ),
         ),
       ),
@@ -203,10 +194,10 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.error_outline, color: Colors.white54, size: 48),
+          Icon(Icons.warning_rounded, color: Colors.white70, size: 48),
           SizedBox(height: 16),
           Text(
-            "No data to display.", // Placeholder title simplified
+            "No hay datos para mostrar", // Placeholder title simplified
             style: TextStyle(
               color: Colors.white,
               fontSize: 18,
@@ -214,7 +205,7 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
             ),
           ),
           Text(
-            "Check the query or data source.",
+            "Por favor, vuelva a consultar el chat",
             style: TextStyle(color: Colors.white70),
           ),
         ],
