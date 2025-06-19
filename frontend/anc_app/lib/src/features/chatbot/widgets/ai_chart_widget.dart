@@ -4,7 +4,7 @@ import "dart:math"; // Import dart:math for log and pow
 import "package:flutter/material.dart";
 import "package:fl_chart/fl_chart.dart";
 
-final Color _glassBackground = Colors.white.withAlpha(0x03);
+const Color _ancapYellow = Color(0xFFFFC107);
 
 /// A widget that parses a specific JSON structure from an AI response
 /// and displays the categorical data as a bar chart.
@@ -258,14 +258,12 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
 
   /// Builds a logarithmic scale chart
   Widget _buildLogarithmicChart(
-      List<String> labels, double minVal, double maxVal,) {
+    List<String> labels,
+    double minVal,
+    double maxVal,
+  ) {
     // Generate logarithmic grid values
     final gridValues = _generateLogGridValues(minVal, maxVal);
-
-    // Map original data values to their logged counterparts for bar heights
-    final Map<String, double> loggedDataValues = _dataValues.map((key, value) {
-      return MapEntry(key, log10(max(1.0, value)));
-    });
 
     // Calculate chart bounds
     double minY = log10(max(1.0, minVal));
@@ -324,7 +322,7 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
               ),
               titlesData: _buildLogTitlesData(labels, gridValues),
               borderData: FlBorderData(show: false),
-              gridData: _buildLogGridData(gridValues),
+              gridData: _buildGridData(gridValues, null),
               barGroups: List.generate(_dataValues.length, (index) {
                 final originalVal = _dataValues[labels[index]]!;
                 return BarChartGroupData(
@@ -332,7 +330,7 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
                   barRods: [
                     BarChartRodData(
                       toY: log10(max(1.0, originalVal)),
-                      color: const Color.fromARGB(255, 199, 7, 135),
+                      color: const Color.fromARGB(255, 26, 184, 23),
                       width: widget.isFullScreen ? 20 : 12,
                       borderRadius:
                           BorderRadius.circular(widget.isFullScreen ? 5 : 3),
@@ -402,7 +400,7 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
               ),
               titlesData: _buildLinearTitlesData(labels, gridValues),
               borderData: FlBorderData(show: false),
-              gridData: _buildLinearGridData(gridValues, interval),
+              gridData: _buildGridData(gridValues, interval),
               barGroups: List.generate(_dataValues.length, (index) {
                 return BarChartGroupData(
                   x: index,
@@ -499,7 +497,9 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
 
   /// Builds titles data for logarithmic chart
   FlTitlesData _buildLogTitlesData(
-      List<String> labels, List<double> gridValues,) {
+    List<String> labels,
+    List<double> gridValues,
+  ) {
     return FlTitlesData(
       show: true,
       topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
@@ -515,15 +515,12 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
             return SideTitleWidget(
               axisSide: meta.axisSide,
               space: 4.0,
-              child: Transform.rotate(
-                angle: -0.7,
-                child: Text(
-                  text.length > 15 ? "${text.substring(0, 12)}..." : text,
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontWeight: FontWeight.w700,
-                    fontSize: widget.isFullScreen ? 12 : 10,
-                  ),
+              child: Text(
+                text.length > 15 ? "${text.substring(0, 16)}..." : text,
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontWeight: FontWeight.w700,
+                  fontSize: widget.isFullScreen ? 12 : 10,
                 ),
               ),
             );
@@ -561,7 +558,9 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
 
   /// Builds titles data for linear chart
   FlTitlesData _buildLinearTitlesData(
-      List<String> labels, List<double> gridValues,) {
+    List<String> labels,
+    List<double> gridValues,
+  ) {
     return FlTitlesData(
       show: true,
       topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
@@ -577,15 +576,12 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
             return SideTitleWidget(
               axisSide: meta.axisSide,
               space: 4.0,
-              child: Transform.rotate(
-                angle: -0.7,
-                child: Text(
-                  text.length > 15 ? "${text.substring(0, 12)}..." : text,
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontWeight: FontWeight.w700,
-                    fontSize: widget.isFullScreen ? 12 : 10,
-                  ),
+              child: Text(
+                text.length > 15 ? "${text.substring(0, 16)}..." : text,
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontWeight: FontWeight.w700,
+                  fontSize: widget.isFullScreen ? 12 : 10,
                 ),
               ),
             );
@@ -617,35 +613,26 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
     );
   }
 
-  /// Builds grid data for logarithmic chart
-  FlGridData _buildLogGridData(List<double> gridValues) {
+  /// Builds grid data for both logarithmic and linear charts
+  FlGridData _buildGridData(List<double> gridValues, double? interval) {
+    // Use 0.01 as default interval for logarithmic charts or when not provided
+    final double gridInterval = interval ?? 0.01;
+
     return FlGridData(
       show: true,
       drawVerticalLine: false,
-      horizontalInterval: 0.01, // Very small interval for precise control
+      horizontalInterval: gridInterval,
       getDrawingHorizontalLine: (value) {
-        // Only draw lines for our predefined log grid values
-        bool shouldDraw =
-            gridValues.any((gridVal) => (log10(gridVal) - value).abs() < 0.01);
-
-        return FlLine(
-          color: shouldDraw ? const Color(0xff37434d) : Colors.transparent,
-          strokeWidth: 1,
-        );
-      },
-    );
-  }
-
-  /// Builds grid data for linear chart
-  FlGridData _buildLinearGridData(List<double> gridValues, double interval) {
-    return FlGridData(
-      show: true,
-      drawVerticalLine: false,
-      horizontalInterval: interval,
-      getDrawingHorizontalLine: (value) {
-        // Only draw lines for our predefined grid values
-        bool shouldDraw =
-            gridValues.any((gridVal) => (gridVal - value).abs() < 0.01);
+        bool shouldDraw = gridValues.any((gridVal) {
+          // For logarithmic scale, compare log values; for linear, compare direct values
+          if (interval == null) {
+            // Logarithmic mode (interval not provided)
+            return (log10(gridVal) - value).abs() < 0.01;
+          } else {
+            // Linear mode (interval provided)
+            return (gridVal - value).abs() < 0.01;
+          }
+        });
 
         return FlLine(
           color: shouldDraw ? const Color(0xff37434d) : Colors.transparent,
