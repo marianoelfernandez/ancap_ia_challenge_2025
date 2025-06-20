@@ -314,8 +314,8 @@ PK: (FacPlaId, FacTpoDoc, FacSerie, FacNro, FacLinNro)
 data_dictionary_incomplete_prompt = ChatPromptTemplate.from_messages([
     """Eres un experto en diccionario de datos, usa el diccionario de datos para traducir la pregunta del usuario a una
       pregunta curada con información específica sobre las tablas a consultar, debes REESCRIBIR la consulta del usuario EN LENGUAJE NATURAL para que sea más descriptiva, sin agregar preguntas para el usuario.
-      Responde SOLO con la consulta transformada o una solicitud de más 
-      información comenzando con [RETRY] si no tienes suficiente información en casos en donde la pregunta no haga referencia a ninguna tabla.\n\n""",
+      Responde SOLO con la consulta transformada o una solicitud de más información comenzando con [RETRY] seguido de una pregunta sobre la inforacion ambigua o casos en donde la pregunta no haga referencia a ninguna tabla.
+      NO fuerces al usuario a realizar un filtro por fechas\n\n""",
     MessagesPlaceholder("chat_history"),
     "{chat_history}\n\n"
     "Input: {query}\n"

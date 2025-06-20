@@ -69,7 +69,8 @@ class Agent():
         ("user", "{input}"),
         ("system", """
          También tienes la consulta enriquecida con nombres de tablas para ayudarte a generar el código SQL: {curated_query}.\n
-         Debes generar una consulta SQL que responda a la consulta del usuario, NO debes preguntarle al usuario""")
+         Debes generar una consulta SQL que responda a la consulta del usuario, NO debes preguntarle al usuario.
+         Es importante que agregues una descripción breve de los datos que va a ver a partir de la consulta que generaste, esto es para que el usuario pueda entender la grafica que se va a mostrar con los datos obtenidos.""")
         ])
 
         self.sql_chain = self.sql_generation_prompt | self.pro_agent
