@@ -1,7 +1,6 @@
 
 import os
 from dotenv import find_dotenv, load_dotenv
-import openai
 
 
 class Settings:
@@ -20,6 +19,7 @@ class Settings:
         self.api_key = os.environ['GEMINI_API_KEY']
         self.mcp_server_uri = os.environ.get('MCP_SERVER_URI')
         self.pocketbase_url = os.environ.get('POCKETBASE_URL')
+        self.local = os.environ.get('LOCAL', 'false').lower() == 'true'
         self.schema = None
 
     def get_schema(self):

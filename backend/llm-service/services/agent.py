@@ -191,7 +191,6 @@ class Agent():
 
                 return state
             except Exception as e:
-                state["input"] = state.get("input", "") + "Hubo un error en la anterior consulta, regenera una consulta SQL:"
                 state["SQL_retries"] -= 1
                 return {**state, "output": f"[Error al ejecutar SQL] {e}"}
 
@@ -221,11 +220,6 @@ class Agent():
             "detect_type",
             lambda s: "query_translator" if s["is_sql"] else "general_llm",
         )
-        builder.add_conditional_edges(
-            "query_translator",
-            lambda s: "execute_sql" if not s["needs_more_info"] else "respond_with_retry",
-        )
-
         builder.add_conditional_edges("query_translator", route_from_query_translator)
         builder.set_finish_point("respond_with_retry")
         builder.add_edge("prepare_sql", "execute_sql")
@@ -278,6 +272,8 @@ class UtilitiesAgent():
         self.schema_formatting_chain = schema_formatting_prompt | self.llm
 
     async def parse_schema(self):
+      if settings.local:
+          return schema_constant
       try:
           schema_json: str = json.dumps(await schema_client.get_schemas(), indent=2)
           response = self.schema_formatting_chain.invoke({
