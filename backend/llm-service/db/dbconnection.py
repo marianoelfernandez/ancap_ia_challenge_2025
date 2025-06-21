@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 class PocketBaseClient:
     _instance = None
     _lock = Lock()
-    settings = Settings()
+    settings = Settings.get_settings()
     client: PocketBase
     def __new__(cls, url=settings.pocketbase_url):
         with cls._lock:

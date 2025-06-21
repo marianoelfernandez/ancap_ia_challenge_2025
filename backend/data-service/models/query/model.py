@@ -78,3 +78,14 @@ class QueryEmbeddingRequest(BaseModel):
 class CacheInput(BaseModel):
     query_text: str
     sql_query: str
+class ColumnSchema(BaseModel):
+    name: str
+    type: str
+
+class TableSchema(BaseModel):
+    table_id: str
+    schema: List[ColumnSchema]
+
+class DatasetSchema(BaseModel):
+    dataset_id: str
+    tables: List[TableSchema]

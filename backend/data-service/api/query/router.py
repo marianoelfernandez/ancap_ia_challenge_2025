@@ -1,15 +1,13 @@
-from typing import Dict
-from fastapi import APIRouter, Body, Depends, Request, HTTPException
+from typing import List
+from fastapi import APIRouter, Depends, Request
 from datetime import datetime
 import logging
 
 from services.bigquery_service import BigQueryService
 from services.data_service import DataService
-from models.query.model import CacheInput, SQLQueryRequest, SQLQueryResponse, QueryStatus, QueryMetadata, ValidateQueryResponse, QueryEmbeddingRequest
+from models.query.model import SQLQueryRequest, SQLQueryResponse, QueryStatus, QueryMetadata, ValidateQueryResponse, DatasetSchema
 from models.data.model import FlChartType
-from utils.cache_connection import retrieve_query
 from utils.text_parser import extract_sql_from_text
-from utils.cache_connection import save_query, retrieve_query
 
 router = APIRouter(
     tags=["query"]
@@ -119,64 +117,12 @@ async def validate_sql_query(
             status=QueryStatus.ERROR,
             error_message=str(e)
         )
-    
 
-@router.post("/embeddings")
-async def save_query_endpoint(
-    input: CacheInput,
-    clients: Dict = Depends(get_clients)
-):
-    """Save a new query to the cache."""
-    try:
-   
-        query_id = save_query(input.query_text, input.sql_query)
-        
-        return {
-            "id": query_id,
-            "message": "Query saved successfully"
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
-@router.post("/embeddings/search")
-async def search_queries_endpoint(
-    query_text: str,
-    num_results: int = 5,
-    clients: Dict = Depends(get_clients)
-):
-    """Search for similar queries in the cache."""
-    try:
-
-        results = retrieve_query(query_text, num_results)
-        
-        return {
-            "results": results,
-            "query_text": query_text,
-            "total_results": len(results) if results else 0
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.post("/embeddings/batch_update")
-async def trigger_batch_update_endpoint(
-    clients: Dict = Depends(get_clients)
-):
-    """Trigger batch update of the vector search index."""
-    try:
-
-        
-        #delta_uri = trigger_batch_index_update()
-        delta_uri = "placeholder"
-        if delta_uri:
-            return {
-                "status": "success",
-                "delta_uri": delta_uri,
-                "message": "Batch update triggered successfully"
-            }
-        else:
-            return {
-                "status": "no_update",
-                "message": "No updates needed"
-            }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+@router.get("/schemas", response_model=List[DatasetSchema])
+async def get_bigquery_schemas(
+    bigquery_service: BigQueryService = Depends(BigQueryService)
+) -> List[DatasetSchema]:
+    """
+    Get all BigQuery schemas
+    """
+    return await bigquery_service.get_schemas()

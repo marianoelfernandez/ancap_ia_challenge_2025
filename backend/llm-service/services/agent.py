@@ -6,12 +6,14 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from utils.connection import call_server, get_cached_query, save_query_to_cache
 from utils.settings import Settings
 from typing import TypedDict, Optional
-from utils.constants import schema_constant, intent_prompt, data_dictionary_prompt
+from utils.constants import schema_constant, intent_prompt, data_dictionary_prompt, schema_formatting_prompt
 from db.dbconnection import check_or_generate_conversation_id, save_query, build_memory_of_conversation
 from utils.auth import permissions_check
 from utils.transformers import extract_sql_and_message
+from services.schema_client import schema_client
+import json
 
-settings = Settings()
+settings = Settings.get_settings()
 
 class AgentState(TypedDict):
     input: str
@@ -79,6 +81,7 @@ class Agent():
         self.graph = self._build_graph(AgentState)
         self.runnable = self.graph.compile()
 
+
     def _build_graph(self, schema):
         builder = StateGraph(state_schema=schema)
 
@@ -100,8 +103,7 @@ class Agent():
             if "schema" in state:
                 return state 
 
-            schema_str = schema_constant
-            state["schema"] = schema_str
+            state["schema"] = settings.schema
             state["needs_more_info"] = False
             state["tables_used"] = []
             state["SQL_retries"] = 3
@@ -130,14 +132,15 @@ class Agent():
                 )
 
                 response = self.llm.invoke(prompt)
+                content = str(response.content)
 
-                if "[RETRY]" in response.content.strip():
+                if "[RETRY]" in content.strip():
                     state["needs_more_info"] = True
-                    state["output"] = response.content.strip()[7:]
+                    state["output"] = content.strip()[7:]
                     return state
                 else:
                     state["needs_more_info"] = False
-                    state["output"] = response.content.strip()
+                    state["output"] = content.strip()
                     return state
             except Exception as e:
                 return {
@@ -235,7 +238,7 @@ class Agent():
 
         return builder
 
-    def ask_agent(self, query: str, conversation_id: str| None, user_id : str) -> str:
+    def ask_agent(self, query: str, conversation_id: str, user_id : str) -> tuple[str, str]:
             @traceable(name="Agent Graph Run")
             def _run_with_trace(input_query, conv_id):
                 return self.runnable.invoke({"input": input_query, "conversation_id": conv_id})
@@ -259,5 +262,29 @@ class Agent():
                 return result["output"], result["conversation_id"], result.get("tables_used", []), result.get("generated_sql", ""), result.get("agent_response", "")
             except Exception as e:
                 raise e
+
+
+
+class UtilitiesAgent():
+
+    def __init__(self):
+        self.llm = ChatGoogleGenerativeAI(
+            model="gemini-2.5-pro-preview-06-05",
+            temperature=0,
+            google_api_key=settings.api_key
+            )
+        self.schema_formatting_chain = schema_formatting_prompt | self.llm
+
+    def parse_schema(self):
+        try:
+            schema_json: str = json.dumps(schema_client.get_schemas(), indent=2)
+            response = self.schema_formatting_chain.invoke({
+                "schema_json": schema_json,
+                "schema_example": schema_constant
+            })
+            settings.schema = str(response.content)
+            return settings.schema
+        except Exception as e:
+            raise Exception(f"[Error al formatear el esquema] {e}")
             
 

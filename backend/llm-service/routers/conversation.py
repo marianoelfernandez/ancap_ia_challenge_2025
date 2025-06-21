@@ -1,5 +1,5 @@
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi import APIRouter, HTTPException, Header
 from pydantic import ValidationError,BaseModel
 from utils.auth import get_user_id_from_auth
 import logging
