@@ -275,16 +275,18 @@ class UtilitiesAgent():
             )
         self.schema_formatting_chain = schema_formatting_prompt | self.llm
 
-    def parse_schema(self):
-        try:
-            schema_json: str = json.dumps(schema_client.get_schemas(), indent=2)
-            response = self.schema_formatting_chain.invoke({
-                "schema_json": schema_json,
-                "schema_example": schema_constant
-            })
-            settings.schema = str(response.content)
-            return settings.schema
-        except Exception as e:
-            raise Exception(f"[Error al formatear el esquema] {e}")
+    async def parse_schema(self):
+      try:
+          schema_json: str = json.dumps(await schema_client.get_schemas(), indent=2)
+          response = self.schema_formatting_chain.invoke({
+              "schema_json": schema_json,
+              "schema_example": schema_constant
+          })
+          settings.schema = str(response.content)
+          return settings.schema
+      except Exception as e:
+          raise Exception(f"[Error al formatear el esquema] {e}")
+          
+    
             
 
