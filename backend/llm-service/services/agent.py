@@ -98,12 +98,12 @@ class Agent():
                 state["needs_more_info"] = True
                 return state
 
-            
+
         def load_schema_node(state):
             if "schema" in state:
                 return state 
 
-            state["schema"] = settings.schema
+            state["schema"] = settings.get_schema()
             state["needs_more_info"] = False
             state["tables_used"] = []
             state["SQL_retries"] = 3
@@ -215,14 +215,15 @@ class Agent():
         builder.add_node("general_llm", general_llm)
 
         builder.set_entry_point("check_cache")
+        builder.add_edge("check_cache", "load_schema")
         builder.add_edge("load_schema", "detect_type")
         builder.add_conditional_edges(
             "detect_type",
-            lambda s: "check_cache" if s["is_sql"] else "general_llm",
+            lambda s: "query_translator" if s["is_sql"] else "general_llm",
         )
         builder.add_conditional_edges(
-            "check_cache",
-            lambda s: "query_translator" if s["needs_more_info"] else "execute_sql",
+            "query_translator",
+            lambda s: "execute_sql" if not s["needs_more_info"] else "respond_with_retry",
         )
 
         builder.add_conditional_edges("query_translator", route_from_query_translator)
@@ -283,11 +284,11 @@ class UtilitiesAgent():
               "schema_json": schema_json,
               "schema_example": schema_constant
           })
-          settings.schema = str(response.content)
-          return settings.schema
+          
+          return settings.set_schema(str(response.content)) 
       except Exception as e:
           raise Exception(f"[Error al formatear el esquema] {e}")
-          
-    
-            
+
+
+
 

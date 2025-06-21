@@ -22,6 +22,11 @@ class Settings:
         self.pocketbase_url = os.environ.get('POCKETBASE_URL')
         self.schema = None
 
-
+    def get_schema(self):
+        """Get the schema from the environment variable."""
+        return self.schema or ""
             
-        
+    def set_schema(self, schema):
+        """Set the schema to be used."""
+        self.schema = schema
+        return self.schema
