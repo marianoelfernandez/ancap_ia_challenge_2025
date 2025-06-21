@@ -4,6 +4,7 @@ import "dart:ui";
 import "package:anc_app/src/features/auth/cubits/auth_cubit.dart";
 import "package:anc_app/src/features/chatbot/cubit/chatbot_cubit.dart";
 import "package:anc_app/src/features/chatbot/services/chat_service.dart";
+import "package:anc_app/src/features/chatbot/widgets/ai_chart_widget.dart";
 import "package:anc_app/src/features/sidebar/widgets/sidebar.dart";
 import "package:anc_app/src/models/chat_message.dart";
 import "package:anc_app/src/router/router.dart";
@@ -63,10 +64,43 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       _chatbotCubit.selectConversation(widget.initialConversationId!);
       _currentConversationId = widget.initialConversationId;
     } else {
-      _addAiMessage(
-        "Hola! Soy tu asistente de ANCAP. ¿En qué puedo ayudarte?",
-      );
+      // Start fresh chat - clear everything
+      _startFreshChat();
     }
+  }
+
+  @override
+  void didUpdateWidget(ChatbotScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // Check if we switched from a conversation to fresh chat or vice versa
+    if (oldWidget.initialConversationId != widget.initialConversationId) {
+      if (widget.initialConversationId != null) {
+        // Loading a specific conversation
+        _chatbotCubit.selectConversation(widget.initialConversationId!);
+        _currentConversationId = widget.initialConversationId;
+      } else {
+        // Starting fresh chat - clear everything
+        _startFreshChat();
+      }
+    }
+  }
+
+  void _startFreshChat() {
+    setState(() {
+      _messages.clear();
+      _currentConversationId = null;
+      _currentConversationTitle = null;
+      _isAiTyping = false;
+    });
+
+    // Clear the chatbot cubit state
+    _chatbotCubit.clearSelectedConversation();
+
+    // Add the initial AI message
+    _addAiMessage(
+      "Hola! Soy tu asistente de ANCAP. ¿En qué puedo ayudarte?",
+    );
   }
 
   void _sendMessage() async {
@@ -107,6 +141,14 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       });
 
       await _chatbotCubit.selectConversation(_currentConversationId!);
+
+      // If this is a new conversation (first message), clear the selected conversation in sidebar
+      // This ensures the "Chatbot" button will go to a fresh chat instead of the current one
+      if (_messages.length == 2) {
+        // First user message + first AI response
+        // We need to access the sidebar cubit to clear the selection
+        // This will be handled by the parent widget that contains both sidebar and chatbot
+      }
     } catch (error) {
       setState(() {
         _isAiTyping = false;
@@ -198,9 +240,9 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
   Widget _buildAppBar() {
     return _buildGlassEffectContainer(
-      margin: const EdgeInsets.all(0),
+      margin: const EdgeInsets.only(left: 24, right: 24 , top: 24),
       padding: const EdgeInsets.all(24.0),
-      borderRadius: 0,
+      borderRadius: 8,
       child: Container(
         decoration: BoxDecoration(
           border:
@@ -381,57 +423,64 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                               padding: const EdgeInsets.all(
                                 0.1,
                               ),
-                              child: MarkdownBody(
-                                data: message.text,
-                                styleSheet: MarkdownStyleSheet.fromTheme(
-                                  Theme.of(context).copyWith(
-                                    textTheme:
-                                        Theme.of(context).textTheme.apply(
-                                              bodyColor: _foreground,
-                                              displayColor: _foreground,
-                                            ),
-                                  ),
-                                ).copyWith(
-                                  p: GoogleFonts.inter(
-                                    color: _foreground,
-                                    fontSize: 14,
-                                  ),
-                                  code: GoogleFonts.firaCode(
-                                    backgroundColor: Colors.grey[850],
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                  ),
-                                  codeblockPadding: const EdgeInsets.all(8),
-                                  codeblockDecoration: BoxDecoration(
-                                    color: Colors.grey[850],
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  blockquote: GoogleFonts.inter(
-                                    color: _foreground.withOpacity(0.8),
-                                    fontSize: 14,
-                                    fontStyle: FontStyle.italic,
-                                  ),
-                                  h1: GoogleFonts.inter(
-                                    color: _foreground,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  h2: GoogleFonts.inter(
-                                    color: _foreground,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  h3: GoogleFonts.inter(
-                                    color: _foreground,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  listBullet: GoogleFonts.inter(
-                                    color: _foreground,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ),
+                              child: _isChartData(message.text)
+                                  ? AiDataResponseChart(
+                                      jsonString:
+                                          _extractChartData(message.text),
+                                    )
+                                  : MarkdownBody(
+                                      data: message.text,
+                                      styleSheet: MarkdownStyleSheet.fromTheme(
+                                        Theme.of(context).copyWith(
+                                          textTheme:
+                                              Theme.of(context).textTheme.apply(
+                                                    bodyColor: _foreground,
+                                                    displayColor: _foreground,
+                                                  ),
+                                        ),
+                                      ).copyWith(
+                                        p: GoogleFonts.inter(
+                                          color: _foreground,
+                                          fontSize: 14,
+                                        ),
+                                        code: GoogleFonts.firaCode(
+                                          backgroundColor: Colors.grey[850],
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                        ),
+                                        codeblockPadding:
+                                            const EdgeInsets.all(8),
+                                        codeblockDecoration: BoxDecoration(
+                                          color: Colors.grey[850],
+                                          borderRadius:
+                                              BorderRadius.circular(4),
+                                        ),
+                                        blockquote: GoogleFonts.inter(
+                                          color: _foreground.withOpacity(0.8),
+                                          fontSize: 14,
+                                          fontStyle: FontStyle.italic,
+                                        ),
+                                        h1: GoogleFonts.inter(
+                                          color: _foreground,
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        h2: GoogleFonts.inter(
+                                          color: _foreground,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        h3: GoogleFonts.inter(
+                                          color: _foreground,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        listBullet: GoogleFonts.inter(
+                                          color: _foreground,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ),
                             ),
                           ),
                         )
@@ -486,7 +535,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
   Widget _buildInputArea() {
     return _buildGlassEffectContainer(
-      margin: const EdgeInsets.all(24),
+      margin: const EdgeInsets.only(left: 24, right: 24, bottom: 24),
       padding: const EdgeInsets.all(12.0),
       borderRadius: 8,
       child: Container(
@@ -559,6 +608,16 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         ),
       ),
     );
+  }
+
+  bool _isChartData(String text) {
+    // Simple check to determine if the text contains chart data
+    return text.startsWith("{") && text.endsWith("}");
+  }
+
+  String _extractChartData(String text) {
+    // Extract the JSON string for the chart from the text
+    return text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1);
   }
 }
 

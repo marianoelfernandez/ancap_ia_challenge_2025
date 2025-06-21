@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 class PocketBaseClient:
     _instance = None
     _lock = Lock()
-    settings = Settings()
+    settings = Settings.get_settings()
     client: PocketBase
     def __new__(cls, url=settings.pocketbase_url):
         with cls._lock:
@@ -27,7 +27,7 @@ class PocketBaseClient:
         return self.client
 
 
-def save_query(natural_query: str, query: str, response: dict, cost:int, conversation_id:str, queried_tables: list[str]) -> Record:
+def save_query(natural_query: str, query: str, response: dict, cost:int, conversation_id:str, queried_tables: list[str], agent_response: str) -> Record:
     client = PocketBaseClient().get_client()
 
     data = {
@@ -36,7 +36,8 @@ def save_query(natural_query: str, query: str, response: dict, cost:int, convers
         "output": response,
         "cost": cost,
         "conversation_id": conversation_id,
-        "queried_tables": queried_tables
+        "queried_tables": queried_tables,
+        "agent_response": agent_response
     }
 
     try:

@@ -1,5 +1,5 @@
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi import APIRouter, HTTPException, Header
 from pydantic import ValidationError,BaseModel
 from utils.auth import get_user_id_from_auth
 import logging
@@ -29,8 +29,8 @@ def receive_query_endpoint(req:QueryRequest,  authorization: str = Header(...)):
     logger.debug("Received query request")
     try:
         user_id = get_user_id_from_auth(authorization)
-        result, conv_id, tables, sql = agent.ask_agent(req.query, req.conversation_id, user_id)
-        return {"response": result, "conversation_id":conv_id, "tables_used": tables, "sql": sql}
+        result, conv_id, tables, sql, ai_resp = agent.ask_agent(req.query, req.conversation_id, user_id)
+        return {"response": result, "conversation_id":conv_id, "tables_used": tables, "sql": sql, "ai_response": ai_resp}
     except ValidationError as ve:
         logger.warning(f"Validation error: {ve.errors()}")
         raise HTTPException(422, ve.errors())

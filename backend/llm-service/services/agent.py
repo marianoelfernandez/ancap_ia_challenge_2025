@@ -1,6 +1,4 @@
-from pydantic import ValidationError
 from langsmith import traceable
-from langchain_openai import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langgraph.graph import StateGraph, END
@@ -8,11 +6,14 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from utils.connection import call_server, get_cached_query, save_query_to_cache
 from utils.settings import Settings
 from typing import TypedDict, Optional
-from utils.constants import schema_constant, intent_prompt, data_dictionary_prompt
+from utils.constants import schema_constant, intent_prompt, data_dictionary_prompt, schema_formatting_prompt
 from db.dbconnection import check_or_generate_conversation_id, save_query, build_memory_of_conversation
 from utils.auth import permissions_check
+from utils.transformers import extract_sql_and_message
+from services.schema_client import schema_client
+import json
 
-settings = Settings()
+settings = Settings.get_settings()
 
 class AgentState(TypedDict):
     input: str
@@ -26,6 +27,7 @@ class AgentState(TypedDict):
     cost: Optional[float]
     SQL_retries : Optional[int] = 3
     memory: Optional[ConversationBufferMemory]
+    agent_response: Optional[str]
 
 class Agent():
     def __init__(self):
@@ -69,13 +71,16 @@ class Agent():
         ("user", "{input}"),
         ("system", """
          También tienes la consulta enriquecida con nombres de tablas para ayudarte a generar el código SQL: {curated_query}.\n
-         Debes generar una consulta SQL que responda a la consulta del usuario, NO debes preguntarle al usuario""")
+         Debes generar una consulta SQL que responda a la consulta del usuario, NO debes preguntarle al usuario.
+         Tambien es obligatorio que agregues un mensaje **Descripción de los datos:** y a continuacion agregues una descripción breve de los datos que va a poder ver en la grafica. Intenta explicar de forma detallada pero que le permita a una persona sin conocimientos de SQL entender que datos va a ver en la grafica.
+         El contexto de los datos es sobre una refinadora de petroleo ANCAP, suelen trabajar con estos productos: Combustibles, Solventes, Asfaltos, Lubricantes, Alcoholes, Portland y Cal, Propelentes. """)
         ])
 
         self.sql_chain = self.sql_generation_prompt | self.pro_agent
 
         self.graph = self._build_graph(AgentState)
         self.runnable = self.graph.compile()
+
 
     def _build_graph(self, schema):
         builder = StateGraph(state_schema=schema)
@@ -98,8 +103,7 @@ class Agent():
             if "schema" in state:
                 return state 
 
-            schema_str = schema_constant
-            state["schema"] = schema_str
+            state["schema"] = settings.schema
             state["needs_more_info"] = False
             state["tables_used"] = []
             state["SQL_retries"] = 3
@@ -128,14 +132,15 @@ class Agent():
                 )
 
                 response = self.llm.invoke(prompt)
+                content = str(response.content)
 
-                if "[RETRY]" in response.content.strip():
+                if "[RETRY]" in content.strip():
                     state["needs_more_info"] = True
-                    state["output"] = response.content.strip()[7:]
+                    state["output"] = content.strip()[7:]
                     return state
                 else:
                     state["needs_more_info"] = False
-                    state["output"] = response.content.strip()
+                    state["output"] = content.strip()
                     return state
             except Exception as e:
                 return {
@@ -159,8 +164,10 @@ class Agent():
                 print(f"Curated Query: {curated_query}")
                 conversation_id = state.get("conversation_id", None)
                 response = self.sql_chain.invoke({"input": query, "schema": schema, "curated_query": curated_query})
-                generated_sql = response.content.strip()
-                state["generated_sql"] = generated_sql
+                sql, ai_message = extract_sql_and_message(response.content)
+                generated_sql = sql.strip()
+                state["agent_response"] = ai_message.strip()
+                state["generated_sql"] = generated_sql.strip()
                 save_query_to_cache(state["input"], generated_sql)
                 return state
             except Exception as e:
@@ -175,6 +182,8 @@ class Agent():
                 state["tables_used"] = list(dict.fromkeys(tables_used))
                 if not generated_sql:
                     return {**state, "output": "No se generó SQL"}
+                
+                print(f"Generated SQL: {generated_sql}")
                 result = call_server(generated_sql)
                 state["output"] = str(result['response']) if 'response' in result else str(result['error'])
                 state['cost'] = float(result.get('cost', 0.0))
@@ -229,7 +238,7 @@ class Agent():
 
         return builder
 
-    def ask_agent(self, query: str, conversation_id: str| None, user_id : str) -> str:
+    def ask_agent(self, query: str, conversation_id: str, user_id : str) -> tuple[str, str]:
             @traceable(name="Agent Graph Run")
             def _run_with_trace(input_query, conv_id):
                 return self.runnable.invoke({"input": input_query, "conversation_id": conv_id})
@@ -246,11 +255,38 @@ class Agent():
                               result.get("output", ""),
                               result.get("cost", 0),
                               conv_id,
-                              result.get("tables_used", []))
+                              result.get("tables_used", []),
+                              result.get("agent_response", ""))
                 
 
-                return result["output"], result["conversation_id"], result.get("tables_used", []), result.get("generated_sql", None)
+                return result["output"], result["conversation_id"], result.get("tables_used", []), result.get("generated_sql", ""), result.get("agent_response", "")
             except Exception as e:
                 raise e
+
+
+
+class UtilitiesAgent():
+
+    def __init__(self):
+        self.llm = ChatGoogleGenerativeAI(
+            model="gemini-2.5-pro-preview-06-05",
+            temperature=0,
+            google_api_key=settings.api_key
+            )
+        self.schema_formatting_chain = schema_formatting_prompt | self.llm
+
+    async def parse_schema(self):
+      try:
+          schema_json: str = json.dumps(await schema_client.get_schemas(), indent=2)
+          response = self.schema_formatting_chain.invoke({
+              "schema_json": schema_json,
+              "schema_example": schema_constant
+          })
+          settings.schema = str(response.content)
+          return settings.schema
+      except Exception as e:
+          raise Exception(f"[Error al formatear el esquema] {e}")
+          
+    
             
 

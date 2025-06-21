@@ -181,8 +181,9 @@ intent_prompt = ChatPromptTemplate.from_messages([
     ("system", 
      "Dada una pregunta de un usuario, debes identificar si requiere una consulta SQL o solo es una conversación. "
      "Responde SOLO 'SQL' si la intención del usuario es una consulta a base de datos o 'GENERAL'."),
+    ("system", "Usa la siguiente memoria de la conversacion:"), 
     MessagesPlaceholder("chat_history"),
-    ("user", "Input: {query}\nTipo:")
+    ("user", "User: {query}\nTipo:")
 ])
 
 data_dictionary = """
@@ -313,13 +314,12 @@ PK: (FacPlaId, FacTpoDoc, FacSerie, FacNro, FacLinNro)
 """
 data_dictionary_incomplete_prompt = ChatPromptTemplate.from_messages([
     """Eres un experto en diccionario de datos, usa el diccionario de datos para traducir la pregunta del usuario a una
-      pregunta curada con información específica sobre las tablas a consultar, debes REESCRIBIR la consulta del usuario EN LENGUAJE NATURAL para que sea más descriptiva, sin agregar preguntas para el usuario.
-      Responde SOLO con la consulta transformada o una solicitud de más 
-      información comenzando con [RETRY] si no tienes suficiente información en casos en donde la pregunta no haga referencia a ninguna tabla.\n\n""",
-    MessagesPlaceholder("chat_history"),
-    "{chat_history}\n\n"
-    "Input: {query}\n"
-    "Type:"])
+      pregunta curada con información específica sobre las tablas a consultar, generalmente son sobre el sistema de entregas o de facturas. Debes REESCRIBIR la consulta del usuario EN LENGUAJE NATURAL para que sea más descriptiva, sin agregar preguntas para el usuario.
+      Responde SOLO con la consulta transformada o una solicitud de más información comenzando con [RETRY] seguido de una pregunta sobre la inforacion ambigua o casos en donde la pregunta no haga referencia a ninguna tabla.
+      NO fuerces al usuario a realizar un filtro por fechas\n\n""",
+    ("system", "Usa el siguiente diccionario de datos para responder a las preguntas del usuario: {data_dictionary}"),
+    "Este es el historial de mensajes previos:",MessagesPlaceholder("chat_history"),
+    "Input: {query}\n"])
 
 
 data_dictionary_prompt = data_dictionary_incomplete_prompt.partial(data_dictionary=data_dictionary)
@@ -360,3 +360,16 @@ entregas_tables = [
     "DEPARTAMENTOS", # Maestro Departamentos
     "LOCALIDADES"    # Maestro Localidades
 ]
+
+schema_formatting_prompt = ChatPromptTemplate.from_template(
+    """Tu tarea es convertir una representación JSON de un esquema de base de datos en una cadena de texto formateada con sentencias CREATE TABLE de SQL.
+La cadena de texto debe ser clara, legible y estar bien comentada para que un asistente de IA pueda entenderla fácilmente y usarla para generar consultas SQL.
+Asegúrate de que el resultado final sea solo el script SQL, sin ninguna otra explicación o texto introductorio.
+
+Usa el siguiente formato como ejemplo:
+{schema_example}
+
+Ahora, convierte el siguiente esquema JSON:
+{schema_json}
+"""
+)

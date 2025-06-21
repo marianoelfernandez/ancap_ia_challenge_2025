@@ -6,6 +6,7 @@ import "package:flutter_bloc/flutter_bloc.dart";
 import "package:go_router/go_router.dart";
 import "package:google_fonts/google_fonts.dart";
 import "package:anc_app/src/router/router.dart";
+import "package:anc_app/src/router/screen_params.dart";
 import "package:intl/intl.dart";
 
 const Color _ancapYellow = Color(0xFFFFC107);
@@ -263,7 +264,13 @@ Widget _buildNavigationTab({
       color: Colors.transparent,
       child: InkWell(
         onTap: () {
-          context.goNamed(route.name);
+          if (route == AppRoute.chatbot) {
+            // For chatbot route, always clear the selected conversation and go to fresh chat
+            context.read<SidebarCubit>().clearSelectedConversation();
+            context.goToAppRoute(AppRoute.chatbot);
+          } else {
+            context.goNamed(route.name);
+          }
         },
         borderRadius: BorderRadius.circular(8.0),
         hoverColor: _foreground.withValues(alpha: 0.05),
@@ -418,7 +425,22 @@ Widget _buildChatHistoryList() {
                                 color: Colors.transparent,
                                 child: InkWell(
                                   onTap: () {
-                                    // Handle conversation selection
+                                    // Set the selected conversation in the cubit
+                                    context
+                                        .read<SidebarCubit>()
+                                        .setSelectedConversation(
+                                          conversation.id,
+                                        );
+
+                                    // Navigate to chatbot with the conversation ID in the URL
+                                    context.goToAppRoute(
+                                      AppRoute.chatbot,
+                                      queryParams: ChatbotParams(
+                                        conversation: conversation.id,
+                                      ),
+                                    );
+
+                                    // Also call the callback if provided (for internal state management)
                                     final sidebar =
                                         context.findAncestorWidgetOfExactType<
                                             Sidebar>();

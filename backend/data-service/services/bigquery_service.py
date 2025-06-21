@@ -1,20 +1,21 @@
 from google.cloud import bigquery
 from google.cloud.exceptions import BadRequest
-from typing import Dict, Any, Optional
+from typing import Dict, Any, List, Optional
 import logging
 from datetime import datetime
+from itertools import groupby
 from config.settings import get_settings
-from models.query.model import QueryStatus, ValidateQueryResponse
+from models.query.model import QueryStatus, ValidateQueryResponse, DatasetSchema
 
 settings = get_settings()
 
 class BigQueryService:
-    def __init__(self, project_id: str = settings.GCP_DATA_PROJECT_ID):
+    def __init__(self, project_id: str = settings.GCP_DATA_PROJECT_ID, dataset_id: str = settings.GCP_DATA_DATASET_ID):
         """Initialize BigQuery service with project configuration"""
         self.client = bigquery.Client(project=project_id)
         self.project_id = project_id or self.client.project
         self.logger = logging.getLogger(__name__)
-
+        self.dataset_id = dataset_id
         self.logger.info(f"BigQueryService initialized with project_id: {project_id}")
         
     async def execute_query(
@@ -29,7 +30,14 @@ class BigQueryService:
         try:
 
             self.logger.info(f"\nReceived query: {query}\n")
+
+            # before executing the query, check if the query is valid
+            validate_query_response = await self.validate_query(query)
+            if validate_query_response.status != QueryStatus.SUCCESS:
+                raise ValueError(validate_query_response.error_message)
            
+            self.logger.info(f"Query is valid: {validate_query_response}")
+            
             # Configure query job
             job_config = bigquery.QueryJobConfig()
             
@@ -127,6 +135,53 @@ class BigQueryService:
                 status=QueryStatus.INVALID_SQL,
                 error_message=str(e),
             )
+
+    async def get_schemas(self) -> List[DatasetSchema]:
+        """
+        Retrieves all tables and their schemas from a specific BigQuery dataset.
+        """
+        try:
+            self.logger.info(f"Fetching schemas for dataset: {self.dataset_id} in project: {self.project_id}")
+            
+            sql = f"""
+                SELECT table_name, column_name, data_type
+                FROM `{self.project_id}.{self.dataset_id}.INFORMATION_SCHEMA.COLUMNS`
+                ORDER BY table_name, ordinal_position
+            """
+
+            self.logger.info(f"Executing query: {sql}")
+            
+            query_job = self.client.query(sql)
+            results = query_job.result()
+
+            
+            tables = []
+            for table_name, columns in groupby(results, key=lambda r: r.table_name):
+                
+                schema_info = [
+                    {
+                        "name": col.column_name,
+                        "type": col.data_type,
+                    }
+                    for col in columns
+                ]
+
+                tables.append({
+                    "table_id": table_name,
+                    "schema": schema_info
+                })
+            
+            dataset_schema = DatasetSchema(
+                dataset_id=f"{self.project_id}.{self.dataset_id}",
+                tables=tables
+            )
+            
+            self.logger.info(f"Successfully fetched schema for dataset: {self.dataset_id}")
+            return [dataset_schema]
+
+        except Exception as e:
+            self.logger.error(f"Error fetching schemas: {str(e)}")
+            raise
 
     def _estimate_cost(self, bytes_processed: int) -> float:
         """Estimate query cost based on bytes processed
