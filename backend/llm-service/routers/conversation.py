@@ -42,8 +42,8 @@ def receive_query_endpoint(req:QueryRequest,  authorization: str = Header(...)):
 def receive_chart_endpoint(req:ChartRequest,  authorization: str = Header(...)):
     logger.debug("Received chart suggestion request")
     try:
-        tables = chart_agent.ask_agent(req.natural_query, req.data_output[:100], req.sql_query)
-        return {"response": tables}
+        result = chart_agent.ask_agent(req.natural_query, req.data_output[:100], req.sql_query)
+        return result
     except ValidationError as ve:
         logger.warning(f"Validation error: {ve.errors()}")
         raise HTTPException(422, ve.errors())
