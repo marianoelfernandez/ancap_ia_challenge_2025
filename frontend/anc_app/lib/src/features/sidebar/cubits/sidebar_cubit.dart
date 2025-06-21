@@ -71,13 +71,20 @@ class SidebarState extends Equatable {
       error: error,
       currentUser: currentUser ?? this.currentUser,
       searchQuery: searchQuery ?? this.searchQuery,
-      selectedConversationId: selectedConversationId ?? this.selectedConversationId, // Add this line
+      selectedConversationId: selectedConversationId ??
+          this.selectedConversationId, // Add this line
     );
   }
 
   @override
-  List<Object?> get props =>
-      [recentConversations, isLoading, error, currentUser, searchQuery, selectedConversationId]; // Add selectedConversationId to props
+  List<Object?> get props => [
+        recentConversations,
+        isLoading,
+        error,
+        currentUser,
+        searchQuery,
+        selectedConversationId,
+      ]; // Add selectedConversationId to props
 }
 
 class SidebarCubit extends Cubit<SidebarState> {
@@ -190,6 +197,32 @@ class SidebarCubit extends Cubit<SidebarState> {
       emit(state.copyWith(currentUser: user));
     } catch (e) {
       debugPrint("SidebarCubit: Exception getting user: $e");
+    }
+  }
+
+  Future<void> signOut() async {
+    try {
+      debugPrint("SidebarCubit: Signing out user");
+      final result = await _authService.signOut();
+      result.when(
+        ok: (_) {
+          debugPrint("SidebarCubit: Sign out successful");
+          emit(
+            state.copyWith(
+              currentUser: null,
+              recentConversations: [],
+              selectedConversationId: null,
+            ),
+          );
+        },
+        err: (error) {
+          debugPrint("SidebarCubit: Sign out error: $error");
+          emit(state.copyWith(error: "Failed to sign out"));
+        },
+      );
+    } catch (e) {
+      debugPrint("SidebarCubit: Exception during sign out: $e");
+      emit(state.copyWith(error: "Failed to sign out"));
     }
   }
 }
