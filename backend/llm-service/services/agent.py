@@ -1,6 +1,4 @@
-from pydantic import ValidationError
 from langsmith import traceable
-from langchain_openai import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langgraph.graph import StateGraph, END
@@ -160,6 +158,8 @@ class Agent():
                 print(f"Curated Query: {curated_query}")
                 conversation_id = state.get("conversation_id", None)
                 response = self.sql_chain.invoke({"input": query, "schema": schema, "curated_query": curated_query})
+                print(f"SQL Response: {response.content.strip()}")
+                # sql, ai_message = extract_sql_and_message(response.content.strip())
                 generated_sql = response.content.strip()
                 state["generated_sql"] = generated_sql
                 save_query_to_cache(state["input"], generated_sql)

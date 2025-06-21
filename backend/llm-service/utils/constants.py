@@ -181,8 +181,9 @@ intent_prompt = ChatPromptTemplate.from_messages([
     ("system", 
      "Dada una pregunta de un usuario, debes identificar si requiere una consulta SQL o solo es una conversación. "
      "Responde SOLO 'SQL' si la intención del usuario es una consulta a base de datos o 'GENERAL'."),
+    ("system", "Usa la siguiente memoria de la conversacion:"), 
     MessagesPlaceholder("chat_history"),
-    ("user", "Input: {query}\nTipo:")
+    ("user", "User: {query}\nTipo:")
 ])
 
 data_dictionary = """
@@ -316,10 +317,10 @@ data_dictionary_incomplete_prompt = ChatPromptTemplate.from_messages([
       pregunta curada con información específica sobre las tablas a consultar, debes REESCRIBIR la consulta del usuario EN LENGUAJE NATURAL para que sea más descriptiva, sin agregar preguntas para el usuario.
       Responde SOLO con la consulta transformada o una solicitud de más información comenzando con [RETRY] seguido de una pregunta sobre la inforacion ambigua o casos en donde la pregunta no haga referencia a ninguna tabla.
       NO fuerces al usuario a realizar un filtro por fechas\n\n""",
+    ("system", "Usa el siguiente diccionario de datos para responder a las preguntas del usuario: {data_dictionary}"),
     MessagesPlaceholder("chat_history"),
     "{chat_history}\n\n"
-    "Input: {query}\n"
-    "Type:"])
+    "Input: {query}\n"])
 
 
 data_dictionary_prompt = data_dictionary_incomplete_prompt.partial(data_dictionary=data_dictionary)
