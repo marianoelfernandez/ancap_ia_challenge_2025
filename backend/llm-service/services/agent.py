@@ -9,6 +9,7 @@ from typing import TypedDict, Optional
 from utils.constants import schema_constant, intent_prompt, data_dictionary_prompt
 from db.dbconnection import check_or_generate_conversation_id, save_query, build_memory_of_conversation
 from utils.auth import permissions_check
+from utils.transformers import extract_sql_and_message
 
 settings = Settings()
 
@@ -24,6 +25,7 @@ class AgentState(TypedDict):
     cost: Optional[float]
     SQL_retries : Optional[int] = 3
     memory: Optional[ConversationBufferMemory]
+    agent_response: Optional[str]
 
 class Agent():
     def __init__(self):
@@ -68,7 +70,7 @@ class Agent():
         ("system", """
          También tienes la consulta enriquecida con nombres de tablas para ayudarte a generar el código SQL: {curated_query}.\n
          Debes generar una consulta SQL que responda a la consulta del usuario, NO debes preguntarle al usuario.
-         Es importante que agregues una descripción breve de los datos que va a ver a partir de la consulta que generaste, esto es para que el usuario pueda entender la grafica que se va a mostrar con los datos obtenidos.""")
+         Tambien es obligatorio que agregues un mensaje **Descripción de los datos:** y a continuacion agregues una descripción breve de los datos que va a poder ver en la grafica. Intenta explicar de forma detallada pero que le permita a una persona sin conocimientos de SQL entender que datos va a ver en la grafica.""")
         ])
 
         self.sql_chain = self.sql_generation_prompt | self.pro_agent
@@ -158,10 +160,10 @@ class Agent():
                 print(f"Curated Query: {curated_query}")
                 conversation_id = state.get("conversation_id", None)
                 response = self.sql_chain.invoke({"input": query, "schema": schema, "curated_query": curated_query})
-                print(f"SQL Response: {response.content.strip()}")
-                # sql, ai_message = extract_sql_and_message(response.content.strip())
-                generated_sql = response.content.strip()
-                state["generated_sql"] = generated_sql
+                sql, ai_message = extract_sql_and_message(response.content)
+                generated_sql = sql.strip()
+                state["agent_response"] = ai_message.strip()
+                state["generated_sql"] = generated_sql.strip()
                 save_query_to_cache(state["input"], generated_sql)
                 return state
             except Exception as e:
@@ -253,7 +255,7 @@ class Agent():
                               result.get("agent_response", ""))
                 
 
-                return result["output"], result["conversation_id"], result.get("tables_used", []), result.get("generated_sql", None)
+                return result["output"], result["conversation_id"], result.get("tables_used", []), result.get("generated_sql", ""), result.get("agent_response", "")
             except Exception as e:
                 raise e
             
