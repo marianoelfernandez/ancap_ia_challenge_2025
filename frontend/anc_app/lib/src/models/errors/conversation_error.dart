@@ -40,5 +40,5 @@ class ConversationNetworkError extends ConversationError {
 
 /// Error thrown for custom error cases
 class ConversationCustomError extends ConversationError {
-  ConversationCustomError(String message) : super(message);
+  ConversationCustomError(super.message);
 }

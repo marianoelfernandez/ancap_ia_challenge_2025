@@ -62,7 +62,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         child: Row(
           children: [
-            Sidebar(showChatFeatures: false),
+            const Sidebar(showChatFeatures: false),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -515,7 +515,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             belowBarData: BarAreaData(
               show: true,
-              color: _ancapYellow.withOpacity(0.1),
+              color: _ancapYellow.withValues(alpha: 0.1),
             ),
           ),
         ],

@@ -240,7 +240,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
   Widget _buildAppBar() {
     return _buildGlassEffectContainer(
-      margin: const EdgeInsets.only(left: 24, right: 24 , top: 24),
+      margin: const EdgeInsets.only(left: 24, right: 24, top: 24),
       padding: const EdgeInsets.all(24.0),
       borderRadius: 8,
       child: Container(
@@ -401,7 +401,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                         ? null
                         : [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                              color: Colors.black.withValues(alpha: 0.1),
                               blurRadius: 5,
                               offset: const Offset(0, 2),
                             ),
@@ -456,7 +456,9 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                                               BorderRadius.circular(4),
                                         ),
                                         blockquote: GoogleFonts.inter(
-                                          color: _foreground.withOpacity(0.8),
+                                          color: _foreground.withValues(
+                                            alpha: 0.8,
+                                          ),
                                           fontSize: 14,
                                           fontStyle: FontStyle.italic,
                                         ),

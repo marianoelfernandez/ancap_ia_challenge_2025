@@ -85,8 +85,8 @@ class _LoginScreenState extends State<LoginScreen>
               top: isLargeScreen ? 80 : 400,
               size: 100,
               colors: [
-                const Color(0xFFFBBF24).withOpacity(0.1),
-                const Color(0xFFEAB308).withOpacity(0.1),
+                const Color(0xFFFBBF24).withValues(alpha: 0.1),
+                const Color(0xFFEAB308).withValues(alpha: 0.1),
               ],
               xOffset: 100,
               yOffset: -50,
@@ -98,8 +98,8 @@ class _LoginScreenState extends State<LoginScreen>
               bottom: isLargeScreen ? 180 : 10,
               size: 96,
               colors: [
-                const Color(0xFF71717A).withOpacity(0.1),
-                const Color(0xFF64748B).withOpacity(0.1),
+                const Color(0xFF71717A).withValues(alpha: 0.1),
+                const Color(0xFF64748B).withValues(alpha: 0.1),
               ],
               xOffset: -80,
               yOffset: 60,
@@ -432,8 +432,8 @@ class AiGridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color =
-          const Color(0xFFFBBF24).withOpacity(0.1) // yellow-400 with opacity
+      ..color = const Color(0xFFFBBF24)
+          .withValues(alpha: 0.1) // yellow-400 with opacity
       ..strokeWidth = 1
       ..style = PaintingStyle.stroke;
 

@@ -336,10 +336,10 @@ class _SidebarState extends State<Sidebar> {
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                               colors: [
-                                Colors.white.withOpacity(0.0),
+                                Colors.white.withValues(alpha: 0.0),
                                 Colors.white,
                                 Colors.white,
-                                Colors.white.withOpacity(0.0),
+                                Colors.white.withValues(alpha: 0.0),
                               ],
                               stops: const [0.0, 0.05, 0.95, 1.0],
                             ).createShader(bounds);
