@@ -9,6 +9,7 @@ def call_server(query: str) -> dict:
     payload = {
         "query": query
     }
+
     uri = f"{settings.mcp_server_uri}/query"
     response = requests.post(uri, json=payload).json()
     

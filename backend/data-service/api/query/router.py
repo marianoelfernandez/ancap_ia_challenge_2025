@@ -116,6 +116,7 @@ async def validate_sql_query(
     try:
         return await bigquery_service.validate_query(request.query)
     except Exception as e:
+        print("ERROR", str(e))
         return ValidateQueryResponse(
             status=QueryStatus.ERROR,
             error_message=str(e)

@@ -73,7 +73,7 @@ class Agent():
          También tienes la consulta enriquecida con nombres de tablas para ayudarte a generar el código SQL: {curated_query}.\n
          Debes generar una consulta SQL que responda a la consulta del usuario, NO debes preguntarle al usuario.
          Tambien es obligatorio que agregues un mensaje **Descripción de los datos:** y a continuacion agregues una descripción breve de los datos que va a poder ver en la grafica. Intenta explicar de forma detallada pero que le permita a una persona sin conocimientos de SQL entender que datos va a ver en la grafica.
-         El contexto de los datos es sobre una refinadora de petroleo ANCAP, suelen trabajar con estos productos: Combustibles, Solventes, Asfaltos, Lubricantes, Alcoholes, Portland y Cal, Propelentes. """)
+         El contexto de los datos es sobre una refinadora de petróleo ANCAP""")
         ])
 
         self.sql_chain = self.sql_generation_prompt | self.pro_agent
@@ -184,7 +184,6 @@ class Agent():
                 if not generated_sql:
                     return {**state, "output": "No se generó SQL"}
                 
-                print(f"Generated SQL: {generated_sql}")
                 result = call_server(generated_sql)
                 state["output"] = str(result['response']) if 'response' in result else str(result['error'])
                 state['cost'] = float(result.get('cost', 0.0))
