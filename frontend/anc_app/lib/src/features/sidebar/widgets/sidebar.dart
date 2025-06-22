@@ -1,5 +1,4 @@
 import "dart:ui";
-import "dart:math" as math;
 import "package:anc_app/src/features/sidebar/cubits/sidebar_cubit.dart";
 import "package:anc_app/src/features/auth/cubits/auth_cubit.dart";
 import "package:anc_app/src/models/conversation.dart";
@@ -54,14 +53,6 @@ class _SidebarState extends State<Sidebar> {
     _searchController.dispose();
     _sidebarCubit.close();
     super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocProvider.value(
-      value: _sidebarCubit,
-      child: _buildSidebar(widget.showChatFeatures),
-    );
   }
 
   Widget _buildSearchInput() {
@@ -254,63 +245,6 @@ Widget _buildNavigationTab({
         ),
       ),
     ),
-  );
-}
-
-Widget _buildSearchInput() {
-  return BlocBuilder<SidebarCubit, SidebarState>(
-    buildWhen: (previous, current) =>
-        previous.searchQuery != current.searchQuery,
-    builder: (context, state) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-        child: TextField(
-          style: GoogleFonts.inter(color: _foreground),
-          decoration: InputDecoration(
-            hintText: "Buscar conversaciones",
-            hintStyle: GoogleFonts.inter(color: _mutedForeground, fontSize: 14),
-            prefixIcon:
-                const Icon(Icons.search, color: _mutedForeground, size: 16),
-            suffixIcon: _searchController.text.isNotEmpty
-                ? IconButton(
-                    icon: const Icon(
-                      Icons.clear,
-                      color: _mutedForeground,
-                      size: 16,
-                    ),
-                    onPressed: () {
-                      _searchController.clear();
-                      context.read<SidebarCubit>().clearSearchQuery();
-                    },
-                  )
-                : null,
-            filled: true,
-            fillColor: Colors.transparent,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8.0),
-              borderSide: BorderSide.none,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8.0),
-              borderSide: BorderSide.none,
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8.0),
-              borderSide: const BorderSide(
-                color: _ancapYellow,
-                width: 1,
-              ),
-            ),
-          ),
-          onChanged: (query) {
-            context.read<SidebarCubit>().updateSearchQuery(query);
-          },
-          controller: _searchController,
-        ),
-      );
-    },
   );
 }
 
