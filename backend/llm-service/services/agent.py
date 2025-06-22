@@ -272,7 +272,7 @@ class UtilitiesAgent():
 
     async def parse_schema(self):
       if settings.local:
-          return schema_constant
+          return settings.set_schema(schema_constant)
       try:
           schema_json: str = json.dumps(await schema_client.get_schemas(), indent=2)
           response = self.schema_formatting_chain.invoke({

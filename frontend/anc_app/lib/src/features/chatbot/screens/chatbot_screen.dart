@@ -141,14 +141,6 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       });
 
       await _chatbotCubit.selectConversation(_currentConversationId!);
-
-      // If this is a new conversation (first message), clear the selected conversation in sidebar
-      // This ensures the "Chatbot" button will go to a fresh chat instead of the current one
-      if (_messages.length == 2) {
-        // First user message + first AI response
-        // We need to access the sidebar cubit to clear the selection
-        // This will be handled by the parent widget that contains both sidebar and chatbot
-      }
     } catch (error) {
       setState(() {
         _isAiTyping = false;
@@ -326,6 +318,18 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                   timestamp: DateTime.now(), // Placeholder timestamp
                 ),
               );
+
+              if (query.aiResponse.isNotEmpty) {
+                _messages.add(
+                  ChatMessage(
+                    id: "id_${query.aiResponse}",
+                    text: query.aiResponse,
+                    isAi: true,
+                    timestamp: DateTime.now(), // Placeholder timestamp
+                  ),
+                );
+              }
+
               _messages.add(
                 ChatMessage(
                   id: "id_${query.output}",
@@ -334,6 +338,19 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                   timestamp: DateTime.now(), // Placeholder timestamp
                 ),
               );
+
+              if (query.sqlQuery.isNotEmpty) {
+                // Add the SQL query as a message
+                //TODO: make a component to enable execution of SQL queries
+                _messages.add(
+                  ChatMessage(
+                    id: "id_${query.sqlQuery}",
+                    text: query.sqlQuery,
+                    isAi: true,
+                    timestamp: DateTime.now(), // Placeholder timestamp
+                  ),
+                );
+              }
             }
             // This rebuild is necessary to show the messages from the selected conversation
             setState(() {});

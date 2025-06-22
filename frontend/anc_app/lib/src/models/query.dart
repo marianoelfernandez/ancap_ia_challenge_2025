@@ -12,6 +12,7 @@ class Query {
   final DateTime created;
   final DateTime updated;
   final List<String> queriedTables;
+  final String aiResponse;
 
   Query({
     required this.id,
@@ -25,6 +26,7 @@ class Query {
     required this.created,
     required this.updated,
     this.queriedTables = const [],
+    required this.aiResponse,
   });
 
   factory Query.fromJson(Map<String, dynamic> json) {
@@ -32,7 +34,8 @@ class Query {
     List<String> tables = [];
     if (json["queried_tables"] != null) {
       if (json["queried_tables"] is List) {
-        tables = (json["queried_tables"] as List).map((e) => e.toString()).toList();
+        tables =
+            (json["queried_tables"] as List).map((e) => e.toString()).toList();
       } else if (json["queried_tables"] is String) {
         try {
           // Try to parse as JSON string
@@ -45,7 +48,7 @@ class Query {
         }
       }
     }
-    
+
     return Query(
       id: json["id"],
       collectionId: json["collectionId"],
@@ -59,6 +62,7 @@ class Query {
       created: DateTime.parse(json["created"]),
       updated: DateTime.parse(json["updated"]),
       queriedTables: tables,
+      aiResponse: json["agent_response"] ?? "",
     );
   }
 
