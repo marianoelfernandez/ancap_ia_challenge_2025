@@ -1,8 +1,15 @@
+import "dart:convert";
+
 import "package:flutter/material.dart";
 import "package:fl_chart/fl_chart.dart";
+import "package:flutter_bloc/flutter_bloc.dart";
 import "package:google_fonts/google_fonts.dart";
 import "package:intl/intl.dart";
+
+import "package:anc_app/src/features/chatbot/widgets/ai_chart_widget.dart";
+import "package:anc_app/src/features/dashboard/cubits/dashboard_cubit.dart";
 import "package:anc_app/src/features/sidebar/widgets/sidebar.dart";
+import "package:anc_app/src/models/chart.dart";
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -20,8 +27,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   static const Color _backgroundEnd = Color(0xFF050505);
 
   final Color _foreground = Colors.white;
-  final Color _mutedForeground = Colors.white.withValues(alpha: 0.7);
-  final Color _border = Colors.white.withValues(alpha: 0.1);
+  final Color _mutedForeground = Colors.white.withAlpha(179);
+  final Color _border = Colors.white.withAlpha(25);
 
   final List<QueryData> _topQueries = [
     QueryData("SELECT * FROM sales", 120),
@@ -88,11 +95,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: _ancapYellow.withValues(alpha: 0.1),
+              color: _ancapYellow.withAlpha(25),
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: _backgroundMid.withValues(alpha: 0.2),
+                  color: _backgroundMid.withAlpha(51),
                   blurRadius: 20,
                 ),
               ],
@@ -136,6 +143,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _buildSectionHeader(
+              "Gráficos Estáticos",
+              Icons.insert_chart_outlined,
+            ),
+            const SizedBox(height: 16),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -245,9 +257,250 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ],
             ),
+            const SizedBox(height: 32),
+            const SizedBox(height: 16),
+            _buildAiGeneratedChartsSection(),
             const SizedBox(height: 24),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, color: _ancapYellow, size: 24),
+        const SizedBox(width: 12),
+        Text(
+          title,
+          style: GoogleFonts.inter(
+            color: _foreground,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAiGeneratedChartsSection() {
+    return BlocProvider(
+      create: (context) => DashboardCubit()..loadCharts(),
+      child: BlocBuilder<DashboardCubit, DashboardState>(
+        builder: (context, state) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Gráficos Guardados",
+                style: GoogleFonts.inter(
+                  color: _foreground,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 16),
+              if (state is DashboardLoading)
+                _buildLoadingIndicator()
+              else if (state is DashboardError)
+                _buildErrorDisplay(state.error.toString())
+              else if (state is DashboardLoaded)
+                state.charts.isEmpty
+                    ? _buildEmptyState()
+                    : _buildChartsGrid(state.charts),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildLoadingIndicator() {
+    return SizedBox(
+      height: 200,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const CircularProgressIndicator(color: _ancapYellow),
+            const SizedBox(height: 16),
+            Text(
+              "Cargando gráficos...",
+              style: GoogleFonts.inter(
+                color: _mutedForeground,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorDisplay(String errorMessage) {
+    String displayMessage = errorMessage;
+    String title = "Error al cargar los gráficos";
+    bool is403 =
+        errorMessage.contains("403") || errorMessage.contains("superusers");
+
+    if (is403) {
+      title = "Error de permisos";
+      displayMessage =
+          "No tienes permisos para acceder a los gráficos guardados. Contacta al administrador para configurar los permisos de PocketBase.";
+    }
+
+    return _buildGlassEffectContainer(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                is403 ? Icons.lock_outline : Icons.error_outline,
+                color: is403 ? Colors.orangeAccent : Colors.redAccent,
+                size: 48,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                title,
+                style: GoogleFonts.inter(
+                  color: _foreground,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                displayMessage,
+                style: GoogleFonts.inter(
+                  color: _mutedForeground,
+                  fontSize: 14,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => context.read<DashboardCubit>().loadCharts(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _ancapYellow,
+                  foregroundColor: Colors.black,
+                ),
+                child: const Text("Reintentar"),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return _buildGlassEffectContainer(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.bar_chart_outlined,
+                color: _ancapYellow,
+                size: 48,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                "No hay gráficos guardados",
+                style: GoogleFonts.inter(
+                  color: _foreground,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                "Interactúa con el chatbot para generar gráficos",
+                style: GoogleFonts.inter(
+                  color: _mutedForeground,
+                  fontSize: 14,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChartsGrid(List<Chart> charts) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 1.5,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+      ),
+      itemCount: charts.length,
+      itemBuilder: (context, index) {
+        final chart = charts[index];
+        return _buildChartTile(chart);
+      },
+    );
+  }
+
+  Widget _buildChartTile(Chart chart) {
+    // Convert chartData to a string if it's not already one
+    String chartDataStr;
+    if (chart.chartData is String) {
+      chartDataStr = chart.chartData;
+    } else if (chart.chartData is Map) {
+      chartDataStr = jsonEncode(chart.chartData);
+    } else {
+      debugPrint("Unexpected chartData type: ${chart.chartData.runtimeType}");
+      chartDataStr = "{}"; // Empty chart as fallback
+    }
+
+    return _buildGlassEffectContainer(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  chart.title,
+                  style: GoogleFonts.inter(
+                    color: _foreground,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(
+                  Icons.delete_outline,
+                  color: Colors.redAccent,
+                ),
+                onPressed: () =>
+                    context.read<DashboardCubit>().deleteChart(chart.id),
+                iconSize: 20,
+                splashRadius: 20,
+                tooltip: "Eliminar gráfico",
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Expanded(
+            child: AiDataResponseChart(
+              jsonString: chartDataStr,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -579,6 +832,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
+// Helper classes for dashboard data
 class QueryData {
   final String query;
   final int count;

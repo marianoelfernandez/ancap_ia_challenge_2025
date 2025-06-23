@@ -1,7 +1,7 @@
 class Chart {
   final String id;
   final String title;
-  final String chartData;
+  final dynamic chartData;
   final String userId;
   final String created;
   final String updated;

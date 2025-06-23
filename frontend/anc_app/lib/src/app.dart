@@ -1,4 +1,5 @@
 import "package:anc_app/src/features/auth/cubits/auth_cubit.dart";
+import "package:anc_app/src/features/dashboard/cubits/dashboard_cubit.dart";
 import "package:flutter/material.dart";
 import "package:flutter_bloc/flutter_bloc.dart";
 import "package:flutter_easyloading/flutter_easyloading.dart";
@@ -76,6 +77,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => AuthCubit()),
+        BlocProvider(create: (_) => DashboardCubit()),
       ],
       child: MaterialApp.router(
         restorationScopeId: AppEnv.I.flavor.id,
