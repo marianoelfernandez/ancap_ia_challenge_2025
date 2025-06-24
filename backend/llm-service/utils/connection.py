@@ -29,7 +29,7 @@ def get_cached_query(natural_query: str) -> dict:
     try:
         if (response['results'] is None or len(response['results']) == 0):
             return {"error": "No cached query found."}
-        return {"response":response['results']['sql']}
+        return {"response":response['results']}
     except Exception as e:
         return {"error": f"[Error parsing MCP embeddings response] {e}"}
     

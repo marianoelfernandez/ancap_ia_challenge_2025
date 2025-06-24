@@ -89,8 +89,8 @@ class Agent():
             query = state["input"]
 
 
-            #cached_result = get_cached_query(query)
-            cached_result = None
+            cached_result = get_cached_query(query)
+            print(f"Cached Result: {cached_result}")
             if cached_result and 'response' in cached_result:
                 state["generated_sql"] = cached_result['response']
                 state["needs_more_info"] = False
