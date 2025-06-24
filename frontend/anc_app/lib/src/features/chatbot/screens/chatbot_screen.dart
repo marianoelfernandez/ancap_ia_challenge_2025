@@ -334,7 +334,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               _messages.add(
                 ChatMessage(
                   id: "id_${query.output}",
-                  text: "CHART_DATA::${query.output}",
+                  text: query.output,
                   isAi: true,
                   timestamp: DateTime.now(), // Placeholder timestamp
                 ),
@@ -637,11 +637,11 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   }
 
   bool _isChartData(String text) {
-    return text.startsWith("CHART_DATA::");
+    return text.startsWith("{") && text.endsWith("}");
   }
 
   String _extractChartData(String text) {
-    return text.substring("CHART_DATA::".length);
+   return text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1);
   }
 
   bool _isSqlQuery(String text) {
