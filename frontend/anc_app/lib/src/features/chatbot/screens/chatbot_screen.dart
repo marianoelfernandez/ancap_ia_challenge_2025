@@ -334,7 +334,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               _messages.add(
                 ChatMessage(
                   id: "id_${query.output}",
-                  text: query.output,
+                  text: "CHART_DATA::${query.output}",
                   isAi: true,
                   timestamp: DateTime.now(), // Placeholder timestamp
                 ),
@@ -637,13 +637,11 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   }
 
   bool _isChartData(String text) {
-    // Simple check to determine if the text contains chart data
-    return text.startsWith("{") && text.endsWith("}");
+    return text.startsWith("CHART_DATA::");
   }
 
   String _extractChartData(String text) {
-    // Extract the JSON string for the chart from the text
-    return text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1);
+    return text.substring("CHART_DATA::".length);
   }
 
   bool _isSqlQuery(String text) {
