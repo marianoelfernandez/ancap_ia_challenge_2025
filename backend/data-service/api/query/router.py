@@ -8,7 +8,6 @@ from services.bigquery_service import BigQueryService
 from services.data_service import DataService
 from models.query.model import CacheInput, SQLQueryRequest, SQLQueryResponse, QueryStatus, QueryMetadata, ValidateQueryResponse, DatasetSchema, QueryEmbeddingRequest
 from models.data.model import FlChartType
-from utils.cache_connection import retrieve_query
 from utils.text_parser import extract_sql_from_text
 from utils.cache_connection import save_query, retrieve_query
 

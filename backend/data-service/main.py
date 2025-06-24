@@ -8,7 +8,7 @@ import uvicorn
 from config.settings import get_settings
 from api.query.router import router as query_router
 
-from utils.cache_connection import create_or_get_and_deploy_streaming_vector_search_index, get_firestore_client, get_gcs_client, get_embedding_model
+from utils.cache_connection import get_firestore_client, get_gcs_client, get_embedding_model
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -35,10 +35,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         
         logger.info("Initializing GCS client...")
         gcs_client = get_gcs_client()
-        
-        create_or_get_and_deploy_streaming_vector_search_index()
-        logger.info("Initializing embedding model...")
-        embedding_model = get_embedding_model()
+
         
 
         logger.info("Testing client connections...")
