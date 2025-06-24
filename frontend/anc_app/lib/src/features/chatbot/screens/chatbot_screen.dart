@@ -5,6 +5,7 @@ import "package:anc_app/src/features/auth/cubits/auth_cubit.dart";
 import "package:anc_app/src/features/chatbot/cubit/chatbot_cubit.dart";
 import "package:anc_app/src/features/chatbot/services/chat_service.dart";
 import "package:anc_app/src/features/chatbot/widgets/ai_chart_widget.dart";
+import "package:anc_app/src/features/chatbot/widgets/sql_response_widget.dart";
 import "package:anc_app/src/features/sidebar/widgets/sidebar.dart";
 import "package:anc_app/src/models/chat_message.dart";
 import "package:anc_app/src/router/router.dart";
@@ -341,11 +342,10 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
               if (query.sqlQuery.isNotEmpty) {
                 // Add the SQL query as a message
-                //TODO: make a component to enable execution of SQL queries
                 _messages.add(
                   ChatMessage(
-                    id: "id_${query.sqlQuery}",
-                    text: query.sqlQuery,
+                    id: "id_sql_${query.sqlQuery}",
+                    text: "SQL_QUERY::${query.sqlQuery}",
                     isAi: true,
                     timestamp: DateTime.now(), // Placeholder timestamp
                   ),
@@ -445,61 +445,68 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                                       jsonString:
                                           _extractChartData(message.text),
                                     )
-                                  : MarkdownBody(
-                                      data: message.text,
-                                      styleSheet: MarkdownStyleSheet.fromTheme(
-                                        Theme.of(context).copyWith(
-                                          textTheme:
-                                              Theme.of(context).textTheme.apply(
+                                  : _isSqlQuery(message.text)
+                                      ? SqlResponseWidget(
+                                          sqlQuery:
+                                              _extractSqlQuery(message.text),
+                                        )
+                                      : MarkdownBody(
+                                          data: message.text,
+                                          styleSheet:
+                                              MarkdownStyleSheet.fromTheme(
+                                            Theme.of(context).copyWith(
+                                              textTheme: Theme.of(context)
+                                                  .textTheme
+                                                  .apply(
                                                     bodyColor: _foreground,
                                                     displayColor: _foreground,
                                                   ),
-                                        ),
-                                      ).copyWith(
-                                        p: GoogleFonts.inter(
-                                          color: _foreground,
-                                          fontSize: 14,
-                                        ),
-                                        code: GoogleFonts.firaCode(
-                                          backgroundColor: Colors.grey[850],
-                                          color: Colors.white,
-                                          fontSize: 12,
-                                        ),
-                                        codeblockPadding:
-                                            const EdgeInsets.all(8),
-                                        codeblockDecoration: BoxDecoration(
-                                          color: Colors.grey[850],
-                                          borderRadius:
-                                              BorderRadius.circular(4),
-                                        ),
-                                        blockquote: GoogleFonts.inter(
-                                          color: _foreground.withValues(
-                                            alpha: 0.8,
+                                            ),
+                                          ).copyWith(
+                                            p: GoogleFonts.inter(
+                                              color: _foreground,
+                                              fontSize: 14,
+                                            ),
+                                            code: GoogleFonts.firaCode(
+                                              backgroundColor: Colors.grey[850],
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                            ),
+                                            codeblockPadding:
+                                                const EdgeInsets.all(8),
+                                            codeblockDecoration: BoxDecoration(
+                                              color: Colors.grey[850],
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
+                                            ),
+                                            blockquote: GoogleFonts.inter(
+                                              color: _foreground.withValues(
+                                                alpha: 0.8,
+                                              ),
+                                              fontSize: 14,
+                                              fontStyle: FontStyle.italic,
+                                            ),
+                                            h1: GoogleFonts.inter(
+                                              color: _foreground,
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            h2: GoogleFonts.inter(
+                                              color: _foreground,
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            h3: GoogleFonts.inter(
+                                              color: _foreground,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            listBullet: GoogleFonts.inter(
+                                              color: _foreground,
+                                              fontSize: 14,
+                                            ),
                                           ),
-                                          fontSize: 14,
-                                          fontStyle: FontStyle.italic,
                                         ),
-                                        h1: GoogleFonts.inter(
-                                          color: _foreground,
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                        h2: GoogleFonts.inter(
-                                          color: _foreground,
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                        h3: GoogleFonts.inter(
-                                          color: _foreground,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                        listBullet: GoogleFonts.inter(
-                                          color: _foreground,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                    ),
                             ),
                           ),
                         )
@@ -637,6 +644,14 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   String _extractChartData(String text) {
     // Extract the JSON string for the chart from the text
     return text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1);
+  }
+
+  bool _isSqlQuery(String text) {
+    return text.startsWith("SQL_QUERY::");
+  }
+
+  String _extractSqlQuery(String text) {
+    return text.substring("SQL_QUERY::".length);
   }
 }
 
