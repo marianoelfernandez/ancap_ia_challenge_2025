@@ -5,6 +5,7 @@ import "package:flutter/material.dart";
 import "package:fl_chart/fl_chart.dart";
 
 const Color _ancapYellow = Color(0xFFFFC107);
+const Color _backgroundMid = Color(0xFF0B101A);
 
 /// A widget that parses a specific JSON structure from an AI response
 /// and displays the categorical data as a bar chart.
@@ -693,14 +694,14 @@ class _FullScreenChartPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Full Screen Chart"),
-        backgroundColor: const Color(0xff2c4260),
+        foregroundColor: Colors.white,
+        backgroundColor: _backgroundMid,
         elevation: 0,
       ),
       body: Container(
-        color: const Color(0xff2c4260), // Match chart background
+        color: _backgroundMid, // Match chart background
         child: Padding(
-          padding: const EdgeInsets.all(16.0), // More padding in full screen
+          padding: const EdgeInsets.all(8.0), // More padding in full screen
           child: AiDataResponseChart(
             jsonString: jsonString,
             isFullScreen: true, // Indicate that it's in full screen
