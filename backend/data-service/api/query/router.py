@@ -14,13 +14,6 @@ from utils.cache_connection import save_query, retrieve_query
 router = APIRouter(
     tags=["query"]
 )
-def get_clients(request: Request):
-    """Dependency to get initialized clients from app state."""
-    return {
-        "firestore_client": request.app.state.firestore_client,
-        "gcs_client": request.app.state.gcs_client,
-        "embedding_model": request.app.state.embedding_model
-    }
 
 @router.post("/query")
 async def execute_sql_query(
@@ -123,8 +116,7 @@ async def validate_sql_query(
     
 @router.post("/embeddings")
 async def save_query_endpoint(
-    input: CacheInput,
-    clients: Dict = Depends(get_clients)
+    input: CacheInput
 ):
     """Save a new query to the cache."""
     try:
@@ -142,7 +134,6 @@ async def save_query_endpoint(
 async def search_queries_endpoint(
     query_text: str,
     num_results: int = 5,
-    clients: Dict = Depends(get_clients)
 ):
     """Search for similar queries in the cache."""
     try:
@@ -157,29 +148,6 @@ async def search_queries_endpoint(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/embeddings/batch_update")
-async def trigger_batch_update_endpoint(
-    clients: Dict = Depends(get_clients)
-):
-    """Trigger batch update of the vector search index."""
-    try:
-
-        
-        #delta_uri = trigger_batch_index_update()
-        delta_uri = "placeholder"
-        if delta_uri:
-            return {
-                "status": "success",
-                "delta_uri": delta_uri,
-                "message": "Batch update triggered successfully"
-            }
-        else:
-            return {
-                "status": "no_update",
-                "message": "No updates needed"
-            }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/schemas", response_model=List[DatasetSchema])
 async def get_bigquery_schemas(

@@ -1,6 +1,6 @@
-from datetime import timedelta, timezone
+from datetime import datetime, timedelta, timezone
 import logging
-from typing import List, Dict, Any, Optional
+from typing import List, Optional
 
 
 import vertexai
@@ -9,8 +9,11 @@ from google.cloud import firestore
 from google.cloud.aiplatform.matching_engine import MatchingEngineIndex
 from google.cloud.aiplatform.matching_engine import MatchingEngineIndexEndpoint
 from vertexai.language_models import TextEmbeddingModel
+from google.cloud.firestore_v1.base_vector_query import DistanceMeasure
+from google.cloud.firestore_v1.vector import Vector
 from config.settings import get_settings
-
+from langchain_google_vertexai import VertexAIEmbeddings
+from langchain_google_firestore import FirestoreVectorStore
 
 
 settings = get_settings()  
@@ -31,10 +34,9 @@ DEPLOYED_INDEX_ID = settings.DEPLOYED_INDEX_ID
  
 FIRESTORE_DATABASE_NAME = settings.FIRESTORE_DATABASE_NAME
 FIRESTORE_COLLECTION_NAME = settings.FIRESTORE_COLLECTION_NAME
-TTL_DURATION_HOURS = 24
+TTL_DAYS = 1
 
-from langchain_google_vertexai import VertexAIEmbeddings
-from langchain_google_firestore import FirestoreVectorStore
+
 
 # Initialize your embedding model
 embedding = VertexAIEmbeddings(
@@ -47,35 +49,6 @@ vector_store = FirestoreVectorStore(
     collection="query_cache",
     embedding_service=embedding
 )
-
-_embedding_model: Optional[TextEmbeddingModel] = None
-_firestore_client: Optional[firestore.Client] = None
-_deployed_endpoint: Optional[MatchingEngineIndexEndpoint] = None
-_gcs_client: Optional[storage.Client] = None
-_streaming_index: Optional[MatchingEngineIndex] = None
-
-
-def get_embedding_model() -> TextEmbeddingModel:
-    """Gets or initializes the TextEmbeddingModel."""
-    global _embedding_model
-    if _embedding_model is None:
-        vertexai.init(project=PROJECT_ID, location=LOCATION)
-        _embedding_model = TextEmbeddingModel.from_pretrained(EMBEDDING_MODEL_NAME)
-    return _embedding_model
-
-def get_firestore_client() -> firestore.Client:
-    """Gets or initializes the Firestore client."""
-    global _firestore_client
-    if _firestore_client is None:
-        _firestore_client = firestore.Client(project=PROJECT_ID, database=FIRESTORE_DATABASE_NAME)
-    return _firestore_client
-
-def get_gcs_client() -> storage.Client:
-    """Gets or initializes the Google Cloud Storage client."""
-    global _gcs_client
-    if _gcs_client is None:
-        _gcs_client = storage.Client(project=PROJECT_ID)
-    return _gcs_client
 
 
 def save_query(query_text: str, sql_query: str) -> str:
@@ -91,18 +64,22 @@ def save_query(query_text: str, sql_query: str) -> str:
     Returns:
         The unique datapoint ID generated for this entry.
     """
-    id = vector_store.add_texts(
+    expiration_time = datetime.utcnow() + timedelta(days=TTL_DAYS)
+
+
+    ids = vector_store.add_texts(
         texts=[query_text],
-        metadatas=[{"sql":sql_query}]
+        metadatas=[{"sql": sql_query}]
     )
-    print("Query saved, response:", id)
-    return id
+    doc_id = ids[0]
 
 
-from typing import List, Dict, Any, Optional
-from google.cloud import firestore
-from google.cloud.firestore_v1.base_vector_query import DistanceMeasure
-from google.cloud.firestore_v1.vector import Vector
+    db = firestore.Client()
+    doc_ref = db.collection("query_cache").document(doc_id)
+    doc_ref.update({"expiration": expiration_time})
+
+    return doc_id
+
 
 def retrieve_query(query_text: str, num_results: int = 1, threshold: float = 0.15) -> Optional[List[str]]:
     """
