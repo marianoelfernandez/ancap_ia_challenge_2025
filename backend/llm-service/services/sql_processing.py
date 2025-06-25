@@ -2,6 +2,7 @@ from utils.connection import call_server
 from utils.auth import permissions_check
 from db.dbconnection import save_query
 import logging
+import json
 
 def process_sql_query(sql_query: str, conv_id, user_id, ai_response="Aquí está el resultado de tu consulta SQL") -> str:
     """
@@ -23,7 +24,17 @@ def process_sql_query(sql_query: str, conv_id, user_id, ai_response="Aquí está
           raise Exception(result["error"])
       
       print(f"Result from data service: {result}")
-      output = result.get("response", "")
+      
+      # Format the response properly for the frontend
+      raw_response = result.get("response", "")
+      
+      # If the response is a dict or list, convert it to a formatted JSON string
+      if isinstance(raw_response, (dict, list)):
+          output = json.dumps(raw_response, indent=2, ensure_ascii=False)
+      else:
+          # If it's already a string, use it as is
+          output = str(raw_response)
+      
       save_query("User input: SQL Query",
                   sql_query,
                   output,

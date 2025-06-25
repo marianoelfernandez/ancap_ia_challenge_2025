@@ -1,4 +1,5 @@
 import "dart:convert";
+import "package:flutter/widgets.dart";
 import "package:http/http.dart" as http;
 import "package:anc_app/src/env.dart";
 import "package:anc_app/src/features/auth/services/auth_service.dart";
@@ -65,6 +66,36 @@ class ChatService {
           as Map<String, dynamic>;
     } else {
       throw Exception("Failed to fetch chart metadata: ${response.body}");
+    }
+  }
+
+  Future<Map<String, dynamic>> executeSqlQuery(
+    String sqlQuery, {
+    String? conversationId,
+  }) async {
+    final token = _authService.token;
+    if (token == null) {
+      throw Exception("Not authenticated");
+    }
+
+    final response = await http.post(
+      Uri.parse("$_baseUrl/query/sql"),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token",
+      },
+      body: jsonEncode({
+        "query": sqlQuery,
+        "conversation_id": conversationId,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      debugPrint("SQL Response: ${response.body}");
+      return jsonDecode(utf8.decode(response.bodyBytes))
+          as Map<String, dynamic>;
+    } else {
+      throw Exception("Failed to execute SQL query: ${response.body}");
     }
   }
 }
