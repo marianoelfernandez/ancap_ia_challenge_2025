@@ -64,8 +64,6 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
     super.didUpdateWidget(oldWidget);
     if (widget.jsonString != oldWidget.jsonString) {
       _processData();
-      // Reset to bar chart when data changes
-      _chartType = ChartType.bar;
       // Update the key to ensure the widget tree rebuilds correctly
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
@@ -85,7 +83,6 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
       String parsedString =
           widget.jsonString.replaceAll("'", '"').replaceAll("None", "null");
 
-      debugPrint("Parsed JSON String: $parsedString");
       final decodedJson = jsonDecode(parsedString);
       debugPrint("Decoded JSON: $decodedJson");
       final dataPayload = decodedJson["data"];
@@ -162,7 +159,12 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
       }
 
       if (widget.naturalQuery != null && widget.sqlQuery != null) {
-        await _fetchChartMetadata(fallbackTitle: chartTitle);
+        await _fetchChartMetadata(
+          fallbackTitle: chartTitle,
+          naturalQuery: widget.naturalQuery!,
+          sqlQuery: widget.sqlQuery!,
+          dataOutput: parsedString,
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -175,15 +177,20 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
     }
   }
 
-  Future<void> _fetchChartMetadata({required String fallbackTitle}) async {
+  Future<void> _fetchChartMetadata({
+    required String fallbackTitle,
+    required String naturalQuery,
+    required String sqlQuery,
+    required String dataOutput,
+  }) async {
     try {
       final response = await http.post(
         Uri.parse("http://localhost:8000/chart"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
-          "natural_query": widget.naturalQuery,
-          "data_output": widget.jsonString,
-          "sql_query": widget.sqlQuery,
+          "natural_query": naturalQuery,
+          "data_output": dataOutput,
+          "sql_query": sqlQuery,
         }),
       );
 
@@ -195,7 +202,7 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
 
         ChartType defaultChartType = ChartType.bar;
         final lowerChartType = chartTypeStr.toLowerCase();
-        if (lowerChartType == "Piechart") {
+        if (lowerChartType == "piechart") {
           defaultChartType = ChartType.pie;
         } else if (lowerChartType == "linea" || lowerChartType == "línea") {
           defaultChartType = ChartType.line;
