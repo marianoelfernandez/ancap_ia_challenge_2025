@@ -233,7 +233,7 @@ class _AuditScreenViewState extends State<_AuditScreenView> {
             ),
             const SizedBox(height: 16),
             Text(
-              "Loading audit records...",
+              "Cargando los registros",
               style: GoogleFonts.inter(
                 color: _foreground,
                 fontSize: 16,
@@ -260,7 +260,7 @@ class _AuditScreenViewState extends State<_AuditScreenView> {
               ),
               const SizedBox(height: 16),
               Text(
-                "Error loading audit records",
+                "Error al cargar",
                 style: GoogleFonts.inter(
                   color: _foreground,
                   fontSize: 18,
