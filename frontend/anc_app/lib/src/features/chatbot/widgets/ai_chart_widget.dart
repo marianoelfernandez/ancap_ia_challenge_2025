@@ -3,6 +3,7 @@ import "dart:math"; // Import dart:math for log and pow
 
 import "package:flutter/material.dart";
 import "package:fl_chart/fl_chart.dart";
+import "package:http/http.dart" as http;
 
 const Color _ancapYellow = Color(0xFFFFC107);
 const Color _backgroundMid = Color(0xFF0B101A);
@@ -20,11 +21,17 @@ class AiDataResponseChart extends StatefulWidget {
   final String jsonString;
   final bool
       isFullScreen; // New property to indicate if it's in full screen mode
+  final bool isDashboard;
+  final String? naturalQuery;
+  final String? sqlQuery;
 
   const AiDataResponseChart({
     super.key,
     required this.jsonString,
     this.isFullScreen = false, // Default to false
+    this.isDashboard = false,
+    this.naturalQuery,
+    this.sqlQuery,
   });
 
   @override
@@ -71,7 +78,7 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
   }
 
   /// Parses the JSON string and transforms it into a frequency map.
-  void _processData() {
+  void _processData() async {
     try {
       debugPrint("Processing JSON: ${widget.jsonString}");
       // Transforms single cuotes into double quotes for valid JSON parsing
@@ -153,6 +160,10 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
           _chartTitle = chartTitle;
         });
       }
+
+      if (widget.naturalQuery != null && widget.sqlQuery != null) {
+        await _fetchChartMetadata(fallbackTitle: chartTitle);
+      }
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -161,6 +172,48 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
         });
       }
       debugPrint("Error processing chart data: $e");
+    }
+  }
+
+  Future<void> _fetchChartMetadata({required String fallbackTitle}) async {
+    try {
+      final response = await http.post(
+        Uri.parse("http://localhost:8000/chart"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "natural_query": widget.naturalQuery,
+          "data_output": widget.jsonString,
+          "sql_query": widget.sqlQuery,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final metadata = jsonDecode(response.body);
+        debugPrint("Chart metadata: $metadata");
+        final String title = metadata["title"] ?? fallbackTitle;
+        final String chartTypeStr = metadata["chart"] ?? "Barras";
+
+        ChartType defaultChartType = ChartType.bar;
+        final lowerChartType = chartTypeStr.toLowerCase();
+        if (lowerChartType == "Piechart") {
+          defaultChartType = ChartType.pie;
+        } else if (lowerChartType == "linea" || lowerChartType == "línea") {
+          defaultChartType = ChartType.line;
+        }
+
+        if (mounted) {
+          setState(() {
+            _chartTitle = title;
+            _chartType = defaultChartType;
+          });
+        }
+      } else {
+        debugPrint(
+          "Failed to load chart metadata: ${response.statusCode} ${response.body}",
+        );
+      }
+    } catch (e) {
+      debugPrint("Error fetching chart metadata: $e");
     }
   }
 
@@ -194,10 +247,12 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
 
   @override
   Widget build(BuildContext context) {
-    // Determine the height based on whether it's full screen or not
-    double chartHeight = widget.isFullScreen
-        ? double.infinity
-        : 450; // Smaller height when not full screen
+    // Determine the height based on the context (dashboard, full screen, or chat)
+    double? chartHeight;
+    if (!widget.isFullScreen && !widget.isDashboard) {
+      chartHeight = 450; // Fixed height for chat view
+    }
+    // For full screen and dashboard, height is null so it can be expansive.
 
     return GestureDetector(
       onTap: widget.isFullScreen
@@ -206,8 +261,11 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) =>
-                      _FullScreenChartPage(jsonString: widget.jsonString),
+                  builder: (context) => _FullScreenChartPage(
+                    jsonString: widget.jsonString,
+                    naturalQuery: widget.naturalQuery,
+                    sqlQuery: widget.sqlQuery,
+                  ),
                 ),
               );
             },
@@ -216,7 +274,7 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: SizedBox(
-            // Use SizedBox to control initial height
+            // Use SizedBox to control initial height, or allow it to be flexible
             height: chartHeight,
             child: _dataValues.isEmpty
                 ? _buildPlaceholder()
@@ -277,7 +335,7 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
                     color: Colors.white70,
                   ),
                   onPressed: _cycleChartType,
-                  tooltip: "Change chart type",
+                  tooltip: "Cambiar tipo de gráfico",
                 ),
               ),
           ],
@@ -953,9 +1011,13 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
 /// A dedicated page to display the chart in full screen.
 class _FullScreenChartPage extends StatelessWidget {
   final String jsonString;
+  final String? naturalQuery;
+  final String? sqlQuery;
 
   const _FullScreenChartPage({
     required this.jsonString,
+    this.naturalQuery,
+    this.sqlQuery,
   });
 
   @override
@@ -972,6 +1034,8 @@ class _FullScreenChartPage extends StatelessWidget {
           padding: const EdgeInsets.all(8.0), // More padding in full screen
           child: AiDataResponseChart(
             jsonString: jsonString,
+            naturalQuery: naturalQuery,
+            sqlQuery: sqlQuery,
             isFullScreen: true, // Indicate that it's in full screen
           ),
         ),

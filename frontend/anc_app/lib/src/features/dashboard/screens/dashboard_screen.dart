@@ -498,6 +498,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Expanded(
             child: AiDataResponseChart(
               jsonString: chartDataStr,
+              isDashboard: true,
             ),
           ),
         ],

@@ -442,6 +442,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                               ),
                               child: _isChartData(message.text)
                                   ? AiDataResponseChart(
+                                    
                                       jsonString:
                                           _extractChartData(message.text),
                                     )
