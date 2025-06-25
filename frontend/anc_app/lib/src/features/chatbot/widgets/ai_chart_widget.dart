@@ -3,7 +3,8 @@ import "dart:math"; // Import dart:math for log and pow
 
 import "package:flutter/material.dart";
 import "package:fl_chart/fl_chart.dart";
-import "package:http/http.dart" as http;
+import "package:anc_app/src/features/chatbot/services/chat_service.dart";
+import "package:get_it/get_it.dart";
 
 const Color _ancapYellow = Color(0xFFFFC107);
 const Color _backgroundMid = Color(0xFF0B101A);
@@ -50,6 +51,12 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
 
   /// A key to manage state changes and force re-renders when data updates.
   late final ValueKey _widgetKey;
+
+  /// Loading state for chart metadata
+  bool _isLoadingMetadata = false;
+
+  /// Chat service instance
+  final ChatService _chatService = GetIt.instance<ChatService>();
 
   @override
   void initState() {
@@ -183,44 +190,40 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
     required String sqlQuery,
     required String dataOutput,
   }) async {
+    setState(() {
+      _isLoadingMetadata = true;
+    });
     try {
-      final response = await http.post(
-        Uri.parse("http://localhost:8000/chart"),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "natural_query": naturalQuery,
-          "data_output": dataOutput,
-          "sql_query": sqlQuery,
-        }),
+      final metadata = await _chatService.fetchChartMetadata(
+        naturalQuery: naturalQuery,
+        sqlQuery: sqlQuery,
+        dataOutput: dataOutput,
       );
+      
+      debugPrint("Chart metadata: $metadata");
+      final String title = metadata["title"] ?? fallbackTitle;
+      final String chartTypeStr = metadata["chart"] ?? "Barras";
 
-      if (response.statusCode == 200) {
-        final metadata = jsonDecode(response.body);
-        debugPrint("Chart metadata: $metadata");
-        final String title = metadata["title"] ?? fallbackTitle;
-        final String chartTypeStr = metadata["chart"] ?? "Barras";
+      ChartType defaultChartType = ChartType.bar;
+      final lowerChartType = chartTypeStr.toLowerCase();
+      if (lowerChartType == "piechart") {
+        defaultChartType = ChartType.pie;
+      } else if (lowerChartType == "linea" || lowerChartType == "línea") {
+        defaultChartType = ChartType.line;
+      }
 
-        ChartType defaultChartType = ChartType.bar;
-        final lowerChartType = chartTypeStr.toLowerCase();
-        if (lowerChartType == "piechart") {
-          defaultChartType = ChartType.pie;
-        } else if (lowerChartType == "linea" || lowerChartType == "línea") {
-          defaultChartType = ChartType.line;
-        }
-
-        if (mounted) {
-          setState(() {
-            _chartTitle = title;
-            _chartType = defaultChartType;
-          });
-        }
-      } else {
-        debugPrint(
-          "Failed to load chart metadata: ${response.statusCode} ${response.body}",
-        );
+      if (mounted) {
+        setState(() {
+          _chartTitle = title;
+          _chartType = defaultChartType;
+        });
       }
     } catch (e) {
       debugPrint("Error fetching chart metadata: $e");
+    } finally {
+      setState(() {
+        _isLoadingMetadata = false;
+      });
     }
   }
 
@@ -348,7 +351,48 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
           ],
         ),
         SizedBox(height: widget.isFullScreen ? 24 : 16),
-        Expanded(child: _buildChart()),
+        Expanded(
+          child: _isLoadingMetadata ? _buildLoadingAnimation() : _buildChart(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLoadingAnimation() {
+    return Stack(
+      children: [
+        // Show the chart with reduced opacity
+        Opacity(
+          opacity: 0.3,
+          child: _buildChart(),
+        ),
+        // Overlay loading animation
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: (0.2)),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(_ancapYellow),
+                  strokeWidth: 3,
+                ),
+                SizedBox(height: 16),
+                Text(
+                  "Generando gráficos...",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }
