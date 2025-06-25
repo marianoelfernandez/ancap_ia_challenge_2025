@@ -81,7 +81,7 @@ def save_query(query_text: str, sql_query: str) -> str:
     return doc_id
 
 
-def retrieve_query(query_text: str, num_results: int = 1, threshold: float = 0.15) -> Optional[List[str]]:
+def retrieve_query(query_text: str, num_results: int = 1, threshold: float = 0.4) -> Optional[List[str]]:
     """
     Retrieves SQL queries from Firestore whose natural language embeddings are similar
     to the input query, within a distance threshold.
