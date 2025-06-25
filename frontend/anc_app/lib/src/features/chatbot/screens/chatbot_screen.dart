@@ -236,66 +236,60 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       margin: const EdgeInsets.only(left: 24, right: 24, top: 24),
       padding: const EdgeInsets.all(24.0),
       borderRadius: 8,
-      child: Container(
-        decoration: BoxDecoration(
-          border:
-              Border(bottom: BorderSide(color: _border.withValues(alpha: 0.1))),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: const LinearGradient(
-                  colors: [
-                    _ancapYellow,
-                    Color(0xFFF59E0B),
-                  ],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: _ancapYellow.withValues(alpha: 0.3),
-                    blurRadius: 10,
-                  ),
-                  BoxShadow(
-                    color: _ancapYellow.withValues(alpha: 0.2),
-                    blurRadius: 20,
-                  ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: const LinearGradient(
+                colors: [
+                  _ancapYellow,
+                  Color(0xFFF59E0B),
                 ],
               ),
-              child: Icon(
-                _currentConversationTitle == null
-                    ? Icons.smart_toy_outlined
-                    : Icons.chat_bubble_outline_outlined,
-                color: _ancapDarkBlue,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _currentConversationTitle ?? "ANCAP AI Assistant",
-                  style: GoogleFonts.inter(
-                    fontWeight: FontWeight.w600,
-                    color: _foreground,
-                    fontSize: 18,
-                  ),
+              boxShadow: [
+                BoxShadow(
+                  color: _ancapYellow.withValues(alpha: 0.3),
+                  blurRadius: 10,
                 ),
-                Text(
-                  "Siempre aquí para ayudarte",
-                  style: GoogleFonts.inter(
-                    color: _mutedForeground,
-                    fontSize: 14,
-                  ),
+                BoxShadow(
+                  color: _ancapYellow.withValues(alpha: 0.2),
+                  blurRadius: 20,
                 ),
               ],
             ),
-          ],
-        ),
+            child: Icon(
+              _currentConversationTitle == null
+                  ? Icons.smart_toy_outlined
+                  : Icons.chat_bubble_outline_outlined,
+              color: _ancapDarkBlue,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _currentConversationTitle ?? "ANCAP AI Assistant",
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w600,
+                  color: _foreground,
+                  fontSize: 18,
+                ),
+              ),
+              Text(
+                "Siempre aquí para ayudarte",
+                style: GoogleFonts.inter(
+                  color: _mutedForeground,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

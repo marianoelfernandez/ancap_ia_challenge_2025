@@ -398,7 +398,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildEmptyState() {
     return _buildGlassEffectContainer(
-      padding: const  EdgeInsets.all(24.0),
+      padding: const EdgeInsets.all(24.0),
       child: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Center(

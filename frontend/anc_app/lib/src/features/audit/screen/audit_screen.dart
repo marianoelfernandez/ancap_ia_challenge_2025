@@ -145,7 +145,7 @@ class _AuditScreenViewState extends State<_AuditScreenView> {
     double? borderRadius,
   }) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(borderRadius ?? 12.0),
+      borderRadius: BorderRadius.circular(borderRadius ?? 8.0),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
         child: Container(
@@ -153,7 +153,7 @@ class _AuditScreenViewState extends State<_AuditScreenView> {
           padding: padding,
           decoration: BoxDecoration(
             color: _glassBackground,
-            borderRadius: BorderRadius.circular(borderRadius ?? 12.0),
+            borderRadius: BorderRadius.circular(borderRadius ?? 8.0),
             border: Border.all(color: _glassBorder, width: 1),
           ),
           child: child,
@@ -294,64 +294,61 @@ class _AuditScreenViewState extends State<_AuditScreenView> {
 
   Widget _buildHeader() {
     return _buildGlassEffectContainer(
-      margin: const EdgeInsets.all(0),
+      margin: const EdgeInsets.only(left: 24, right: 24, top: 24),
       padding: const EdgeInsets.all(24.0),
-      borderRadius: 0,
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          border:
-              Border(bottom: BorderSide(color: _border.withValues(alpha: 0.1))),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: const LinearGradient(
-                  colors: [
-                    _ancapYellow,
-                    Color(0xFFF59E0B),
-                  ],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: _ancapYellow.withValues(alpha: 0.3),
-                    blurRadius: 20,
-                  ),
+      borderRadius: 8,
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: const LinearGradient(
+                colors: [
+                  _ancapYellow,
+                  Color(0xFFF59E0B),
                 ],
               ),
-              child: const Icon(
-                Icons.analytics_outlined,
-                color: _ancapDarkBlue,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Auditoría",
-                  style: GoogleFonts.inter(
-                    color: _foreground,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                  ),
+              boxShadow: [
+                BoxShadow(
+                  color: _ancapYellow.withValues(alpha: 0.3),
+                  blurRadius: 10,
                 ),
-                Text(
-                  "Registro de consultas y operaciones",
-                  style: GoogleFonts.inter(
-                    color: _mutedForeground,
-                    fontSize: 14,
-                  ),
+                BoxShadow(
+                  color: _ancapYellow.withValues(alpha: 0.2),
+                  blurRadius: 20,
                 ),
               ],
             ),
-          ],
-        ),
+            child: const Icon(
+              Icons.analytics_outlined,
+              color: _ancapDarkBlue,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Auditoría",
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w600,
+                  color: _foreground,
+                  fontSize: 18,
+                ),
+              ),
+              Text(
+                "Registro de consultas y operaciones",
+                style: GoogleFonts.inter(
+                  color: _mutedForeground,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
