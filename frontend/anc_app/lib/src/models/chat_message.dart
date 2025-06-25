@@ -4,6 +4,8 @@ class ChatMessage {
   final bool isAi;
   final DateTime timestamp;
   final String? chartData; // Optional field for chart JSON data
+  final String? naturalQuery;
+  final String? sqlQuery;
 
   ChatMessage({
     required this.id,
@@ -11,5 +13,7 @@ class ChatMessage {
     required this.isAi,
     required this.timestamp,
     this.chartData,
+    this.naturalQuery,
+    this.sqlQuery,
   });
 }

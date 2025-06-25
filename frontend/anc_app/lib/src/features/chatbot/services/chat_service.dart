@@ -36,4 +36,35 @@ class ChatService {
       throw Exception("Failed to send message: ${response.body}");
     }
   }
+
+  Future<Map<String, dynamic>> fetchChartMetadata({
+    required String naturalQuery,
+    required String sqlQuery,
+    required String dataOutput,
+  }) async {
+    final token = _authService.token;
+    if (token == null) {
+      throw Exception("Not authenticated");
+    }
+
+    final response = await http.post(
+      Uri.parse("$_baseUrl/chart"),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token",
+      },
+      body: jsonEncode({
+        "natural_query": naturalQuery,
+        "data_output": dataOutput,
+        "sql_query": sqlQuery,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(utf8.decode(response.bodyBytes))
+          as Map<String, dynamic>;
+    } else {
+      throw Exception("Failed to fetch chart metadata: ${response.body}");
+    }
+  }
 }
