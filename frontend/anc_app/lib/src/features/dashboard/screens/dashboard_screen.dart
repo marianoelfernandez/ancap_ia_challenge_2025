@@ -1,4 +1,5 @@
 import "dart:convert";
+import "dart:ui";
 
 import "package:flutter/material.dart";
 import "package:fl_chart/fl_chart.dart";
@@ -25,6 +26,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   static const Color _backgroundStart = Color(0xFF060912);
   static const Color _backgroundMid = Color(0xFF0B101A);
   static const Color _backgroundEnd = Color(0xFF050505);
+
+  final Color _glassBackground = Colors.white.withValues(alpha: 0.03);
+  static const Color _glassBorder = Color(0x1AFFFFFF);
 
   final Color _foreground = Colors.white;
   final Color _mutedForeground = Colors.white.withAlpha(179);
@@ -88,18 +92,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildHeader() {
-    return Padding(
+    return _buildGlassEffectContainer(
+      margin: const EdgeInsets.only(left: 24, right: 24, top: 24),
       padding: const EdgeInsets.all(24.0),
+      borderRadius: 8,
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
-              color: _ancapYellow.withAlpha(25),
-              borderRadius: BorderRadius.circular(12),
+              shape: BoxShape.circle,
+              gradient: const LinearGradient(
+                colors: [
+                  _ancapYellow,
+                  Color(0xFFF59E0B),
+                ],
+              ),
               boxShadow: [
                 BoxShadow(
-                  color: _backgroundMid.withAlpha(51),
+                  color: _ancapYellow.withValues(alpha: 0.3),
+                  blurRadius: 10,
+                ),
+                BoxShadow(
+                  color: _ancapYellow.withValues(alpha: 0.2),
                   blurRadius: 20,
                 ),
               ],
@@ -110,16 +126,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
               size: 20,
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 "Dashboard",
                 style: GoogleFonts.inter(
-                  color: _foreground,
-                  fontSize: 20,
                   fontWeight: FontWeight.w600,
+                  color: _foreground,
+                  fontSize: 18,
                 ),
               ),
               Text(
@@ -143,17 +159,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildSectionHeader(
-              "Gráficos Estáticos",
-              Icons.insert_chart_outlined,
-            ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24.0),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
                   flex: 2,
                   child: _buildGlassEffectContainer(
+                    padding: const EdgeInsets.all(24.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -177,6 +190,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 const SizedBox(width: 24),
                 Expanded(
                   child: _buildGlassEffectContainer(
+                    padding: const EdgeInsets.all(24.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -202,6 +216,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(height: 24),
             // Time series chart
             _buildGlassEffectContainer(
+              padding: const EdgeInsets.all(24.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -264,23 +279,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildSectionHeader(String title, IconData icon) {
-    return Row(
-      children: [
-        Icon(icon, color: _ancapYellow, size: 24),
-        const SizedBox(width: 12),
-        Text(
-          title,
-          style: GoogleFonts.inter(
-            color: _foreground,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
     );
   }
 
@@ -351,6 +349,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     return _buildGlassEffectContainer(
+      padding: const EdgeInsets.all(16.0),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Center(
@@ -399,6 +398,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildEmptyState() {
     return _buildGlassEffectContainer(
+      padding: const  EdgeInsets.all(24.0),
       child: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Center(
@@ -508,28 +508,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildGlassEffectContainer({
     required Widget child,
-    EdgeInsets margin = EdgeInsets.zero,
-    EdgeInsets padding = const EdgeInsets.all(24.0),
+    EdgeInsetsGeometry? padding,
+    EdgeInsetsGeometry? margin,
+    double? borderRadius,
   }) {
-    return Container(
-      margin: margin,
-      padding: padding,
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: _border,
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(borderRadius ?? 8.0),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+        child: Container(
+          margin: margin,
+          padding: padding,
+          decoration: BoxDecoration(
+            color: _glassBackground,
+            borderRadius: BorderRadius.circular(borderRadius ?? 8.0),
+            border: Border.all(color: _glassBorder, width: 1),
           ),
-        ],
+          child: child,
+        ),
       ),
-      child: child,
     );
   }
 
@@ -783,6 +780,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     required String value,
   }) {
     return _buildGlassEffectContainer(
+      padding: const EdgeInsets.all(24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
