@@ -355,8 +355,7 @@ class _AuditScreenViewState extends State<_AuditScreenView> {
 
   Widget _buildFilters() {
     return _buildGlassEffectContainer(
-      margin: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -725,8 +724,7 @@ class _AuditScreenViewState extends State<_AuditScreenView> {
   Widget _buildAuditTable(AuditLoaded state) {
     return Expanded(
       child: _buildGlassEffectContainer(
-        margin: const EdgeInsets.all(24),
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
