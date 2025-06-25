@@ -590,9 +590,29 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
     final List<String> labels = _dataValues.keys.toList();
     final total = _dataValues.values.fold(0.0, (sum, item) => sum + item);
 
+    // Create a more distinct color palette
+    final List<Color> distinctColors = [
+      const Color(0xFFFF6B6B), // Red
+      const Color(0xFF4ECDC4), // Teal
+      const Color(0xFF45B7D1), // Blue
+      const Color(0xFF96CEB4), // Green
+      const Color(0xFFFFA726), // Orange
+      const Color(0xFFAB47BC), // Purple
+      const Color(0xFFEF5350), // Light Red
+      const Color(0xFF26A69A), // Cyan
+      const Color(0xFF42A5F5), // Light Blue
+      const Color(0xFF66BB6A), // Light Green
+      const Color(0xFFFF7043), // Deep Orange
+      const Color(0xFF8E24AA), // Dark Purple
+      const Color(0xFFEC407A), // Pink
+      const Color(0xFF29B6F6), // Sky Blue
+      const Color(0xFF9CCC65), // Lime Green
+      const Color(0xFFFFCA28), // Amber
+    ];
+
     final List<Color> colors = List.generate(
       labels.length,
-      (index) => Colors.primaries[index % Colors.primaries.length].shade300,
+      (index) => distinctColors[index % distinctColors.length],
     );
 
     final List<PieChartSectionData> sections =

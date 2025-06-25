@@ -453,6 +453,24 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                                       ? SqlResponseWidget(
                                           sqlQuery:
                                               _extractSqlQuery(message.text),
+                                          conversationId:
+                                              _currentConversationId,
+                                          onSqlExecuted: (result) {
+                                            // Add the SQL execution result as a new message
+
+                                            setState(() {
+                                              _messages.add(
+                                                ChatMessage(
+                                                  id: DateTime.now()
+                                                      .millisecondsSinceEpoch
+                                                      .toString(),
+                                                  text: result,
+                                                  isAi: true,
+                                                  timestamp: DateTime.now(),
+                                                ),
+                                              );
+                                            });
+                                          },
                                         )
                                       : MarkdownBody(
                                           data: message.text,

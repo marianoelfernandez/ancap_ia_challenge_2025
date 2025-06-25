@@ -181,7 +181,7 @@ class _LoginScreenState extends State<LoginScreen>
                   : CrossAxisAlignment.center,
               children: [
                 Text(
-                  "ANC-APP",
+                  "Oktan",
                   textAlign: isLargeScreen ? TextAlign.left : TextAlign.center,
                   style: GoogleFonts.inter(
                     fontSize: isLargeScreen ? 96 : 72, // text-6xl lg:text-8xl

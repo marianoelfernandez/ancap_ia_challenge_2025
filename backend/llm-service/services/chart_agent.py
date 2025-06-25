@@ -30,10 +30,10 @@ class ChartAgent():
               Piechart: cuando se muestra la *composición o proporción de un total*, ideal para porcentajes o distribución (por ejemplo: porcentaje de uso por tipo, participación por sector, etc.).
 
               Tu respuesta debe ser exclusivamente un JSON en este formato:
-              { "title": TÍTULO DE GRÁFICA, "chart": TIPO DE GRÁFICA }
+              title: TÍTULO DE GRÁFICA, chart: TIPO DE GRÁFICA 
 
               Si no puedes sugerir un gráfico adecuado, responde exactamente:
-              { "title": "NONE", "chart": "NONE" }
+              title: NONE, chart: NONE 
 
               No des explicaciones adicionales bajo ninguna circunstancia."""),
             ("user", "{natural_query}, received data output: {data_output}, using sql query: {sql_query}"),

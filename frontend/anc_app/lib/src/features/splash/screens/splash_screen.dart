@@ -25,7 +25,10 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void initState() {
     super.initState();
-    developer.log("SplashScreen initState called", name: "SplashScreen"); // <--- ADD THIS
+    developer.log(
+      "SplashScreen initState called",
+      name: "SplashScreen",
+    ); // <--- ADD THIS
 
     _animationController = AnimationController(
       vsync: this,
@@ -42,11 +45,17 @@ class _SplashScreenState extends State<SplashScreen>
     _animationController.forward();
 
     Timer(const Duration(seconds: 3), () {
-      developer.log("SplashScreen Timer expired, navigating to chatbot", name: "SplashScreen"); // <--- ADD THIS
+      developer.log(
+        "SplashScreen Timer expired, navigating to chatbot",
+        name: "SplashScreen",
+      ); // <--- ADD THIS
       if (mounted) {
         context.goNamed(AppRoute.chatbot.name);
       } else {
-        developer.log("SplashScreen Timer: NOT MOUNTED, cannot navigate", name: "SplashScreen"); // <--- ADD THIS
+        developer.log(
+          "SplashScreen Timer: NOT MOUNTED, cannot navigate",
+          name: "SplashScreen",
+        ); // <--- ADD THIS
       }
     });
   }
@@ -59,7 +68,10 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    developer.log("SplashScreen build called", name: "SplashScreen"); // <--- ADD THIS
+    developer.log(
+      "SplashScreen build called",
+      name: "SplashScreen",
+    ); // <--- ADD THIS
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -73,7 +85,7 @@ class _SplashScreenState extends State<SplashScreen>
           child: FadeTransition(
             opacity: _fadeAnimation,
             child: Text(
-              "ANC-APP",
+              "Oktan",
               style: GoogleFonts.inter(
                 fontSize: 60,
                 fontWeight: FontWeight.w900,
