@@ -7,6 +7,9 @@ import "package:fl_chart/fl_chart.dart";
 const Color _ancapYellow = Color(0xFFFFC107);
 const Color _backgroundMid = Color(0xFF0B101A);
 
+/// Enum for different chart types.
+enum ChartType { bar, pie, line }
+
 /// A widget that parses a specific JSON structure from an AI response
 /// and displays the categorical data as a bar chart.
 ///
@@ -35,6 +38,9 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
   /// The title for the chart, derived from the column names in the JSON.
   String _chartTitle = "Data";
 
+  /// The current chart type to display.
+  ChartType _chartType = ChartType.bar;
+
   /// A key to manage state changes and force re-renders when data updates.
   late final ValueKey _widgetKey;
 
@@ -51,6 +57,8 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
     super.didUpdateWidget(oldWidget);
     if (widget.jsonString != oldWidget.jsonString) {
       _processData();
+      // Reset to bar chart when data changes
+      _chartType = ChartType.bar;
       // Update the key to ensure the widget tree rebuilds correctly
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
@@ -156,6 +164,34 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
     }
   }
 
+  void _cycleChartType() {
+    setState(() {
+      if (_chartType == ChartType.bar) {
+        _chartType = ChartType.pie;
+      } else if (_chartType == ChartType.pie) {
+        // Only show line chart if there are multiple data points
+        if (_dataValues.length > 1) {
+          _chartType = ChartType.line;
+        } else {
+          _chartType = ChartType.bar;
+        }
+      } else {
+        _chartType = ChartType.bar;
+      }
+    });
+  }
+
+  IconData _getChartTypeIcon(ChartType type) {
+    switch (type) {
+      case ChartType.bar:
+        return Icons.bar_chart_outlined;
+      case ChartType.pie:
+        return Icons.pie_chart_outline;
+      case ChartType.line:
+        return Icons.show_chart_outlined;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Determine the height based on whether it's full screen or not
@@ -182,7 +218,9 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
           child: SizedBox(
             // Use SizedBox to control initial height
             height: chartHeight,
-            child: _dataValues.isEmpty ? _buildPlaceholder() : _buildChart(),
+            child: _dataValues.isEmpty
+                ? _buildPlaceholder()
+                : _buildChartContainer(),
           ),
         ),
       ),
@@ -214,7 +252,43 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
     );
   }
 
-  /// Builds the main BarChart widget with improved grid sizing.
+  Widget _buildChartContainer() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            Text(
+              _chartTitle,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: widget.isFullScreen ? 20 : 16,
+                fontWeight: FontWeight.w800,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            if (_dataValues.isNotEmpty)
+              Positioned(
+                right: 0,
+                child: IconButton(
+                  icon: Icon(
+                    _getChartTypeIcon(_chartType),
+                    color: Colors.white70,
+                  ),
+                  onPressed: _cycleChartType,
+                  tooltip: "Change chart type",
+                ),
+              ),
+          ],
+        ),
+        SizedBox(height: widget.isFullScreen ? 24 : 16),
+        Expanded(child: _buildChart()),
+      ],
+    );
+  }
+
+  /// Builds the main chart widget based on the current chart type.
   Widget _buildChart() {
     final List<String> labels = _dataValues.keys.toList();
 
@@ -230,10 +304,24 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
     // Improved logarithmic scale detection
     bool useLogScale = _shouldUseLogScale(minOriginalVal, maxOriginalVal);
 
-    if (useLogScale) {
-      return _buildLogarithmicChart(labels, minOriginalVal, maxOriginalVal);
-    } else {
-      return _buildLinearChart(labels, minOriginalVal, maxOriginalVal);
+    switch (_chartType) {
+      case ChartType.pie:
+        return _buildPieChart();
+      case ChartType.line:
+        if (useLogScale) {
+          return _buildLogarithmicLineChart(
+            labels,
+            minOriginalVal,
+            maxOriginalVal,
+          );
+        }
+        return _buildLinearLineChart(labels, minOriginalVal, maxOriginalVal);
+      case ChartType.bar:
+      default:
+        if (useLogScale) {
+          return _buildLogarithmicChart(labels, minOriginalVal, maxOriginalVal);
+        }
+        return _buildLinearChart(labels, minOriginalVal, maxOriginalVal);
     }
   }
 
@@ -275,74 +363,57 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
       maxY = minY + 2;
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          _chartTitle,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: widget.isFullScreen ? 20 : 16,
-            fontWeight: FontWeight.w800,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        SizedBox(height: widget.isFullScreen ? 24 : 16),
-        Expanded(
-          child: BarChart(
-            BarChartData(
-              alignment: BarChartAlignment.spaceAround,
-              minY: minY,
-              maxY: maxY,
-              barTouchData: BarTouchData(
-                touchTooltipData: BarTouchTooltipData(
-                  tooltipBgColor: Colors.blueGrey,
-                  getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                    final category = labels[group.x.toInt()];
-                    final originalValue = _dataValues[category] ?? 0.0;
-                    return BarTooltipItem(
-                      "$category\n",
-                      const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                      children: <TextSpan>[
-                        TextSpan(
-                          text: _formatValue(originalValue),
-                          style: const TextStyle(
-                            color: Colors.yellow,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    );
-                  },
+    return BarChart(
+      BarChartData(
+        alignment: BarChartAlignment.spaceAround,
+        minY: minY,
+        maxY: maxY,
+        barTouchData: BarTouchData(
+          touchTooltipData: BarTouchTooltipData(
+            tooltipBgColor: Colors.blueGrey,
+            getTooltipItem: (group, groupIndex, rod, rodIndex) {
+              final category = labels[group.x.toInt()];
+              final originalValue = _dataValues[category] ?? 0.0;
+              return BarTooltipItem(
+                "$category\n",
+                const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
                 ),
-              ),
-              titlesData: _buildLogTitlesData(labels, gridValues),
-              borderData: FlBorderData(show: false),
-              gridData: _buildGridData(gridValues, null),
-              barGroups: List.generate(_dataValues.length, (index) {
-                final originalVal = _dataValues[labels[index]]!;
-                return BarChartGroupData(
-                  x: index,
-                  barRods: [
-                    BarChartRodData(
-                      toY: log10(max(1.0, originalVal)),
-                      color: _ancapYellow,
-                      width: widget.isFullScreen ? 20 : 12,
-                      borderRadius:
-                          BorderRadius.circular(widget.isFullScreen ? 5 : 3),
+                children: <TextSpan>[
+                  TextSpan(
+                    text: _formatValue(originalValue),
+                    style: const TextStyle(
+                      color: Colors.yellow,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
                     ),
-                  ],
-                );
-              }),
-            ),
+                  ),
+                ],
+              );
+            },
           ),
         ),
-      ],
+        titlesData: _buildLogTitlesData(labels, gridValues),
+        borderData: FlBorderData(show: false),
+        gridData: _buildGridData(gridValues, null),
+        barGroups: List.generate(_dataValues.length, (index) {
+          final originalVal = _dataValues[labels[index]]!;
+          return BarChartGroupData(
+            x: index,
+            barRods: [
+              BarChartRodData(
+                toY: log10(max(1.0, originalVal)),
+                color: _ancapYellow,
+                width: widget.isFullScreen ? 20 : 12,
+                borderRadius:
+                    BorderRadius.circular(widget.isFullScreen ? 5 : 3),
+              ),
+            ],
+          );
+        }),
+      ),
     );
   }
 
@@ -354,72 +425,269 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
     double chartMaxY = gridValues.isNotEmpty ? gridValues.last : maxVal * 1.2;
     double interval = _calculateLinearInterval(maxVal);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          _chartTitle,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: widget.isFullScreen ? 20 : 16,
-            fontWeight: FontWeight.bold,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        SizedBox(height: widget.isFullScreen ? 24 : 16),
-        Expanded(
-          child: BarChart(
-            BarChartData(
-              alignment: BarChartAlignment.spaceAround,
-              minY: 0,
-              maxY: chartMaxY,
-              barTouchData: BarTouchData(
-                touchTooltipData: BarTouchTooltipData(
-                  tooltipBgColor: Colors.blueGrey,
-                  getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                    final category = labels[group.x.toInt()];
-                    return BarTooltipItem(
-                      "$category\n",
-                      const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                      children: <TextSpan>[
-                        TextSpan(
-                          text: _formatValue(rod.toY),
-                          style: const TextStyle(
-                            color: Colors.yellow,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    );
-                  },
+    return BarChart(
+      BarChartData(
+        alignment: BarChartAlignment.spaceAround,
+        minY: 0,
+        maxY: chartMaxY,
+        barTouchData: BarTouchData(
+          touchTooltipData: BarTouchTooltipData(
+            tooltipBgColor: Colors.blueGrey,
+            getTooltipItem: (group, groupIndex, rod, rodIndex) {
+              final category = labels[group.x.toInt()];
+              return BarTooltipItem(
+                "$category\n",
+                const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
                 ),
-              ),
-              titlesData: _buildLinearTitlesData(labels, gridValues),
-              borderData: FlBorderData(show: false),
-              gridData: _buildGridData(gridValues, interval),
-              barGroups: List.generate(_dataValues.length, (index) {
-                return BarChartGroupData(
-                  x: index,
-                  barRods: [
-                    BarChartRodData(
-                      toY: _dataValues[labels[index]]!,
-                      color: _ancapYellow,
-                      width: widget.isFullScreen ? 20 : 12,
-                      borderRadius:
-                          BorderRadius.circular(widget.isFullScreen ? 5 : 3),
+                children: <TextSpan>[
+                  TextSpan(
+                    text: _formatValue(rod.toY),
+                    style: const TextStyle(
+                      color: Colors.yellow,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
                     ),
-                  ],
-                );
-              }),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+        titlesData: _buildLinearTitlesData(labels, gridValues),
+        borderData: FlBorderData(show: false),
+        gridData: _buildGridData(gridValues, interval),
+        barGroups: List.generate(_dataValues.length, (index) {
+          return BarChartGroupData(
+            x: index,
+            barRods: [
+              BarChartRodData(
+                toY: _dataValues[labels[index]]!,
+                color: _ancapYellow,
+                width: widget.isFullScreen ? 20 : 12,
+                borderRadius:
+                    BorderRadius.circular(widget.isFullScreen ? 5 : 3),
+              ),
+            ],
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildPieChart() {
+    final List<String> labels = _dataValues.keys.toList();
+    final total = _dataValues.values.fold(0.0, (sum, item) => sum + item);
+
+    final List<Color> colors = List.generate(
+      labels.length,
+      (index) => Colors.primaries[index % Colors.primaries.length].shade300,
+    );
+
+    final List<PieChartSectionData> sections =
+        List.generate(labels.length, (i) {
+      final category = labels[i];
+      final value = _dataValues[category]!;
+      final percentage = total > 0 ? (value / total) * 100 : 0;
+
+      return PieChartSectionData(
+        color: colors[i],
+        value: value,
+        title: percentage > 5 ? "${percentage.toStringAsFixed(1)}%" : "",
+        radius: widget.isFullScreen ? 120 : 80,
+        titleStyle: TextStyle(
+          fontSize: widget.isFullScreen ? 16 : 12,
+          fontWeight: FontWeight.bold,
+          color: const Color(0xffffffff),
+        ),
+      );
+    });
+
+    return Row(
+      children: <Widget>[
+        Expanded(
+          flex: 3,
+          child: PieChart(
+            PieChartData(
+              pieTouchData: PieTouchData(
+                touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                  // Can be implemented later for interactivity
+                },
+              ),
+              borderData: FlBorderData(show: false),
+              sectionsSpace: 2,
+              centerSpaceRadius: widget.isFullScreen ? 60 : 40,
+              sections: sections,
             ),
           ),
         ),
+        Expanded(
+          flex: 2,
+          child: _buildPieChartLegend(labels, colors),
+        ),
       ],
+    );
+  }
+
+  Widget _buildPieChartLegend(List<String> labels, List<Color> colors) {
+    return ListView.builder(
+      itemCount: labels.length,
+      itemBuilder: (context, index) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+          child: Row(
+            children: [
+              Container(width: 16, height: 16, color: colors[index]),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  labels[index],
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  /// Builds a linear scale line chart
+  Widget _buildLinearLineChart(
+    List<String> labels,
+    double minVal,
+    double maxVal,
+  ) {
+    final gridValues = _generateLinearGridValues(minVal, maxVal);
+    double chartMaxY = gridValues.isNotEmpty ? gridValues.last : maxVal * 1.2;
+    double interval = _calculateLinearInterval(maxVal);
+
+    final spots = List.generate(labels.length, (index) {
+      return FlSpot(index.toDouble(), _dataValues[labels[index]]!);
+    });
+
+    return LineChart(
+      LineChartData(
+        minY: 0,
+        maxY: chartMaxY,
+        gridData: _buildGridData(gridValues, interval),
+        titlesData: _buildLinearTitlesData(labels, gridValues),
+        borderData: FlBorderData(show: false),
+        lineTouchData: LineTouchData(
+          touchTooltipData: LineTouchTooltipData(
+            tooltipBgColor: Colors.blueGrey,
+            getTooltipItems: (touchedSpots) {
+              return touchedSpots.map((spot) {
+                final category = labels[spot.x.toInt()];
+                final value = spot.y;
+                return LineTooltipItem(
+                  "$category\n",
+                  const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  children: [
+                    TextSpan(
+                      text: _formatValue(value),
+                      style: const TextStyle(
+                        color: Colors.yellow,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                );
+              }).toList();
+            },
+          ),
+        ),
+        lineBarsData: [
+          LineChartBarData(
+            spots: spots,
+            isCurved: true,
+            color: _ancapYellow,
+            barWidth: widget.isFullScreen ? 4 : 3,
+            isStrokeCapRound: true,
+            dotData: FlDotData(show: true),
+            belowBarData: BarAreaData(
+              show: true,
+              color: _ancapYellow.withOpacity(0.3),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Builds a logarithmic scale line chart
+  Widget _buildLogarithmicLineChart(
+    List<String> labels,
+    double minVal,
+    double maxVal,
+  ) {
+    final gridValues = _generateLogGridValues(minVal, maxVal);
+    double minY = log10(max(1.0, minVal));
+    double maxY = log10(max(1.0, maxVal * 1.2));
+    if (maxY - minY < 1) {
+      maxY = minY + 2;
+    }
+
+    final spots = List.generate(labels.length, (index) {
+      final originalVal = _dataValues[labels[index]]!;
+      return FlSpot(index.toDouble(), log10(max(1.0, originalVal)));
+    });
+
+    return LineChart(
+      LineChartData(
+        minY: minY,
+        maxY: maxY,
+        gridData: _buildGridData(gridValues, null),
+        titlesData: _buildLogTitlesData(labels, gridValues),
+        borderData: FlBorderData(show: false),
+        lineTouchData: LineTouchData(
+          touchTooltipData: LineTouchTooltipData(
+            tooltipBgColor: Colors.blueGrey,
+            getTooltipItems: (touchedSpots) {
+              return touchedSpots.map((spot) {
+                final category = labels[spot.x.toInt()];
+                final originalValue = _dataValues[category] ?? 0.0;
+                return LineTooltipItem(
+                  "$category\n",
+                  const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  children: [
+                    TextSpan(
+                      text: _formatValue(originalValue),
+                      style: const TextStyle(
+                        color: Colors.yellow,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                );
+              }).toList();
+            },
+          ),
+        ),
+        lineBarsData: [
+          LineChartBarData(
+            spots: spots,
+            isCurved: true,
+            color: _ancapYellow,
+            barWidth: widget.isFullScreen ? 4 : 3,
+            isStrokeCapRound: true,
+            dotData: FlDotData(show: true),
+            belowBarData: BarAreaData(
+              show: true,
+              color: _ancapYellow.withOpacity(0.3),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
