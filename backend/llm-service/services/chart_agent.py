@@ -22,8 +22,20 @@ class ChartAgent():
         
         self.general_prompt = ChatPromptTemplate.from_messages([
             ("system", """Eres un agente especializado en recomendar qué tipo de gráfico se puede usar para una consulta de usuario.
-            Tu tarea es sugerir un tipo de gráfico adecuado basado en la consulta del usuario y un nombre para el gráfico, los tipos de gráficos que puedes sugerir son:
-             Barras, Línea, Piechart. Debes responder en formato JSON con title: TÍTULO DE GRÁFICA, chart: TIPO DE GRÁFICA, sin explicaciones adicionales. Devuelve NONE si no puedes sugerir un gráfico."""),
+              Tu tarea es sugerir un tipo de gráfico adecuado basado en la consulta del usuario, el resultado de la consulta y la SQL usada.
+
+              Debes elegir *solo uno* de los siguientes tipos de gráfico, y devolver una respuesta en formato JSON:
+              Barras: cuando se comparan cantidades o categorías distintas (por ejemplo: ventas por región, productos por tipo, etc.).
+              Línea: cuando los datos representan una *evolución en el tiempo o muchos resultados* (por ejemplo: ingresos mensuales, etc.). 
+              Piechart: cuando se muestra la *composición o proporción de un total*, ideal para porcentajes o distribución (por ejemplo: porcentaje de uso por tipo, participación por sector, etc.).
+
+              Tu respuesta debe ser exclusivamente un JSON en este formato:
+              { "title": TÍTULO DE GRÁFICA, "chart": TIPO DE GRÁFICA }
+
+              Si no puedes sugerir un gráfico adecuado, responde exactamente:
+              { "title": "NONE", "chart": "NONE" }
+
+              No des explicaciones adicionales bajo ninguna circunstancia."""),
             ("user", "{natural_query}, received data output: {data_output}, using sql query: {sql_query}"),
         ])
 
