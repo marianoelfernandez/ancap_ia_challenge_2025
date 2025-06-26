@@ -41,14 +41,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
-  void _closeSidebarOnNavigation() {
-    if (_isMobile && !_isSidebarCollapsed) {
-      setState(() {
-        _isSidebarCollapsed = true;
-      });
-    }
-  }
-
   // Build mobile menu bar (same as chatbot screen)
   Widget _buildMobileMenuBar() {
     return _buildGlassEffectContainer(

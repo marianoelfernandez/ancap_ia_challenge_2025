@@ -81,6 +81,13 @@ class _SidebarState extends State<Sidebar> with TickerProviderStateMixin {
     }
   }
 
+  // Expose method to refresh conversations
+  void refreshConversations() {
+    if (widget.showChatFeatures) {
+      _sidebarCubit.refreshConversations();
+    }
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
