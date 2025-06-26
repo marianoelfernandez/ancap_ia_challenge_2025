@@ -21,6 +21,13 @@ abstract interface class ChartsService {
     String? description,
   });
 
+  /// Create a new chart directly from data
+  Future<Result<Chart, ChartsError>> createChart({
+    required String title,
+    required String chartData,
+    String? description,
+  });
+
   /// Update an existing chart
   Future<Result<Chart, ChartsError>> updateChart({
     required String id,

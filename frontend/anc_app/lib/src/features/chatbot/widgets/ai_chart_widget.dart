@@ -4,6 +4,8 @@ import "dart:math"; // Import dart:math for log and pow
 import "package:flutter/material.dart";
 import "package:fl_chart/fl_chart.dart";
 import "package:anc_app/src/features/chatbot/services/chat_service.dart";
+import "package:anc_app/src/features/dashboard/services/charts_service.dart";
+
 import "package:get_it/get_it.dart";
 
 const Color _ancapYellow = Color(0xFFFFC107);
@@ -55,8 +57,14 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
   /// Loading state for chart metadata
   bool _isLoadingMetadata = false;
 
+  /// Loading state for pinning chart
+  bool _isPinning = false;
+
   /// Chat service instance
   final ChatService _chatService = GetIt.instance<ChatService>();
+
+  /// Charts service instance
+  final ChartsService _chartsService = GetIt.instance<ChartsService>();
 
   @override
   void initState() {
@@ -199,7 +207,7 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
         sqlQuery: sqlQuery,
         dataOutput: dataOutput,
       );
-      
+
       debugPrint("Chart metadata: $metadata");
       final String title = metadata["title"] ?? fallbackTitle;
       final String chartTypeStr = metadata["chart"] ?? "Barras";
@@ -252,6 +260,46 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
         return Icons.pie_chart_outline;
       case ChartType.line:
         return Icons.show_chart_outlined;
+    }
+  }
+
+  Future<void> _pinChart() async {
+    if (_isPinning) {
+      return;
+    }
+
+    setState(() {
+      _isPinning = true;
+    });
+
+    final result = await _chartsService.createChart(
+      title: _chartTitle,
+      chartData: widget.jsonString,
+    );
+
+    if (mounted) {
+      result.when(
+        ok: (_) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Gráfico fijado con éxito."),
+              backgroundColor: Colors.green,
+            ),
+          );
+        },
+        err: (error) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Error al fijar el gráfico: ${error.toString()}"),
+              backgroundColor: Colors.red,
+            ),
+          );
+        },
+      );
+
+      setState(() {
+        _isPinning = false;
+      });
     }
   }
 
@@ -327,25 +375,53 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
         Stack(
           alignment: Alignment.center,
           children: [
-            Text(
-              _chartTitle,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: widget.isFullScreen ? 20 : 16,
-                fontWeight: FontWeight.w800,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 80.0),
+              child: Text(
+                _chartTitle,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: widget.isFullScreen ? 20 : 16,
+                  fontWeight: FontWeight.w800,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-              textAlign: TextAlign.center,
             ),
             if (_dataValues.isNotEmpty)
               Positioned(
                 right: 0,
-                child: IconButton(
-                  icon: Icon(
-                    _getChartTypeIcon(_chartType),
-                    color: Colors.white70,
-                  ),
-                  onPressed: _cycleChartType,
-                  tooltip: "Cambiar tipo de gráfico",
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (!widget.isDashboard)
+                      IconButton(
+                        icon: _isPinning
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  color: Colors.white70,
+                                ),
+                              )
+                            : const Icon(
+                                Icons.push_pin_outlined,
+                                color: Colors.white70,
+                              ),
+                        onPressed: _isPinning ? null : _pinChart,
+                        tooltip: "Fijar gráfico al dashboard",
+                      ),
+                    IconButton(
+                      icon: Icon(
+                        _getChartTypeIcon(_chartType),
+                        color: Colors.white70,
+                      ),
+                      onPressed: _cycleChartType,
+                      tooltip: "Cambiar tipo de gráfico",
+                    ),
+                  ],
                 ),
               ),
           ],
