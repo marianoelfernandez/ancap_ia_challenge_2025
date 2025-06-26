@@ -173,30 +173,37 @@ Widget _buildNavigationTabs() {
     child: Container(
       padding: const EdgeInsets.only(bottom: 16.0),
       decoration: BoxDecoration(
-        border:
-            Border(bottom: BorderSide(color: _border.withValues(alpha: 0.1))),
+        border: Border(bottom: BorderSide(color: _border.withValues(alpha: 0.1))),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildNavigationTab(
-            icon: Icons.chat_bubble_outline,
-            label: "Chatbot",
-            route: AppRoute.chatbot,
-          ),
-          const SizedBox(height: 8),
-          _buildNavigationTab(
-            icon: Icons.dashboard_outlined,
-            label: "Dashboard",
-            route: AppRoute.dashboard,
-          ),
-          const SizedBox(height: 8),
-          _buildNavigationTab(
-            icon: Icons.analytics_outlined,
-            label: "Auditoría",
-            route: AppRoute.audit,
-          ),
-        ],
+      child: BlocBuilder<AuthCubit, AuthState>(
+        builder: (context, authState) {
+          final bool isAdmin = authState.isAuthenticated && authState.currentUser.unwrap().role == "Admin";
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildNavigationTab(
+                icon: Icons.chat_bubble_outline,
+                label: "Chatbot",
+                route: AppRoute.chatbot,
+              ),
+              const SizedBox(height: 8),
+              _buildNavigationTab(
+                icon: Icons.dashboard_outlined,
+                label: "Dashboard",
+                route: AppRoute.dashboard,
+              ),
+              if (isAdmin) ...[
+                const SizedBox(height: 8),
+                _buildNavigationTab(
+                  icon: Icons.analytics_outlined,
+                  label: "Auditoría",
+                  route: AppRoute.audit,
+                ),
+              ],
+            ],
+          );
+        },
       ),
     ),
   );
