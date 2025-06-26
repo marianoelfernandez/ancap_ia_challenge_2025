@@ -178,6 +178,45 @@ class PocketbaseChartsService implements ChartsService {
   }
 
   @override
+  Future<Result<Chart, ChartsError>> createChart({
+    required String title,
+    required String chartData,
+    String? description,
+  }) async {
+    try {
+      final currentUser = _pb.authStore.record;
+      if (currentUser == null) {
+        return Result.err(const ChartsErrorUnauthorized());
+      }
+
+      final userId = currentUser.id;
+
+      final body = {
+        "chart_data": chartData,
+        "user": userId,
+        "title": title,
+        "description": description,
+      };
+
+      final record = await _pb.collection(_collectionName).create(body: body);
+      final json = record.toJson();
+      return Result.ok(
+        Chart(
+          id: json["id"],
+          title: json["title"],
+          chartData: json["chart_data"],
+          userId: json["user"],
+          created: json["created"],
+          updated: json["updated"],
+        ),
+      );
+    } catch (e) {
+      debugPrint("Error creating chart: $e");
+      return Result.err(const ChartsErrorUnknown());
+    }
+  }
+
+  @override
   Future<Result<void, ChartsError>> deleteChart(String id) async {
     try {
       await _pb.collection(_collectionName).delete(id);
