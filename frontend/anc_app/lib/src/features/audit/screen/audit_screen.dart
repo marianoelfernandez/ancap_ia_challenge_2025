@@ -1013,7 +1013,7 @@ class _AuditScreenViewState extends State<_AuditScreenView> {
                                 SizedBox(
                                   width: costWidth,
                                   child: Text(
-                                    "\$${record.cost.toStringAsFixed(2)}",
+                                    "\$${record.cost.toStringAsFixed(5)}",
                                   ),
                                 ),
                               ),
