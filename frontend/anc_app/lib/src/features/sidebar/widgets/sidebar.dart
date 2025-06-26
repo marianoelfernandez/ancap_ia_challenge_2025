@@ -23,26 +23,59 @@ const Color _glassBorder = Color(0x1AFFFFFF);
 class Sidebar extends StatefulWidget {
   final bool showChatFeatures;
   final Function(String conversationId, String title)? onConversationSelected;
+  final bool isCollapsed;
+  final VoidCallback? onToggle;
 
   const Sidebar({
     super.key,
     this.showChatFeatures = false,
     this.onConversationSelected,
+    this.isCollapsed = true, // Changed to true - mobile menu closed by default
+    this.onToggle,
   });
 
   @override
   State<Sidebar> createState() => _SidebarState();
 }
 
-class _SidebarState extends State<Sidebar> {
+class _SidebarState extends State<Sidebar> with TickerProviderStateMixin {
   late SidebarCubit _sidebarCubit;
   late TextEditingController _searchController;
+  late AnimationController _animationController;
+  late Animation<double> _slideAnimation;
+  late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
     _sidebarCubit = SidebarCubit();
     _searchController = TextEditingController();
+
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+
+    _slideAnimation = Tween<double>(
+      begin: -1.0,
+      end: 0.0,
+    ).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeInOut,
+      ),
+    );
+
     if (widget.showChatFeatures) {
       _sidebarCubit.loadRecentConversations();
     }
@@ -51,8 +84,20 @@ class _SidebarState extends State<Sidebar> {
   @override
   void dispose() {
     _searchController.dispose();
+    _animationController.dispose();
     _sidebarCubit.close();
     super.dispose();
+  }
+
+  bool get _isMobile => MediaQuery.of(context).size.width < 768;
+  bool get _isTablet =>
+      MediaQuery.of(context).size.width >= 768 &&
+      MediaQuery.of(context).size.width < 1024;
+
+  double get _sidebarWidth {
+    if (_isMobile) return MediaQuery.of(context).size.width * 0.85;
+    if (_isTablet) return 320;
+    return 300;
   }
 
   Widget _buildSearchInput() {
@@ -114,14 +159,15 @@ class _SidebarState extends State<Sidebar> {
   }
 
   Widget _buildSidebar(bool showChatFeatures) {
-    return _buildGlassEffectContainer(
+    final sidebarContent = _buildGlassEffectContainer(
       margin: EdgeInsets.zero,
-      borderRadius: 0,
+      borderRadius: _isMobile ? 0 : 0,
       child: SizedBox(
-        width: 300,
+        width: _sidebarWidth,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (_isMobile) _buildMobileHeader(),
             _buildUserProfile(),
             _buildNavigationTabs(),
             if (showChatFeatures) _buildSearchInput(),
@@ -130,10 +176,96 @@ class _SidebarState extends State<Sidebar> {
         ),
       ),
     );
+
+    if (_isMobile) {
+      return _buildMobileDrawer(sidebarContent);
+    } else {
+      return sidebarContent;
+    }
+  }
+
+  Widget _buildMobileHeader() {
+    return Container(
+      height: 60,
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: _border.withValues(alpha: 0.1)),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            "Menú",
+            style: GoogleFonts.inter(
+              color: _foreground,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          IconButton(
+            icon: const Icon(
+              Icons.close,
+              color: _foreground,
+              size: 24,
+            ),
+            onPressed: widget.onToggle,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileDrawer(Widget sidebarContent) {
+    return Positioned.fill(
+      child: Stack(
+        children: [
+          // Backdrop
+          GestureDetector(
+            onTap: widget.onToggle,
+            child: AnimatedBuilder(
+              animation: _fadeAnimation,
+              builder: (context, child) {
+                return Container(
+                  color: Colors.black
+                      .withValues(alpha: 0.5 * _fadeAnimation.value),
+                );
+              },
+            ),
+          ),
+          // Sidebar
+          AnimatedBuilder(
+            animation: _slideAnimation,
+            builder: (context, child) {
+              return Transform.translate(
+                offset: Offset(_slideAnimation.value * _sidebarWidth, 0),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    height: double.infinity,
+                    child: sidebarContent,
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    // Trigger animations based on collapse state
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.isCollapsed) {
+        _animationController.reverse();
+      } else {
+        _animationController.forward();
+      }
+    });
+
     return BlocProvider.value(
       value: _sidebarCubit,
       child: _buildSidebar(widget.showChatFeatures),
@@ -173,11 +305,13 @@ Widget _buildNavigationTabs() {
     child: Container(
       padding: const EdgeInsets.only(bottom: 16.0),
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: _border.withValues(alpha: 0.1))),
+        border:
+            Border(bottom: BorderSide(color: _border.withValues(alpha: 0.1))),
       ),
       child: BlocBuilder<AuthCubit, AuthState>(
         builder: (context, authState) {
-          final bool isAdmin = authState.isAuthenticated && authState.currentUser.unwrap().role == "Admin";
+          final bool isAdmin = authState.isAuthenticated &&
+              authState.currentUser.unwrap().role == "Admin";
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,

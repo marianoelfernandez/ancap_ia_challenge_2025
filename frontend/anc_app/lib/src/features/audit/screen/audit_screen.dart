@@ -3,6 +3,7 @@ import "package:flutter/material.dart";
 import "package:flutter_bloc/flutter_bloc.dart";
 import "package:google_fonts/google_fonts.dart";
 import "package:anc_app/src/features/sidebar/widgets/sidebar.dart";
+import "package:anc_app/src/features/sidebar/widgets/hamburger_menu_button.dart";
 import "package:anc_app/src/features/audit/cubit/audit_cubit.dart";
 import "package:intl/intl.dart";
 
@@ -45,6 +46,53 @@ class _AuditScreenViewState extends State<_AuditScreenView> {
   final TextEditingController _dateFilter = TextEditingController();
   final TextEditingController _tablesFilter = TextEditingController();
   final TextEditingController _costFilter = TextEditingController();
+
+  bool _isSidebarCollapsed = true; // Mobile menu closed by default
+
+  bool get _isMobile => MediaQuery.of(context).size.width < 768;
+
+  void _toggleSidebar() {
+    setState(() {
+      _isSidebarCollapsed = !_isSidebarCollapsed;
+    });
+  }
+
+  void _closeSidebarOnNavigation() {
+    if (_isMobile && !_isSidebarCollapsed) {
+      setState(() {
+        _isSidebarCollapsed = true;
+      });
+    }
+  }
+
+  // Build mobile menu bar (same as other screens)
+  Widget _buildMobileMenuBar() {
+    return _buildGlassEffectContainer(
+      margin: const EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+      borderRadius: 8,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          HamburgerMenuButton(
+            isOpen: !_isSidebarCollapsed,
+            onPressed: _toggleSidebar,
+            size: 24,
+          ),
+          Text(
+            "Auditoría",
+            style: GoogleFonts.inter(
+              fontWeight: FontWeight.w600,
+              color: _foreground,
+              fontSize: 16,
+            ),
+          ),
+          // Placeholder to center the title
+          const SizedBox(width: 24),
+        ],
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -173,51 +221,103 @@ class _AuditScreenViewState extends State<_AuditScreenView> {
             end: Alignment.bottomRight,
           ),
         ),
-        child: Row(
-          children: [
-            // Sidebar with dark background
-            const Sidebar(showChatFeatures: false),
-
-            // Main content area
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        child: _isMobile
+            ? Stack(
                 children: [
-                  // Header that spans full width
-                  _buildHeader(),
-
-                  // Content with padding
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(24.0, 0, 24.0, 24.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 24),
-                          _buildFilters(),
-                          const SizedBox(height: 24),
-                          BlocBuilder<AuditCubit, AuditState>(
-                            builder: (context, state) {
-                              if (state is AuditLoading) {
-                                return _buildLoadingIndicator();
-                              } else if (state is AuditError) {
-                                return _buildErrorMessage(state.message);
-                              } else if (state is AuditLoaded) {
-                                return _buildAuditTable(state);
-                              } else {
-                                return const SizedBox();
-                              }
-                            },
+                  // Main content
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Mobile-only menu bar
+                      _buildMobileMenuBar(),
+                      // Header that spans full width
+                      _buildHeader(),
+                      // Content with padding
+                      Expanded(
+                        child: Padding(
+                          padding:
+                              const EdgeInsets.fromLTRB(24.0, 0, 24.0, 24.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 24),
+                              _buildFilters(),
+                              const SizedBox(height: 24),
+                              BlocBuilder<AuditCubit, AuditState>(
+                                builder: (context, state) {
+                                  if (state is AuditLoading) {
+                                    return _buildLoadingIndicator();
+                                  } else if (state is AuditError) {
+                                    return _buildErrorMessage(state.message);
+                                  } else if (state is AuditLoaded) {
+                                    return _buildAuditTable(state);
+                                  } else {
+                                    return const SizedBox();
+                                  }
+                                },
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
+                    ],
+                  ),
+                  // Mobile sidebar overlay
+                  if (!_isSidebarCollapsed)
+                    Sidebar(
+                      showChatFeatures: false,
+                      isCollapsed: _isSidebarCollapsed,
+                      onToggle: _toggleSidebar,
+                    ),
+                ],
+              )
+            : Row(
+                children: [
+                  // Desktop sidebar - always visible
+                  const Sidebar(
+                    showChatFeatures: false,
+                    isCollapsed: false, // Always open on desktop
+                  ),
+                  // Main content area
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Header that spans full width
+                        _buildHeader(),
+                        // Content with padding
+                        Expanded(
+                          child: Padding(
+                            padding:
+                                const EdgeInsets.fromLTRB(24.0, 0, 24.0, 24.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 24),
+                                _buildFilters(),
+                                const SizedBox(height: 24),
+                                BlocBuilder<AuditCubit, AuditState>(
+                                  builder: (context, state) {
+                                    if (state is AuditLoading) {
+                                      return _buildLoadingIndicator();
+                                    } else if (state is AuditError) {
+                                      return _buildErrorMessage(state.message);
+                                    } else if (state is AuditLoaded) {
+                                      return _buildAuditTable(state);
+                                    } else {
+                                      return const SizedBox();
+                                    }
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -294,7 +394,7 @@ class _AuditScreenViewState extends State<_AuditScreenView> {
 
   Widget _buildHeader() {
     return _buildGlassEffectContainer(
-      margin: const EdgeInsets.only(left: 24, right: 24, top: 24),
+      margin: EdgeInsets.only(left: 24, right: 24, top: _isMobile ? 0 : 24),
       padding: const EdgeInsets.all(24.0),
       borderRadius: 8,
       child: Row(

@@ -5,6 +5,7 @@ import "package:anc_app/src/features/chatbot/widgets/ai_chart_widget.dart";
 import "package:anc_app/src/features/dashboard/cubits/dashboard_cubit.dart";
 import "package:anc_app/src/features/dashboard/widgets/static_charts.dart";
 import "package:anc_app/src/features/sidebar/widgets/sidebar.dart";
+import "package:anc_app/src/features/sidebar/widgets/hamburger_menu_button.dart";
 import "package:anc_app/src/models/chart.dart";
 import "package:flutter/material.dart";
 import "package:flutter_bloc/flutter_bloc.dart";
@@ -30,6 +31,53 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final Color _foreground = Colors.white;
   final Color _mutedForeground = Colors.white.withAlpha(179);
 
+  bool _isSidebarCollapsed = true; // Mobile menu closed by default
+
+  bool get _isMobile => MediaQuery.of(context).size.width < 768;
+
+  void _toggleSidebar() {
+    setState(() {
+      _isSidebarCollapsed = !_isSidebarCollapsed;
+    });
+  }
+
+  void _closeSidebarOnNavigation() {
+    if (_isMobile && !_isSidebarCollapsed) {
+      setState(() {
+        _isSidebarCollapsed = true;
+      });
+    }
+  }
+
+  // Build mobile menu bar (same as chatbot screen)
+  Widget _buildMobileMenuBar() {
+    return _buildGlassEffectContainer(
+      margin: const EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+      borderRadius: 8,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          HamburgerMenuButton(
+            isOpen: !_isSidebarCollapsed,
+            onPressed: _toggleSidebar,
+            size: 24,
+          ),
+          Text(
+            "Dashboard",
+            style: GoogleFonts.inter(
+              fontWeight: FontWeight.w600,
+              color: _foreground,
+              fontSize: 16,
+            ),
+          ),
+          // Placeholder to center the title
+          const SizedBox(width: 24),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -41,28 +89,55 @@ class _DashboardScreenState extends State<DashboardScreen> {
             end: Alignment.bottomRight,
           ),
         ),
-        child: Row(
-          children: [
-            const Sidebar(showChatFeatures: false),
-            Expanded(
-              child: Column(
+        child: _isMobile
+            ? Stack(
                 children: [
-                  _buildHeader(),
+                  // Main content
+                  Column(
+                    children: [
+                      // Mobile-only menu bar
+                      _buildMobileMenuBar(),
+                      _buildHeader(),
+                      Expanded(
+                        child: _buildDashboardContent(),
+                      ),
+                    ],
+                  ),
+                  // Mobile sidebar overlay
+                  if (!_isSidebarCollapsed)
+                    Sidebar(
+                      showChatFeatures: false,
+                      isCollapsed: _isSidebarCollapsed,
+                      onToggle: _toggleSidebar,
+                    ),
+                ],
+              )
+            : Row(
+                children: [
+                  // Desktop sidebar - always visible
+                  const Sidebar(
+                    showChatFeatures: false,
+                    isCollapsed: false, // Always open on desktop
+                  ),
                   Expanded(
-                    child: _buildDashboardContent(),
+                    child: Column(
+                      children: [
+                        _buildHeader(),
+                        Expanded(
+                          child: _buildDashboardContent(),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
-            ),
-          ],
-        ),
       ),
     );
   }
 
   Widget _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+      padding: EdgeInsets.fromLTRB(24, _isMobile ? 0 : 24, 24, 0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -360,16 +435,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildGlassEffectContainer({
     required Widget child,
     EdgeInsetsGeometry? padding,
+    EdgeInsetsGeometry? margin,
+    double? borderRadius,
   }) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(12.0),
+      borderRadius: BorderRadius.circular(borderRadius ?? 12.0),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
         child: Container(
+          margin: margin,
           padding: padding,
           decoration: BoxDecoration(
             color: _glassBackground,
-            borderRadius: BorderRadius.circular(12.0),
+            borderRadius: BorderRadius.circular(borderRadius ?? 12.0),
             border: Border.all(color: _glassBorder, width: 1),
           ),
           child: child,

@@ -7,6 +7,7 @@ import "package:anc_app/src/features/chatbot/services/chat_service.dart";
 import "package:anc_app/src/features/chatbot/widgets/ai_chart_widget.dart";
 import "package:anc_app/src/features/chatbot/widgets/sql_response_widget.dart";
 import "package:anc_app/src/features/sidebar/widgets/sidebar.dart";
+import "package:anc_app/src/features/sidebar/widgets/hamburger_menu_button.dart";
 import "package:anc_app/src/models/chat_message.dart";
 import "package:anc_app/src/router/router.dart";
 import "package:flutter/material.dart";
@@ -46,6 +47,23 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   late final ChatbotCubit _chatbotCubit;
   String? _currentConversationId;
   String? _currentConversationTitle;
+  bool _isSidebarCollapsed = true; // Mobile menu closed by default
+
+  bool get _isMobile => MediaQuery.of(context).size.width < 768;
+
+  void _toggleSidebar() {
+    setState(() {
+      _isSidebarCollapsed = !_isSidebarCollapsed;
+    });
+  }
+
+  void _closeSidebarOnNavigation() {
+    if (_isMobile && !_isSidebarCollapsed) {
+      setState(() {
+        _isSidebarCollapsed = true;
+      });
+    }
+  }
 
   @override
   void initState() {
@@ -200,32 +218,66 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               end: Alignment.bottomRight,
             ),
           ),
-          child: Row(
-            children: [
-              Sidebar(
-                showChatFeatures: true,
-                onConversationSelected: (conversationId, title) {
-                  if (_currentConversationId == conversationId) return;
-
-                  setState(() {
-                    _currentConversationId = conversationId;
-                    _currentConversationTitle = title;
-                    _messages.clear();
-                  });
-                  _chatbotCubit.selectConversation(conversationId);
-                },
-              ),
-              Expanded(
-                child: Column(
+          child: _isMobile
+              ? Stack(
                   children: [
-                    _buildAppBar(),
-                    _buildMessagesList(),
-                    _buildInputArea(),
+                    // Main content
+                    Column(
+                      children: [
+                        // Mobile-only menu bar
+                        _buildAppBar(),
+                        _buildMessagesList(),
+                        _buildInputArea(),
+                      ],
+                    ),
+                    // Mobile sidebar overlay
+                    if (!_isSidebarCollapsed)
+                      Sidebar(
+                        showChatFeatures: true,
+                        isCollapsed: _isSidebarCollapsed,
+                        onToggle: _toggleSidebar,
+                        onConversationSelected: (conversationId, title) {
+                          if (_currentConversationId == conversationId) return;
+
+                          setState(() {
+                            _currentConversationId = conversationId;
+                            _currentConversationTitle = title;
+                            _messages.clear();
+                          });
+                          _chatbotCubit.selectConversation(conversationId);
+                          _closeSidebarOnNavigation(); // Close sidebar after navigation
+                        },
+                      ),
+                  ],
+                )
+              : Row(
+                  children: [
+                    // Desktop sidebar - always visible
+                    Sidebar(
+                      showChatFeatures: true,
+                      isCollapsed: false, // Always open on desktop
+                      onConversationSelected: (conversationId, title) {
+                        if (_currentConversationId == conversationId) return;
+
+                        setState(() {
+                          _currentConversationId = conversationId;
+                          _currentConversationTitle = title;
+                          _messages.clear();
+                        });
+                        _chatbotCubit.selectConversation(conversationId);
+                      },
+                    ),
+                    Expanded(
+                      child: Column(
+                        children: [
+                          _buildAppBar(),
+                          _buildMessagesList(),
+                          _buildInputArea(),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
-              ),
-            ],
-          ),
         ),
       ),
     );
@@ -233,61 +285,74 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
   Widget _buildAppBar() {
     return _buildGlassEffectContainer(
-      margin: const EdgeInsets.only(left: 24, right: 24, top: 24),
+      margin: const EdgeInsets.only(
+        left: 24,
+        right: 24,
+        top: 24,
+        bottom: 0,
+      ),
       padding: const EdgeInsets.all(24.0),
       borderRadius: 8,
       child: Row(
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: const LinearGradient(
-                colors: [
-                  _ancapYellow,
-                  Color(0xFFF59E0B),
-                ],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: _ancapYellow.withValues(alpha: 0.3),
-                  blurRadius: 10,
+          _isMobile
+              ? HamburgerMenuButton(
+                  isOpen: !_isSidebarCollapsed,
+                  onPressed: _toggleSidebar,
+                  size: 24,
+                )
+              : Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: const LinearGradient(
+                      colors: [
+                        _ancapYellow,
+                        Color(0xFFF59E0B),
+                      ],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _ancapYellow.withValues(alpha: 0.3),
+                        blurRadius: 10,
+                      ),
+                      BoxShadow(
+                        color: _ancapYellow.withValues(alpha: 0.2),
+                        blurRadius: 20,
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    _currentConversationTitle == null
+                        ? Icons.smart_toy_outlined
+                        : Icons.chat_bubble_outline_outlined,
+                    color: _ancapDarkBlue,
+                    size: 20,
+                  ),
                 ),
-                BoxShadow(
-                  color: _ancapYellow.withValues(alpha: 0.2),
-                  blurRadius: 20,
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _currentConversationTitle ?? "ANCAP AI Assistant",
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w600,
+                    color: _foreground,
+                    fontSize: 18,
+                  ),
+                ),
+                Text(
+                  "Siempre aquí para ayudarte",
+                  style: GoogleFonts.inter(
+                    color: _mutedForeground,
+                    fontSize: 14,
+                  ),
                 ),
               ],
             ),
-            child: Icon(
-              _currentConversationTitle == null
-                  ? Icons.smart_toy_outlined
-                  : Icons.chat_bubble_outline_outlined,
-              color: _ancapDarkBlue,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _currentConversationTitle ?? "ANCAP AI Assistant",
-                style: GoogleFonts.inter(
-                  fontWeight: FontWeight.w600,
-                  color: _foreground,
-                  fontSize: 18,
-                ),
-              ),
-              Text(
-                "Siempre aquí para ayudarte",
-                style: GoogleFonts.inter(
-                  color: _mutedForeground,
-                  fontSize: 14,
-                ),
-              ),
-            ],
           ),
         ],
       ),
@@ -399,7 +464,9 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 alignment: isAi ? Alignment.centerLeft : Alignment.centerRight,
                 child: Container(
                   constraints: BoxConstraints(
-                    maxWidth: MediaQuery.of(context).size.width * 0.75,
+                    maxWidth: _isMobile
+                        ? MediaQuery.of(context).size.width * 1.0
+                        : MediaQuery.of(context).size.width * 0.65,
                   ),
                   margin: const EdgeInsets.symmetric(
                     vertical: 8.0,
