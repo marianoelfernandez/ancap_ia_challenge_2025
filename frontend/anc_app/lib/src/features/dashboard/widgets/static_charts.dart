@@ -130,10 +130,7 @@ class _StaticChartsWidgetState extends State<StaticChartsWidget> {
     try {
       final List<StaticChartData> chartData = [];
       for (var entry in _staticQueries.entries) {
-        final result = await _chatService.executeSqlQuery(
-          entry.value,
-          conversationId: "4ih6g0um1qtv74q",
-        );
+        final result = await _chatService.executeSqlQuery(entry.value);
         final jsonStringForChart = result["response"] as String;
         chartData.add(
           StaticChartData(
