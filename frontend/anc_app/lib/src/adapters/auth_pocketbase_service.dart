@@ -98,6 +98,18 @@ class AuthPocketBaseService implements AuthService {
   String? get token => pb.authStore.token;
 
   @override
+  Future<Result<void, AuthError>> refreshToken() async {
+    if (!isAuthenticated) return const Result.ok(null);
+
+    try {
+      await pb.collection("users").authRefresh();
+      return const Result.ok(null);
+    } catch (e) {
+      return Result.err(AuthErrorUnknown());
+    }
+  }
+
+  @override
   Future<Result<User, AuthError>> getUserById(String userId) async {
     try {
       final record = await pb.collection("users").getOne(userId);

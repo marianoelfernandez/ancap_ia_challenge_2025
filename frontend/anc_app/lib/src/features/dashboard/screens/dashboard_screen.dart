@@ -19,17 +19,32 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  late final DashboardCubit _dashboardCubit;
+
+  @override
+  void initState() {
+    super.initState();
+    _dashboardCubit = DashboardCubit()..loadCharts();
+  }
+
+  @override
+  void dispose() {
+    _dashboardCubit.close();
+    super.dispose();
+  }
+
   static const Color _ancapYellow = Color(0xFFFFC107);
+  static const Color _ancapDarkBlue = Color(0xFF002A53);
 
   static const Color _backgroundStart = Color(0xFF060912);
   static const Color _backgroundMid = Color(0xFF0B101A);
   static const Color _backgroundEnd = Color(0xFF050505);
 
-  final Color _glassBackground = Colors.white.withAlpha(15);
-  static const Color _glassBorder = Color(0x1AFFFFFF);
+  static const Color _foreground = Color(0xFFF8FAFC);
+  static const Color _mutedForeground = Color(0xFF808EA2);
 
-  final Color _foreground = Colors.white;
-  final Color _mutedForeground = Colors.white.withAlpha(179);
+  final Color _glassBackground = Colors.white.withOpacity(0.03);
+  static const Color _glassBorder = Color(0x1AFFFFFF);
 
   bool _isSidebarCollapsed = true; // Mobile menu closed by default
 
@@ -41,30 +56,83 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
-  // Build mobile menu bar (same as chatbot screen)
-  Widget _buildMobileMenuBar() {
+  void _closeSidebarOnNavigation() {
+    if (_isMobile && !_isSidebarCollapsed) {
+      setState(() {
+        _isSidebarCollapsed = true;
+      });
+    }
+  }
+
+  Widget _buildAppBar() {
     return _buildGlassEffectContainer(
-      margin: const EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+      margin: const EdgeInsets.only(
+        left: 24,
+        right: 24,
+        top: 24,
+        bottom: 0,
+      ),
+      padding: const EdgeInsets.all(24.0),
       borderRadius: 8,
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          HamburgerMenuButton(
-            isOpen: !_isSidebarCollapsed,
-            onPressed: _toggleSidebar,
-            size: 24,
-          ),
-          Text(
-            "Dashboard",
-            style: GoogleFonts.inter(
-              fontWeight: FontWeight.w600,
-              color: _foreground,
-              fontSize: 16,
+          _isMobile
+              ? HamburgerMenuButton(
+                  isOpen: !_isSidebarCollapsed,
+                  onPressed: _toggleSidebar,
+                  size: 24,
+                )
+              : Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: const LinearGradient(
+                      colors: [
+                        _ancapYellow,
+                        Color(0xFFF59E0B),
+                      ],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _ancapYellow.withOpacity(0.3),
+                        blurRadius: 10,
+                      ),
+                      BoxShadow(
+                        color: _ancapYellow.withOpacity(0.2),
+                        blurRadius: 20,
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.dashboard_outlined,
+                    color: _ancapDarkBlue,
+                    size: 20,
+                  ),
+                ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Dashboard",
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w600,
+                    color: _foreground,
+                    fontSize: 18,
+                  ),
+                ),
+                Text(
+                  "Una vista general de tus métricas clave.",
+                  style: GoogleFonts.inter(
+                    color: _mutedForeground,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
             ),
           ),
-          // Placeholder to center the title
-          const SizedBox(width: 24),
         ],
       ),
     );
@@ -87,9 +155,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   // Main content
                   Column(
                     children: [
-                      // Mobile-only menu bar
-                      _buildMobileMenuBar(),
-                      _buildHeader(),
+                      _buildAppBar(),
                       Expanded(
                         child: _buildDashboardContent(),
                       ),
@@ -111,10 +177,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     showChatFeatures: false,
                     isCollapsed: false, // Always open on desktop
                   ),
+                  // Main content
                   Expanded(
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildHeader(),
+                        _buildAppBar(),
                         Expanded(
                           child: _buildDashboardContent(),
                         ),
@@ -123,60 +191,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ],
               ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(24, _isMobile ? 0 : 24, 24, 0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            "Dashboard",
-            style: GoogleFonts.inter(
-              color: _foreground,
-              fontSize: 24,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          _buildDateSelector(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDateSelector() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: _glassBackground,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: _glassBorder, width: 1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.calendar_today_outlined,
-            color: _mutedForeground,
-            size: 16,
-          ),
-          const SizedBox(width: 8),
-          Text(
-            "Jun 1, 2025 - Jun 7, 2025",
-            style: GoogleFonts.inter(
-              color: _mutedForeground,
-              fontSize: 14,
-            ),
-          ),
-          const SizedBox(width: 4),
-          Icon(
-            Icons.arrow_drop_down,
-            color: _mutedForeground,
-          ),
-        ],
       ),
     );
   }
@@ -200,8 +214,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildAiGeneratedChartsSection() {
-    return BlocProvider(
-      create: (context) => DashboardCubit()..loadCharts(),
+    return BlocProvider.value(
+      value: _dashboardCubit,
       child: BlocBuilder<DashboardCubit, DashboardState>(
         builder: (context, state) {
           return Column(

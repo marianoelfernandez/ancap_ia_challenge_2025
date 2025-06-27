@@ -148,7 +148,7 @@ class AuditCubit extends Cubit<AuditState> {
 
       final filteredRecords = currentState.auditRecords.where((record) {
         final usernameMatch = newUsernameFilter.isEmpty ||
-            record.username
+            record.displayName
                 .toLowerCase()
                 .contains(newUsernameFilter.toLowerCase());
 
@@ -227,7 +227,7 @@ class AuditCubit extends Cubit<AuditState> {
         // Apply filters with the new tag
         final filteredRecords = currentState.auditRecords.where((record) {
           final usernameMatch = currentState.usernameFilter.isEmpty ||
-              record.username
+              record.displayName
                   .toLowerCase()
                   .contains(currentState.usernameFilter.toLowerCase());
 
@@ -287,7 +287,7 @@ class AuditCubit extends Cubit<AuditState> {
 
       final filteredRecords = currentState.auditRecords.where((record) {
         final usernameMatch = currentState.usernameFilter.isEmpty ||
-            record.username
+            record.displayName
                 .toLowerCase()
                 .contains(currentState.usernameFilter.toLowerCase());
 
@@ -347,7 +347,7 @@ class AuditCubit extends Cubit<AuditState> {
         // Apply filters with the new tag
         final filteredRecords = currentState.auditRecords.where((record) {
           final usernameMatch = currentState.usernameFilter.isEmpty ||
-              record.username
+              record.displayName
                   .toLowerCase()
                   .contains(currentState.usernameFilter.toLowerCase());
 
@@ -407,7 +407,7 @@ class AuditCubit extends Cubit<AuditState> {
       // Apply filters without the removed tag
       final filteredRecords = currentState.auditRecords.where((record) {
         final usernameMatch = currentState.usernameFilter.isEmpty ||
-            record.username
+            record.displayName
                 .toLowerCase()
                 .contains(currentState.usernameFilter.toLowerCase());
 

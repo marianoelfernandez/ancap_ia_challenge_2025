@@ -31,11 +31,11 @@ Future<void> setupDI() async {
 
   final pb = PocketBase(AppEnv.I.read(EnvKey.apiUrl), authStore: store);
 
-  getIt.registerSingleton<AuthService>(
-    AuthPocketBaseService(
-      pocketBase: pb,
-    ),
+  final authService = AuthPocketBaseService(
+    pocketBase: pb,
   );
+  getIt.registerSingleton<AuthService>(authService);
+  await authService.refreshToken();
 
   getIt.registerSingleton<ConversationService>(
     ConversationPocketbaseService(pb),
