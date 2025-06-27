@@ -1,4 +1,5 @@
 import "dart:ui";
+import "package:anc_app/src/models/audit_record.dart";
 import "package:flutter/material.dart";
 import "package:flutter_bloc/flutter_bloc.dart";
 import "package:google_fonts/google_fonts.dart";
@@ -822,6 +823,162 @@ class _AuditScreenViewState extends State<_AuditScreenView> {
   }
 
   Widget _buildAuditTable(AuditLoaded state) {
+    Widget buildHeader() {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+        decoration: BoxDecoration(
+          color: _border.withOpacity(0.1),
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(4),
+            topRight: Radius.circular(4),
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              flex: 18,
+              child: Text(
+                "Usuario",
+                style: GoogleFonts.inter(
+                  color: _foreground,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 15,
+              child: Text(
+                "Rol",
+                style: GoogleFonts.inter(
+                  color: _foreground,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 22,
+              child: Text(
+                "Fecha",
+                style: GoogleFonts.inter(
+                  color: _foreground,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 30,
+              child: Text(
+                "Tablas consultadas",
+                style: GoogleFonts.inter(
+                  color: _foreground,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 15,
+              child: Text(
+                "Costo",
+                style: GoogleFonts.inter(
+                  color: _foreground,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    Widget buildRow(AuditRecord record) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 18,
+              child: Text(
+                record.displayName,
+                style: GoogleFonts.inter(color: _foreground, fontSize: 14),
+              ),
+            ),
+            Expanded(
+              flex: 15,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: IntrinsicWidth(
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: _ancapYellow.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: _ancapYellow.withOpacity(0.3)),
+                    ),
+                    child: Text(
+                      record.role,
+                      style: GoogleFonts.inter(
+                        color: _ancapYellow,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 22,
+              child: Text(
+                DateFormat("yyyy-MM-dd HH:mm").format(record.date),
+                style: GoogleFonts.inter(color: _foreground, fontSize: 14),
+              ),
+            ),
+            Expanded(
+              flex: 30,
+              child: Wrap(
+                spacing: 4,
+                runSpacing: 4,
+                children: record.consultedTables.map((table) {
+                  return Container(
+                    margin: const EdgeInsets.only(right: 4, bottom: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: _ancapYellow.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: _ancapYellow.withOpacity(0.3)),
+                    ),
+                    child: Text(
+                      table,
+                      style: GoogleFonts.inter(
+                        color: _ancapYellow,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            Expanded(
+              flex: 15,
+              child: Text(
+                "\$${record.cost.toStringAsFixed(5)}",
+                style: GoogleFonts.inter(color: _foreground, fontSize: 14),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Expanded(
       child: _buildGlassEffectContainer(
         padding: const EdgeInsets.all(24.0),
@@ -850,180 +1007,21 @@ class _AuditScreenViewState extends State<_AuditScreenView> {
             ),
             const SizedBox(height: 16),
             Expanded(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final double availableWidth = constraints.maxWidth;
-                  final double usernameWidth = availableWidth * 0.18;
-                  final double roleWidth = availableWidth * 0.15;
-                  final double dateWidth = availableWidth * 0.22;
-                  final double tablesWidth = availableWidth * 0.30;
-                  final double costWidth = availableWidth * 0.15;
-
-                  return SingleChildScrollView(
-                    scrollDirection: Axis.vertical,
-                    child: SizedBox(
-                      width: availableWidth,
-                      child: DataTable(
-                        headingRowColor: WidgetStateColor.resolveWith(
-                          (states) => _border.withValues(alpha: 0.1),
-                        ),
-                        dataRowColor: WidgetStateColor.resolveWith(
-                          (states) => Colors.transparent,
-                        ),
-                        headingTextStyle: GoogleFonts.inter(
-                          color: _foreground,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        dataTextStyle: GoogleFonts.inter(
-                          color: _foreground,
-                          fontSize: 14,
-                        ),
-                        columnSpacing: 8,
-                        horizontalMargin: 8,
-                        columns: [
-                          DataColumn(
-                            label: SizedBox(
-                              width: usernameWidth,
-                              child: const Text("Usuario"),
-                            ),
-                          ),
-                          DataColumn(
-                            label: SizedBox(
-                              width: roleWidth,
-                              child: const Text("Rol"),
-                            ),
-                          ),
-                          DataColumn(
-                            label: SizedBox(
-                              width: dateWidth,
-                              child: const Text("Fecha"),
-                            ),
-                          ),
-                          DataColumn(
-                            label: SizedBox(
-                              width: tablesWidth,
-                              child: const Text("Tablas consultadas"),
-                            ),
-                          ),
-                          DataColumn(
-                            label: SizedBox(
-                              width: costWidth,
-                              child: const Text("Costo"),
-                            ),
-                          ),
-                        ],
-                        rows: state.filteredRecords.map((record) {
-                          return DataRow(
-                            cells: [
-                              DataCell(
-                                SizedBox(
-                                  width: usernameWidth,
-                                  child: Text(record.displayName),
-                                ),
-                              ),
-                              DataCell(
-                                SizedBox(
-                                  width: roleWidth,
-                                  child: Align(
-                                    alignment: Alignment.centerLeft,
-                                    child: IntrinsicWidth(
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 2,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: _ancapYellow.withValues(
-                                            alpha: 0.15,
-                                          ),
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                          border: Border.all(
-                                            color: _ancapYellow.withValues(
-                                              alpha: 0.3,
-                                            ),
-                                          ),
-                                        ),
-                                        child: Text(
-                                          record.role,
-                                          style: GoogleFonts.inter(
-                                            color: _ancapYellow,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              DataCell(
-                                SizedBox(
-                                  width: dateWidth,
-                                  child: Text(
-                                    DateFormat("yyyy-MM-dd HH:mm")
-                                        .format(record.date),
-                                  ),
-                                ),
-                              ),
-                              DataCell(
-                                SizedBox(
-                                  width: tablesWidth,
-                                  child: Wrap(
-                                    spacing: 4,
-                                    runSpacing: 4,
-                                    children:
-                                        record.consultedTables.map((table) {
-                                      return Container(
-                                        margin: const EdgeInsets.only(
-                                          right: 4,
-                                          bottom: 4,
-                                        ),
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 2,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: _ancapYellow.withValues(
-                                            alpha: 0.15,
-                                          ),
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                          border: Border.all(
-                                            color: _ancapYellow.withValues(
-                                              alpha: 0.3,
-                                            ),
-                                          ),
-                                        ),
-                                        child: Text(
-                                          table,
-                                          style: GoogleFonts.inter(
-                                            color: _ancapYellow,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      );
-                                    }).toList(),
-                                  ),
-                                ),
-                              ),
-                              DataCell(
-                                SizedBox(
-                                  width: costWidth,
-                                  child: Text(
-                                    "\$${record.cost.toStringAsFixed(5)}",
-                                  ),
-                                ),
-                              ),
-                            ],
-                          );
-                        }).toList(),
-                      ),
+              child: Column(
+                children: [
+                  buildHeader(),
+                  Expanded(
+                    child: ListView.separated(
+                      itemCount: state.filteredRecords.length,
+                      itemBuilder: (context, index) {
+                        final record = state.filteredRecords[index];
+                        return buildRow(record);
+                      },
+                      separatorBuilder: (context, index) =>
+                          const Divider(color: _border, height: 1),
                     ),
-                  );
-                },
+                  ),
+                ],
               ),
             ),
           ],
