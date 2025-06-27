@@ -20,4 +20,6 @@ abstract interface class AuthService {
 
   String? get token;
   bool get isAuthenticated;
+
+  Future<Result<void, AuthError>> refreshToken();
 }

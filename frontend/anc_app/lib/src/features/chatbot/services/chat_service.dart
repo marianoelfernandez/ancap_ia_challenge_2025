@@ -72,18 +72,26 @@ class ChatService {
   Future<Map<String, dynamic>> executeSqlQuery(
     String sqlQuery, {
     String? conversationId,
+    Map<String, String>? headers,
   }) async {
     final token = _authService.token;
+    debugPrint("TokEEEEEEEen: $token");
     if (token == null) {
       throw Exception("Not authenticated");
     }
 
+    final requestHeaders = {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer $token",
+    };
+
+    if (headers != null) {
+      requestHeaders.addAll(headers);
+    }
+
     final response = await http.post(
       Uri.parse("$_baseUrl/query/sql"),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer $token",
-      },
+      headers: requestHeaders,
       body: jsonEncode({
         "query": sqlQuery,
         "conversation_id": conversationId,
