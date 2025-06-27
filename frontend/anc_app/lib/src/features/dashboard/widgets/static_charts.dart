@@ -132,7 +132,7 @@ class _StaticChartsWidgetState extends State<StaticChartsWidget> {
       for (var entry in _staticQueries.entries) {
         final result = await _chatService.executeSqlQuery(
           entry.value,
-          conversationId: "q5ypej9k72gkmc2",
+          conversationId: "7id0i585f774706",
         );
         final jsonStringForChart = result["response"] as String;
         chartData.add(
@@ -196,6 +196,7 @@ class _StaticChartsWidgetState extends State<StaticChartsWidget> {
             border: Border.all(color: Colors.white.withOpacity(0.1)),
           ),
           child: AiDataResponseChart(
+            title: chart.title,
             jsonString: chart.jsonString,
             isDashboard: true,
           ),

@@ -27,6 +27,7 @@ class AiDataResponseChart extends StatefulWidget {
   final bool isDashboard;
   final String? naturalQuery;
   final String? sqlQuery;
+  final String? title;
 
   const AiDataResponseChart({
     super.key,
@@ -35,6 +36,7 @@ class AiDataResponseChart extends StatefulWidget {
     this.isDashboard = false,
     this.naturalQuery,
     this.sqlQuery,
+    this.title,
   });
 
   @override
@@ -46,7 +48,7 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
   Map<String, double> _dataValues = {};
 
   /// The title for the chart, derived from the column names in the JSON.
-  String _chartTitle = "Data";
+  String _chartTitle = "";
 
   /// The current chart type to display.
   ChartType _chartType = ChartType.bar;
@@ -70,6 +72,7 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
   void initState() {
     super.initState();
     _widgetKey = ValueKey(widget.jsonString);
+    _chartTitle = widget.title ?? "";
     _processData();
   }
 
@@ -135,7 +138,6 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
       final bool isCountingOccurrences = (valueKey == null);
 
       final Map<String, double> aggregatedValues = {};
-      String chartTitle = "Distribution of ${categoryKey.toLowerCase()}";
 
       for (var record in records) {
         final String categoryValue =
@@ -161,21 +163,26 @@ class _AiDataResponseChartState extends State<AiDataResponseChart> {
         }
       }
 
+      String generatedTitle = "Distribution of ${categoryKey.toLowerCase()}";
       if (!isCountingOccurrences && valueKey != null) {
-        chartTitle =
+        generatedTitle =
             "Total ${valueKey.toLowerCase().replaceAll('total', '')} by ${categoryKey.toLowerCase()}";
       }
 
       if (mounted) {
         setState(() {
           _dataValues = aggregatedValues;
-          _chartTitle = chartTitle;
+          if (widget.title == null) {
+            _chartTitle = generatedTitle;
+          }
         });
       }
 
-      if (widget.naturalQuery != null && widget.sqlQuery != null) {
+      if (widget.title == null &&
+          widget.naturalQuery != null &&
+          widget.sqlQuery != null) {
         await _fetchChartMetadata(
-          fallbackTitle: chartTitle,
+          fallbackTitle: generatedTitle,
           naturalQuery: widget.naturalQuery!,
           sqlQuery: widget.sqlQuery!,
           dataOutput: parsedString,
