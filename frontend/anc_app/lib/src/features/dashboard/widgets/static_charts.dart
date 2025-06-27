@@ -1,4 +1,3 @@
-import "dart:convert";
 import "package:flutter/material.dart";
 import "package:get_it/get_it.dart";
 import "package:anc_app/src/features/chatbot/services/chat_service.dart";
@@ -135,10 +134,11 @@ class _StaticChartsWidgetState extends State<StaticChartsWidget> {
           entry.value,
           conversationId: "q5ypej9k72gkmc2",
         );
+        final jsonStringForChart = result["response"] as String;
         chartData.add(
           StaticChartData(
             title: entry.key,
-            jsonString: jsonEncode(result),
+            jsonString: jsonStringForChart,
           ),
         );
       }
