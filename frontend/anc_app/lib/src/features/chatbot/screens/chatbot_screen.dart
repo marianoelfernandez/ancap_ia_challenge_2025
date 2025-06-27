@@ -10,6 +10,7 @@ import "package:anc_app/src/features/sidebar/widgets/sidebar.dart";
 import "package:anc_app/src/features/sidebar/widgets/hamburger_menu_button.dart";
 import "package:anc_app/src/models/chat_message.dart";
 import "package:anc_app/src/router/router.dart";
+import "package:anc_app/src/router/screen_params.dart"; // Add this import
 import "package:flutter/material.dart";
 import "package:flutter_bloc/flutter_bloc.dart";
 import "package:flutter_markdown/flutter_markdown.dart";
@@ -48,6 +49,9 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   String? _currentConversationId;
   String? _currentConversationTitle;
   bool _isSidebarCollapsed = true; // Mobile menu closed by default
+
+  // Key to force sidebar rebuild when new conversation is created
+  Key _sidebarKey = const Key("sidebar_initial");
 
   bool get _isMobile => MediaQuery.of(context).size.width < 768;
 
@@ -127,6 +131,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
     final userMessage = _controller.text.trim();
     _controller.clear();
+    final bool wasNewConversation = _currentConversationId == null;
 
     setState(() {
       _messages.add(
@@ -146,6 +151,8 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         conversationId: _currentConversationId,
       );
 
+      final newConversationId = response["conversation_id"] as String;
+
       setState(() {
         _isAiTyping = false;
         _messages.add(
@@ -156,8 +163,25 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             timestamp: DateTime.now(),
           ),
         );
-        _currentConversationId = response["conversation_id"] as String;
+        _currentConversationId = newConversationId;
       });
+
+      // If this was a new conversation, we need to:
+      // 1. Update the URL to include the conversation ID
+      // 2. Reload the sidebar conversations by forcing a rebuild
+      // 3. Select the new conversation in the chatbot cubit
+      if (wasNewConversation) {
+        // Update URL with new conversation ID
+        await context.goToAppRoute(
+          AppRoute.chatbot,
+          queryParams: ChatbotParams(conversation: newConversationId),
+        );
+
+        // Force sidebar rebuild to reload conversations
+        setState(() {
+          _sidebarKey = Key("sidebar_${DateTime.now().millisecondsSinceEpoch}");
+        });
+      }
 
       await _chatbotCubit.selectConversation(_currentConversationId!);
     } catch (error) {
@@ -233,6 +257,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                     // Mobile sidebar overlay
                     if (!_isSidebarCollapsed)
                       Sidebar(
+                        key: _sidebarKey, // Add key here
                         showChatFeatures: true,
                         isCollapsed: _isSidebarCollapsed,
                         onToggle: _toggleSidebar,
@@ -254,6 +279,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                   children: [
                     // Desktop sidebar - always visible
                     Sidebar(
+                      key: _sidebarKey, // Add key here too
                       showChatFeatures: true,
                       isCollapsed: false, // Always open on desktop
                       onConversationSelected: (conversationId, title) {
