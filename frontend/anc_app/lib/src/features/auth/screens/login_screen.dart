@@ -3,8 +3,12 @@ import "dart:math" as math;
 import "package:google_fonts/google_fonts.dart";
 import "package:anc_app/src/features/auth/widgets/login_form.dart";
 
+const Color _backgroundStart = Color(0xFF060912);
+const Color _backgroundMid = Color(0xFF0B101A);
+const Color _backgroundEnd = Color(0xFF050505);
+
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({Key? key}) : super(key: key);
+  const LoginScreen({super.key});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -62,11 +66,7 @@ class _LoginScreenState extends State<LoginScreen>
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF0C0A09), // slate-950
-              Color(0xFF18181B), // zinc-900
-              Color(0xFF171717), // neutral-900
-            ],
+            colors: [_backgroundStart, _backgroundMid, _backgroundEnd],
           ),
         ),
         child: Stack(
@@ -79,15 +79,14 @@ class _LoginScreenState extends State<LoginScreen>
               ),
             ),
 
-            // Floating Orbs
             _buildFloatingOrb(
               controller: _orbController1,
-              left: 80,
-              top: 80,
-              size: 128,
+              left: isLargeScreen ? 80 : 40,
+              top: isLargeScreen ? 80 : 400,
+              size: 100,
               colors: [
-                const Color(0xFFFBBF24).withOpacity(0.2), // yellow-400/20
-                const Color(0xFFEAB308).withOpacity(0.2), // yellow-500/20
+                const Color(0xFFFBBF24).withValues(alpha: 0.1),
+                const Color(0xFFEAB308).withValues(alpha: 0.1),
               ],
               xOffset: 100,
               yOffset: -50,
@@ -95,20 +94,16 @@ class _LoginScreenState extends State<LoginScreen>
 
             _buildFloatingOrb(
               controller: _orbController2,
-              right: 80,
-              bottom: 80,
+              right: isLargeScreen ? 150 : 80,
+              bottom: isLargeScreen ? 180 : 10,
               size: 96,
               colors: [
-                const Color(0xFF71717A).withOpacity(0.2), // zinc-400/20
-                const Color(0xFF64748B).withOpacity(0.2), // slate-500/20
+                const Color(0xFF71717A).withValues(alpha: 0.1),
+                const Color(0xFF64748B).withValues(alpha: 0.1),
               ],
               xOffset: -80,
               yOffset: 60,
               delay: 2.0,
-            ),
-
-            _buildPulsingOrb(
-              controller: _pulseController,
             ),
 
             // Main Content
@@ -130,23 +125,12 @@ class _LoginScreenState extends State<LoginScreen>
                                   child: _buildBrandingSection(isLargeScreen),
                                 ),
                                 const SizedBox(width: 48),
-                                // Right Side - Login Form
+
                                 Expanded(
                                   flex: 6,
                                   child: Align(
                                     alignment: Alignment.centerRight,
-                                    child: LoginForm(
-                                      onLoginSuccess: () {
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          const SnackBar(
-                                            content:
-                                                Text("Login Successful! 🚀"),
-                                            backgroundColor: Color(0xFFFBBF24),
-                                          ),
-                                        );
-                                      },
-                                    ),
+                                    child: LoginForm(),
                                   ),
                                 ),
                               ],
@@ -156,17 +140,7 @@ class _LoginScreenState extends State<LoginScreen>
                                 children: [
                                   _buildBrandingSection(isLargeScreen),
                                   const SizedBox(height: 48),
-                                  LoginForm(
-                                    onLoginSuccess: () {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        const SnackBar(
-                                          content: Text("Login Successful! 🚀"),
-                                          backgroundColor: Color(0xFFFBBF24),
-                                        ),
-                                      );
-                                    },
-                                  ),
+                                  LoginForm(),
                                 ],
                               ),
                             ),
@@ -207,7 +181,7 @@ class _LoginScreenState extends State<LoginScreen>
                   : CrossAxisAlignment.center,
               children: [
                 Text(
-                  "ANC-APP",
+                  "Oktan",
                   textAlign: isLargeScreen ? TextAlign.left : TextAlign.center,
                   style: GoogleFonts.inter(
                     fontSize: isLargeScreen ? 96 : 72, // text-6xl lg:text-8xl
@@ -217,64 +191,28 @@ class _LoginScreenState extends State<LoginScreen>
                     height: 1,
                     color: Colors.white,
                     // Enhanced shadows for bolder appearance
-                    shadows: const [
-                      Shadow(
-                        color: Color(0xFFFBBF24),
-                        blurRadius: 8,
-                      ),
-                      Shadow(
-                        color: Color(0xFFFBBF24),
-                        blurRadius: 16,
-                        offset: Offset(0, 0),
-                      ),
-                      Shadow(
-                        color: Color(0xFFFBBF24),
-                        blurRadius: 24,
-                        offset: Offset(0, 0),
-                      ),
-                      // Additional shadow for stronger glow
-                      Shadow(
-                        color: Color(0xFFFBBF24),
-                        blurRadius: 4,
-                        offset: Offset(0, 0),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Container(
-                  width: 80, // Wider line
-                  height: 6, // Taller line
-                  margin: isLargeScreen
-                      ? null
-                      : const EdgeInsets.symmetric(horizontal: 0),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [
-                        Color(0xFFFBBF24),
-                        Color(0xFFEAB308),
-                      ], // yellow-400 to yellow-500
-                    ),
-                    borderRadius:
-                        BorderRadius.circular(3), // Adjusted for thicker line
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0xFFFBBF24),
-                        blurRadius: 15,
-                        spreadRadius: 2, // Added spread for more prominent glow
-                      ),
-                      BoxShadow(
-                        color: Color(0xFFFBBF24),
-                        blurRadius: 30,
-                        spreadRadius: 1,
-                        offset: Offset(0, 0),
-                      ),
-                      BoxShadow(
-                        color: Color(0xFFFBBF24),
-                        blurRadius: 60,
-                        offset: Offset(0, 0),
-                      ),
-                    ],
+                    // shadows: const [
+                    //   Shadow(
+                    //     color: Color(0xFFFBBF24),
+                    //     blurRadius: 8,
+                    //   ),
+                    //   Shadow(
+                    //     color: Color(0xFFFBBF24),
+                    //     blurRadius: 16,
+                    //     offset: Offset(0, 0),
+                    //   ),
+                    //   Shadow(
+                    //     color: Color(0xFFFBBF24),
+                    //     blurRadius: 24,
+                    //     offset: Offset(0, 0),
+                    //   ),
+                    //   // Additional shadow for stronger glow
+                    //   Shadow(
+                    //     color: Color(0xFFFBBF24),
+                    //     blurRadius: 4,
+                    //     offset: Offset(0, 0),
+                    //   ),
+                    // ],
                   ),
                 ),
               ],
@@ -360,11 +298,11 @@ class _LoginScreenState extends State<LoginScreen>
                     label: "Análisis Potenciado por IA",
                   ),
                   _buildFeatureIndicator(
-                    color: const Color(0xFF71717A), // zinc-400
-                    label: "Información en Tiempo Real",
+                    color: const Color(0xFF4ADE80), // zinc-400
+                    label: "Graficos y Visualizaciones",
                   ),
                   _buildFeatureIndicator(
-                    color: const Color(0xFFFBBF24), // yellow-400
+                    color: const Color(0xFF4ADE80), // yellow-400
                     label: "Consultas en Lenguaje Natural",
                   ),
                 ],
@@ -411,7 +349,7 @@ class _LoginScreenState extends State<LoginScreen>
         Text(
           label,
           style: const TextStyle(
-            fontSize: 14,
+            fontSize: 12,
             color: Color(0xFFA1A1AA), // text-muted-foreground
           ),
         ),
@@ -471,43 +409,6 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  Widget _buildPulsingOrb({required AnimationController controller}) {
-    return Positioned.fill(
-      child: Center(
-        child: AnimatedBuilder(
-          animation: controller,
-          builder: (context, child) {
-            final scale = 1.0 + 0.2 * math.sin(controller.value * 2 * math.pi);
-            final rotation = controller.value * 2 * math.pi;
-
-            return Transform.scale(
-              scale: scale,
-              child: Transform.rotate(
-                angle: rotation,
-                child: Container(
-                  width: 160,
-                  height: 160,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        const Color(0xFFFBBF24)
-                            .withOpacity(0.1), // yellow-400/10
-                        const Color(0xFF71717A).withOpacity(0.1), // zinc-400/10
-                        Colors.transparent,
-                      ],
-                      stops: const [0.2, 0.5, 1.0],
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-
   Widget _buildAiGrid() {
     return AnimatedBuilder(
       animation: _pulseController,
@@ -531,8 +432,8 @@ class AiGridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color =
-          const Color(0xFFFBBF24).withOpacity(0.1) // yellow-400 with opacity
+      ..color = const Color(0xFFFBBF24)
+          .withValues(alpha: 0.1) // yellow-400 with opacity
       ..strokeWidth = 1
       ..style = PaintingStyle.stroke;
 

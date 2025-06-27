@@ -13,3 +13,21 @@ class NoParams extends ScreenParams<NoParams> {
   Map<String, String> toMap() => {};
 }
 
+class ChatbotParams extends ScreenParams<ChatbotParams> {
+  final String? conversation;
+
+  const ChatbotParams({this.conversation});
+
+  factory ChatbotParams.fromMap(Map<String, String> map) {
+    return ChatbotParams(
+      conversation: map["conversation"],
+    );
+  }
+
+  @override
+  Map<String, String> toMap() {
+    return {
+      if (conversation != null) "conversation": conversation!,
+    };
+  }
+}

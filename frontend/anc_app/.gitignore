@@ -67,3 +67,4 @@ web/
 
 # VS Code
 .vscode/
+frontend/anc_app/.firebase/

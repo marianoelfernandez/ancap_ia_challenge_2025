@@ -13,4 +13,13 @@ abstract interface class AuthService {
     required String password,
   });
   Future<Result<void, AuthError>> signOut();
+
+  User? getCurrentUser();
+
+  Future<Result<User, AuthError>> getUserById(String userId);
+
+  String? get token;
+  bool get isAuthenticated;
+
+  Future<Result<void, AuthError>> refreshToken();
 }

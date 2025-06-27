@@ -1,12 +1,16 @@
 // GoRouter configuration
 import "dart:async";
 
+import "package:anc_app/src/features/auth/cubits/auth_cubit.dart";
 import "package:flutter/material.dart";
+import "package:flutter_bloc/flutter_bloc.dart";
 import "package:go_router/go_router.dart";
 import "package:anc_app/src/router/screen_params.dart";
 import "package:anc_app/src/features/auth/screens/login_screen.dart";
 import "package:anc_app/src/features/chatbot/screens/chatbot_screen.dart";
 import "package:anc_app/src/features/splash/screens/splash_screen.dart"; // Added splash screen import
+import "package:anc_app/src/features/audit/screen/audit_screen.dart"; // Added audit screen import
+import "package:anc_app/src/features/dashboard/screens/dashboard_screen.dart";
 
 /// All the routes in the app are defined here
 ///
@@ -29,13 +33,21 @@ enum AppRoute<ParamsType extends ScreenParams<ParamsType>> {
     path: "/home",
     isAuthEnforcementRequired: true,
   ),
-  chatbot<NoParams>(
+  dashboard<NoParams>(
+    path: "/dashboard",
+    isAuthEnforcementRequired: true,
+  ),
+  chatbot<ChatbotParams>(
     path: "/chatbot",
-    isAuthEnforcementRequired: true, // Assuming auth is required
+    isAuthEnforcementRequired: true,
   ),
   splash<NoParams>(
     path: "/splash",
-    isAuthEnforcementRequired: false, // Splash screen doesn't need auth itself, shown after login
+    isAuthEnforcementRequired: false,
+  ),
+  audit<NoParams>(
+    path: "/audit",
+    isAuthEnforcementRequired: true,
   ),
   ;
 
@@ -91,12 +103,26 @@ GoRouter buildRouter({
             GoRoute(
               name: AppRoute.chatbot.name,
               path: AppRoute.chatbot.path,
-              builder: (context, state) => const ChatbotScreen(),
+              builder: (context, state) {
+                final conversationId =
+                    state.uri.queryParameters["conversation"];
+                return ChatbotScreen(initialConversationId: conversationId);
+              },
             ),
             GoRoute(
               name: AppRoute.splash.name,
               path: AppRoute.splash.path,
               builder: (context, state) => const SplashScreen(),
+            ),
+            GoRoute(
+              name: AppRoute.audit.name,
+              path: AppRoute.audit.path,
+              builder: (context, state) => const AuditScreen(),
+            ),
+            GoRoute(
+              name: AppRoute.dashboard.name,
+              path: AppRoute.dashboard.path,
+              builder: (context, state) => const DashboardScreen(),
             ),
           ],
         ),
@@ -135,8 +161,14 @@ Widget _wrapWithAuthEnforcer(
 ) {
   final appRoute = AppRoute.fromString(state.name ?? state.fullPath ?? "");
   if (appRoute.isAuthEnforcementRequired) {
-    // return AuthEnforce(child: child);
-    return child;
+    return BlocBuilder<AuthCubit, AuthState>(
+      builder: (context, authState) {
+        if (!authState.isAuthenticated) {
+          return const LoginScreen();
+        }
+        return child;
+      },
+    );
   } else {
     return child;
   }

@@ -1,5 +1,7 @@
 [general]
 log_level = "debug"
+api_url = "https://databaseservice-205211385697.southamerica-east1.run.app"
+llm_service_url = "https://llmservice-205211385697.southamerica-east1.run.app"
 
 [us]
 easter_egg = false

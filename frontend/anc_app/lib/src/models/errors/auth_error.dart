@@ -10,14 +10,13 @@ sealed class AuthError extends Error {
 }
 
 final class AuthErrorUnknown extends AuthError {
-  AuthErrorUnknown() : super("Unknown error");
+  AuthErrorUnknown() : super("Error desconocido");
 }
 
 final class AuthErrorEmailAlreadyInUse extends AuthError {
-  AuthErrorEmailAlreadyInUse() : super("Email already in use");
+  AuthErrorEmailAlreadyInUse() : super("El correo electrónico ya está en uso");
 }
 
 final class AuthErrorInvalidCredentials extends AuthError {
-  AuthErrorInvalidCredentials() : super("Invalid credentials");
+  AuthErrorInvalidCredentials() : super("Credenciales inválidas");
 }
-
