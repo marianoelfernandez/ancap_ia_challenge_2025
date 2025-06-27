@@ -15,9 +15,14 @@ def process_sql_query(sql_query: str, conv_id, user_id, ai_response="Aquí está
         str: The processed SQL query.
     """
     try:
-      tables_used = permissions_check(sql_query, conv_id)
-      filtered_tables = list(dict.fromkeys(tables_used))
+      
+      if (conv_id is not None):
+        tables_used = permissions_check(sql_query, conv_id)
+        filtered_tables = list(dict.fromkeys(tables_used))
 
+      else:
+        filtered_tables = []
+        
       result = call_server(sql_query)
       if "error" in result:
           logging.error(f"Error from data service: {result['error']}")

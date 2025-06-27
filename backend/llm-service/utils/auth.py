@@ -9,8 +9,8 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 TABLES_PER_ROLE = {
     "Admin": [entregas_tables + facturas_tables],
-    "Entregas": entregas_tables,
-    "Facturas": facturas_tables
+    "Entregas": [entregas_tables],
+    "Facturas": [facturas_tables]
 }
 def get_user_id_from_auth(authorization: str) -> str:
   if not authorization.startswith("Bearer "):
@@ -45,9 +45,14 @@ def permissions_check(sql, conversation_id) -> list:
         tables_used = extract_tables_from_sql(sql)
         
         allowed_tables = TABLES_PER_ROLE.get(role, [])
+        tables_used = set(tables_used)
         if allowed_tables:
             allowed_tables = allowed_tables[0]
-        unauthorized = [table for table in tables_used if table not in allowed_tables]
+
+        unauthorized = [
+            table for table in tables_used
+            if table.strip().upper() not in allowed_tables
+        ]
         if unauthorized:
             raise ValueError(f"El rol '{role}' no tiene acceso a las siguientes tablas: {unauthorized}")
         
